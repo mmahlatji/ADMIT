@@ -1,0 +1,55 @@
+# Path-based rules: backend/frontend jobs only run when their folder changes.
+
+stages:
+  - lint
+  - test
+
+backend-lint:
+  stage: lint
+  image: python:3.11-slim
+  rules:
+    - changes:
+        - backend/**/*
+  before_script:
+    - pip install uv
+    - cd backend
+    - uv sync
+  script:
+    - uv run ruff check .
+
+backend-test:
+  stage: test
+  image: python:3.11-slim
+  rules:
+    - changes:
+        - backend/**/*
+  before_script:
+    - pip install uv
+    - cd backend
+    - uv sync
+  script:
+    - uv run pytest
+
+frontend-lint:
+  stage: lint
+  image: node:20-slim
+  rules:
+    - changes:
+        - frontend/**/*
+  before_script:
+    - cd frontend
+    - npm install
+  script:
+    - npm run lint
+
+frontend-build:
+  stage: test
+  image: node:20-slim
+  rules:
+    - changes:
+        - frontend/**/*
+  before_script:
+    - cd frontend
+    - npm install
+  script:
+    - npm run build

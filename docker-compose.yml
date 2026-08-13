@@ -1,0 +1,35 @@
+version: "3.9"
+
+services:
+  api:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./backend/.env
+    depends_on:
+      - db
+
+  web:
+    build: ./frontend
+    ports:
+      - "5173:4173"
+    env_file:
+      - ./frontend/.env
+
+  # Plain postgres:16 for the data-layer owner to test Alembic migrations
+  # against before pushing to hosted Supabase. Not used by hosted/demo envs
+  # (those point DATABASE_URL at Supabase instead).
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: admit
+    ports:
+      - "5432:5432"
+    volumes:
+      - admit_db_data:/var/lib/postgresql/data
+
+volumes:
+  admit_db_data:
