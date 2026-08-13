@@ -1,9 +1,4 @@
-/**
- * The ONLY file allowed to talk to Supabase directly — and only for auth.
- * All applicant data, imports, decisions, etc. go through lib/api.ts and
- * our own FastAPI backend, so authorization logic lives in one place
- * instead of two systems that can drift.
- */
+// The ONLY file allowed to talk to Supabase directly, and only for auth.
 import { createClient } from "@supabase/supabase-js";
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;

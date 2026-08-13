@@ -1,8 +1,4 @@
-"""Shared FastAPI dependencies: DB session, current user, role checks.
-
-Every router handler that touches data depends on get_db here — no
-router or service should construct its own session.
-"""
+"""Shared FastAPI dependencies: DB session, current user, role checks."""
 
 from collections.abc import Generator
 
@@ -26,21 +22,10 @@ def get_db() -> Generator[Session, None, None]:
 
 
 def get_current_user():
-    """Decode and verify the Supabase-issued JWT from the Authorization header.
-
-    This only establishes identity, not authorization — new signups start
-    with role = null (see require_role below).
-    """
     raise NotImplementedError
 
 
 def require_role(*allowed_roles: str):
-    """Dependency factory: 403s unless the current user's role is allowed.
-
-    role = null (an unapproved signup) never satisfies any role check —
-    the convenor must assign a role via POST /users/{id}/role first.
-    """
-
     def _check(user=Depends(get_current_user)):
         if getattr(user, "role", None) not in allowed_roles:
             raise HTTPException(status.HTTP_403_FORBIDDEN, "Not permitted")

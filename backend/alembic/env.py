@@ -1,18 +1,10 @@
-"""Alembic environment.
-
-Schema authority lives here — Alembic only, no manual DB edits, no
-autogenerate against a DB that wasn't migrated up first.
-"""
-
 from logging.config import fileConfig
 
-from alembic import context
 from sqlalchemy import engine_from_config, pool
 
+from alembic import context
 from app.config import get_settings
 
-# Import the shared declarative Base so autogenerate can see all models
-# once they're registered in app/models.
 # from app.models import Base
 # target_metadata = Base.metadata
 target_metadata = None
