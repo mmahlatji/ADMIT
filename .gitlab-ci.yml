@@ -1,4 +1,14 @@
-# Path-based rules: backend/frontend jobs only run when their folder changes.
+# Runs on merge requests and on regular pushes (skipping the push pipeline
+# once an MR is open for that branch, so it doesn't run twice).
+# Path-based rules within each job: backend/frontend jobs only run when
+# their folder changes.
+
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_OPEN_MERGE_REQUESTS'
+      when: never
+    - if: '$CI_PIPELINE_SOURCE == "push"'
 
 stages:
   - lint
