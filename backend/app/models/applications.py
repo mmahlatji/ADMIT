@@ -1,9 +1,12 @@
 from app.deps import Base
 from enum import Enum
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import String, ForeignKey, Enum as SQLEnum, DateTime
 from datetime import datetime 
-
+from .applicants import Applicant
+from .motivations import Motivation
+from .votes import Vote
+from .application_lifecycles import ApplicationLifecycle
 class AcademicCareer(Enum):
     HONOURS = "hons"
     MASTERS = "msc"
@@ -21,7 +24,7 @@ class Application(Base):
     __tablename__="applications"
     application_number: Mapped[str] = mapped_column(String(255), primary_key=True, index=True)
     campus_id: Mapped[str] = mapped_column(ForeignKey("applicants.campus_id"), nullable=False, index=True)
-    academic_program_code: Mapped[str] = mapped_column(ForeignKey("academic_program.academic_program_code"), nullable=False, index=True)
+    academic_program_code: Mapped[str] = mapped_column(ForeignKey("academic_programs.academic_program_code"), nullable=False, index=True)
     academic_plan1: Mapped[str] = mapped_column(String(255), nullable=False)
     academic_plan2: Mapped[str] = mapped_column(String(255), nullable=True) # if you only apply for one program, can even be removed probably because it will exist in another row
     academic_career: Mapped[AcademicCareer] = mapped_column(SQLEnum(AcademicCareer, name="academic_career"), nullable=False, default=AcademicCareer.HONOURS, index=True) # can be changed if ASR also includes undergrad
@@ -30,8 +33,15 @@ class Application(Base):
     admit_type: Mapped[Choice] = mapped_column(String(255), nullable=True)
     semester: Mapped[Semester] = mapped_column(SQLEnum(Semester, name="semester"), nullable=False)
     last_registration: Mapped[datetime] = mapped_column(DateTime, nullable=True)
+    application_term: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     previous_application_term: Mapped[datetime] = mapped_column(DateTime, nullable=True) # maybe they never applied at all
 
+    applicant: Mapped["Applicant"] = relationship(back_populates="applications")
+    motivation: Mapped["Motivation"] = relationship(back_populates="applicant", cascade="all, delete-orphan")
+    votes: Mapped[list["Vote"]] = relationship(back_populates="application", cascade="all, delete-orphan")
+    application_lifecycle: Mapped["ApplicationLifecycle"] = relationship(back_populates="application")
+
+    
 #TODO: Review below
 """
 1.  Since another application can exist in another row the there would be no need to have an academic plan2 we can can just query applications for an applicant for a 

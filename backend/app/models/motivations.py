@@ -1,7 +1,8 @@
 from datetime import date, datetime
 from sqlalchemy import Float, ForeignKey, DateTime, String, Text
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.deps import Base
+from .applicants import Applicant
 
 class Motivation(Base):
     __tablename__="motivations"
@@ -9,3 +10,5 @@ class Motivation(Base):
     last_name: Mapped[str] = mapped_column(String(255), nullable=False)
     first_name: Mapped[str] = mapped_column(String(255), nullable=False)
     motivation: Mapped[str] = mapped_column(Text, nullable=False)
+
+    applicant: Mapped["Applicant"] = relationship(back_populates="motivation")
