@@ -1,8 +1,10 @@
-from datetime import date, datetime
-from sqlalchemy import Float, ForeignKey, DateTime, String, Text
+from sqlalchemy import ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 from app.deps import Base
+
 from .applicants import Applicant
+
 
 class Motivation(Base):
     __tablename__="motivations"
