@@ -10,10 +10,9 @@ from sqlalchemy import (
     Integer
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from .applicants import Applicant
 
 from app.deps import Base
-
-from .applicants import Applicant
 
 
 class ApplicantMark(Base):
@@ -31,7 +30,7 @@ class ApplicantMark(Base):
         CheckConstraint(
             "mark >= 0 AND mark <= 100",
             name="course_mark_constraint"
-        )
+        ),
     )
 
 

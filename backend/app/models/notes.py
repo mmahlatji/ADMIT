@@ -5,9 +5,7 @@ from sqlalchemy import UUID, DateTime, ForeignKey, Text, Integer
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.deps import Base
-
 from .applicants import Applicant
-
 
 class Note(Base):
     __tablename__="notes"

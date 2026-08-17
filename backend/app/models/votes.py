@@ -7,12 +7,10 @@ from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.deps import Base
-
 from .applications import Application
 
-
 class VoteDecision(Enum):
-    pass
+    PLACEHOLDER = "placeholder"
 
 
 class Vote(Base):

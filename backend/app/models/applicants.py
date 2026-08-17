@@ -3,13 +3,12 @@ from datetime import UTC, date, datetime
 
 from sqlalchemy import UUID, Boolean, Date, DateTime, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from .applications import Application
+from .applicant_marks import ApplicantMark
+from .notes import Note
+from .motivations import Motivation
 
 from app.deps import Base
-
-from .applicant_marks import ApplicantMark
-from .applications import Application
-from .motivations import Motivation
-from .notes import Note
 
 
 class Applicant(Base):

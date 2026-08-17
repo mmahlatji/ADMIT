@@ -4,24 +4,23 @@ from enum import Enum
 from sqlalchemy import DateTime, ForeignKey
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from .applications import Application
 
 from app.deps import Base
 
-from .applications import Application
 
+class ProgramAction(str, Enum):
+    PLACEHOLDER = "placeholder"
 
-class ProgramAction(Enum):
-    pass
+class ProgramReason(str, Enum):
+    PLACEHOLDER = "placeholder"
 
-class ProgramReason(Enum):
-    pass
-
-class ProgramStatus(Enum):
-    pass
+class ProgramStatus(str, Enum):
+    PLACEHOLDER = "placeholder"
 
 class ApplicationLifecycle(Base):
     __tablename__="application_lifecycles"
-    application_number: Mapped[str] = mapped_column(ForeignKey("applicantions.application_number"), primary_key=True, index=True)
+    application_number: Mapped[str] = mapped_column(ForeignKey("applications.application_number"), primary_key=True, index=True)
     program_action: Mapped[ProgramAction] = mapped_column(SQLEnum(ProgramAction, name="program_action"), nullable=False)
     program_reason: Mapped[ProgramReason] = mapped_column(SQLEnum(ProgramReason, name="program_reason"), nullable=False) # may be nullable
     program_status: Mapped[ProgramStatus] = mapped_column(SQLEnum(ProgramStatus, name="program_status"), nullable=False) # may be nullable

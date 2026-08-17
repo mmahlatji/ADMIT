@@ -3,20 +3,17 @@ from enum import Enum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import String, ForeignKey, Enum as SQLEnum, DateTime
 from datetime import datetime 
-from .applicants import Applicant
-from .motivations import Motivation
-from .votes import Vote
-from .application_lifecycles import ApplicationLifecycle
-class AcademicCareer(Enum):
+
+class AcademicCareer(str, Enum):
     HONOURS = "hons"
     MASTERS = "msc"
     DOCTORATE = "phd"
 
-class Choice(Enum):
+class Choice(str, Enum):
     FIRST = "first"
     SECOND = "second"
 
-class Semester(Enum):
+class Semester(str, Enum):
     FIRST = "first"
     SECOND = "second"
 

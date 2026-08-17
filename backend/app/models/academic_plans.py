@@ -8,4 +8,4 @@ class AcademicPlan(Base):
     __tablename__="academic_plans"
     academic_plan_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     academic_plan: Mapped[str] = mapped_column(String(255), nullable=False, unique=True, index=True)
-    academic_program_code: Mapped[str] = mapped_column(ForeignKey("academic_program.academic_program_code"), nullable=False)
+    academic_program_code: Mapped[str] = mapped_column(ForeignKey("academic_programs.academic_program_code"), nullable=False)
