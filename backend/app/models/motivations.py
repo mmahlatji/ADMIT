@@ -1,8 +1,12 @@
+from typing import TYPE_CHECKING
+
 from sqlalchemy import ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.deps import Base
-from .applicants import Applicant
+
+if TYPE_CHECKING:
+    from .applicants import Applicant
 
 
 class Motivation(Base):
@@ -12,4 +16,4 @@ class Motivation(Base):
     first_name: Mapped[str] = mapped_column(String(255), nullable=False)
     motivation: Mapped[str] = mapped_column(Text, nullable=False)
 
-    applicant: Mapped["Applicant"] = relationship(back_populates="motivation")
+    applicant: Mapped[Applicant] = relationship(back_populates="motivation")

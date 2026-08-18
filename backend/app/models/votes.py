@@ -1,13 +1,15 @@
-import uuid
 from datetime import UTC, datetime
 from enum import Enum
+from typing import TYPE_CHECKING
 
-from sqlalchemy import UUID, DateTime, ForeignKey, Integer
+from sqlalchemy import DateTime, ForeignKey, Integer
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.deps import Base
-from .applications import Application
+
+if TYPE_CHECKING:
+    from .applications import Application
 
 class VoteDecision(Enum):
     PLACEHOLDER = "placeholder"
@@ -23,4 +25,4 @@ class Vote(Base):
     voted_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
 
     application: Mapped["Application"] = relationship(back_populates="votes", foreign_keys=[application_number])
-    # voter
+    

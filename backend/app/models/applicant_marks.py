@@ -1,18 +1,13 @@
-import uuid
 from datetime import UTC, datetime
+from typing import TYPE_CHECKING
 
-from sqlalchemy import (
-    UUID,
-    CheckConstraint,
-    DateTime,
-    Float,
-    ForeignKey,
-    Integer
-)
+from sqlalchemy import CheckConstraint, DateTime, Float, ForeignKey, Integer
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from .applicants import Applicant
 
 from app.deps import Base
+
+if TYPE_CHECKING:
+    from .applicants import Applicant
 
 
 class ApplicantMark(Base):

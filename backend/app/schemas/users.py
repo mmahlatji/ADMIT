@@ -10,6 +10,7 @@ from pydantic import BaseModel, ConfigDict, EmailStr
 
 
 class UserCreate(BaseModel):
+    employee_id: str
     first_name: str
     last_name: str
     email: EmailStr

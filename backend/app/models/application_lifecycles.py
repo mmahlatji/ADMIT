@@ -1,12 +1,15 @@
 from datetime import UTC, datetime
 from enum import Enum
+from typing import TYPE_CHECKING
 
 from sqlalchemy import DateTime, ForeignKey
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from .applications import Application
 
 from app.deps import Base
+
+if TYPE_CHECKING:
+    from .applications import Application
 
 
 class ProgramAction(str, Enum):

@@ -4,8 +4,7 @@ from collections.abc import Generator
 
 from fastapi import Depends, HTTPException, status
 from sqlalchemy import create_engine
-from sqlalchemy.orm import Session, sessionmaker, DeclarativeBase
-
+from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
 from app.config import get_settings
 

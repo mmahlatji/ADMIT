@@ -1,11 +1,13 @@
-import uuid
 from datetime import UTC, datetime
+from typing import TYPE_CHECKING
 
-from sqlalchemy import UUID, DateTime, ForeignKey, Text, Integer
+from sqlalchemy import DateTime, ForeignKey, Integer, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.deps import Base
-from .applicants import Applicant
+
+if TYPE_CHECKING:
+    from .applicants import Applicant
 
 class Note(Base):
     __tablename__="notes"

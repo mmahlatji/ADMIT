@@ -10,6 +10,7 @@ from pydantic import BaseModel, ConfigDict
 
 
 class ApplicationLifecycleCreate(BaseModel):
+    application_number: str
     program_action: str
     program_reason: str
     program_status: str

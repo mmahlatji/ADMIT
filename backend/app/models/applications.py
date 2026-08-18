@@ -1,9 +1,20 @@
+from typing import TYPE_CHECKING
 from app.deps import Base
 from enum import Enum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import String, ForeignKey, Enum as SQLEnum, DateTime
 from datetime import datetime 
+from .applicants import Applicant
+from .motivations import Motivation
+from .votes import Vote
+from .application_lifecycles import ApplicationLifecycle
 
+
+if TYPE_CHECKING:
+    from .applicants import Applicant
+    from .motivations import Motivation
+    from .votes import Vote
+    from .application_lifecycles import ApplicationLifecycle
 class AcademicCareer(str, Enum):
     HONOURS = "hons"
     MASTERS = "msc"
@@ -34,7 +45,6 @@ class Application(Base):
     previous_application_term: Mapped[datetime] = mapped_column(DateTime, nullable=True) # maybe they never applied at all
 
     applicant: Mapped["Applicant"] = relationship(back_populates="applications")
-    motivation: Mapped["Motivation"] = relationship(back_populates="applicant", cascade="all, delete-orphan")
     votes: Mapped[list["Vote"]] = relationship(back_populates="application", cascade="all, delete-orphan")
     application_lifecycle: Mapped["ApplicationLifecycle"] = relationship(back_populates="application")
 

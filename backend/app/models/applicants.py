@@ -1,14 +1,17 @@
 import uuid
 from datetime import UTC, date, datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import UUID, Boolean, Date, DateTime, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from .applications import Application
-from .applicant_marks import ApplicantMark
-from .notes import Note
-from .motivations import Motivation
 
 from app.deps import Base
+
+if TYPE_CHECKING:
+    from .applicant_marks import ApplicantMark
+    from .applications import Application
+    from .motivations import Motivation
+    from .notes import Note
 
 
 class Applicant(Base):
@@ -32,7 +35,7 @@ class Applicant(Base):
     applications: Mapped[list["Application"]] = relationship(back_populates="applicant", cascade="all, delete-orphan") # so now we can access applications with applicant.applications
     applicant_marks: Mapped[list["ApplicantMark"]] = relationship(back_populates="applicant", cascade="all, delete-orphan")
     notes: Mapped[list["Note"]] = relationship(back_populates="applicant", cascade="all, delete-orphan")
-    motivation: Mapped["Motivation"] = relationship(back_populates="applicant", cascade="all, delete-orphan")
+    motivation: Mapped["Motivation"] = relationship(back_populates="applicant", cascade="all, delete-orphan", uselist=False)
 
 
 
