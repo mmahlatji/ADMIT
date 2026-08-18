@@ -11,6 +11,7 @@ class AcademicPlanService:
     def get_by_id(self, academic_plan_id: int) -> AcademicPlan | None:
         return self.repository.get_by_id(academic_plan_id)
 
+    # def get_by_academic_plan(self)
     def get_all(self) -> list[AcademicPlan]:
         return list(self.repository.get_all())
 
