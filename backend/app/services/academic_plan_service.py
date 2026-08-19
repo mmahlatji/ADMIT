@@ -1,4 +1,6 @@
 
+import uuid
+
 from app.models.academic_plans import AcademicPlan
 from app.queries.academic_plan_repository import AcademicPlanRepository
 from app.schemas.academic_plans import AcademicPlanCreate
@@ -8,7 +10,7 @@ class AcademicPlanService:
     def __init__(self, academicPlanRepository: AcademicPlanRepository) -> None:
         self.repository = academicPlanRepository
 
-    def get_by_id(self, academic_plan_id: int) -> AcademicPlan | None:
+    def get_by_id(self, academic_plan_id: uuid.UUID) -> AcademicPlan | None:
         return self.repository.get_by_id(academic_plan_id)
 
     # def get_by_academic_plan(self)

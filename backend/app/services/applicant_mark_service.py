@@ -1,4 +1,6 @@
 
+import uuid
+
 from app.models.applicant_marks import ApplicantMark
 from app.queries.applicant_mark_repository import ApplicantMarkRepository
 from app.schemas.applicant_marks import ApplicantMarkCreate
@@ -8,7 +10,7 @@ class ApplicantMarkService:
     def __init__(self, applicantMarkRepository: ApplicantMarkRepository) -> None:
         self.repository = applicantMarkRepository
 
-    def get_by_id(self, mark_id: int) -> ApplicantMark | None:
+    def get_by_id(self, mark_id: uuid.UUID) -> ApplicantMark | None:
         """
         Returns: One row from ApplicantMark table in the database
         """

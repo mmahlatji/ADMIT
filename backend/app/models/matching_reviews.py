@@ -1,12 +1,13 @@
+import uuid
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 from typing import Any
 from enum import Enum
 
-from sqlalchemy import DateTime, ForeignKey, Integer, Text, Enum as SQLEnum, JSON
+from sqlalchemy import DateTime, ForeignKey, Text, Enum as SQLEnum, JSON, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.deps import Base
+from .base import Base
 
 
 class MatchStatus(Enum):
@@ -19,8 +20,8 @@ class MatchResolution(Enum):
 
 class MatchingReview(Base):
     __tablename__="matching_reviews"
-    match_id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    staging_row_id: Mapped[int] = mapped_column(ForeignKey("staging.staging_id"), nullable=False) # rem: if source_type then table
+    match_id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True)
+    staging_row_id: Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("staging.staging_id"), nullable=False) # rem: if source_type then table
     candidate_keys: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=True)
     match_signals: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=True) # what matched
     status: Mapped[MatchStatus] = mapped_column(SQLEnum(MatchStatus, name="match_status"), nullable=False, default=MatchStatus.PENDING)

@@ -1,17 +1,18 @@
 from typing import TYPE_CHECKING
 from datetime import UTC, datetime
-
-from sqlalchemy import DateTime, ForeignKey, String
+import uuid
+from sqlalchemy import DateTime, ForeignKey, String, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.deps import Base
+from .base import Base
 if TYPE_CHECKING:
     from .notes import Note
     from .votes import Vote
 
 class User(Base):
     __tablename__="users"
-    employee_id: Mapped[str] = mapped_column(String(7), primary_key=True, index=True)
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True)
+    employee_id: Mapped[str] = mapped_column(String(7), unique=True, index=True, nullable=False)
     first_name: Mapped[str] = mapped_column(String(255), nullable=False)
     last_name: Mapped[str] = mapped_column(String(255), nullable=False)
     email: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)

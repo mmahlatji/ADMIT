@@ -1,4 +1,6 @@
 
+import uuid
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -9,7 +11,7 @@ class CourseRepository:
     def __init__(self, session: Session) -> None:
         self.session = session
 
-    def get_by_id(self, course_id: int) -> Course | None:
+    def get_by_id(self, course_id: uuid.UUID) -> Course | None:
         return self.session.get(Course, course_id)
 
     def get_all(self) -> list[Course]:

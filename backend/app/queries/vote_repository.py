@@ -1,4 +1,6 @@
 
+import uuid
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -9,7 +11,7 @@ class VoteRepository:
     def __init__(self, session: Session) -> None:
         self.session = session
 
-    def get_by_id(self, vote_id: int) -> Vote | None:
+    def get_by_id(self, vote_id: uuid.UUID) -> Vote | None:
         return self.session.get(Vote, vote_id)
 
     def get_all(self) -> list[Vote]:

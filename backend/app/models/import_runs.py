@@ -1,11 +1,11 @@
+import uuid
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 from enum import Enum
-from sqlalchemy import DateTime, ForeignKey, Integer, String, Enum as SQLEnum
+from sqlalchemy import DateTime, ForeignKey, Integer, String, Enum as SQLEnum, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.deps import Base
-
+from .base import Base
 
 class SourceType(Enum):
     ASR = "asr"
@@ -23,7 +23,7 @@ class ImportStatus(Enum):
 
 class ImportRun(Base):
     __tablename__="import_runs"
-    import_run_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    import_run_id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True)
     source_type: Mapped[SourceType] = mapped_column(SQLEnum(SourceType, name="source_types"), nullable=False, index=True)
     uploaded_by: Mapped[str] = mapped_column(ForeignKey("users.employee_id"), nullable=False)
     uploaded_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(UTC)) 

@@ -1,4 +1,6 @@
 
+import uuid
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -9,7 +11,7 @@ class ApplicantMarkRepository:
     def __init__(self, session: Session) -> None:
         self.session = session
 
-    def get_by_id(self, mark_id: int) -> ApplicantMark | None:
+    def get_by_id(self, mark_id: uuid.UUID) -> ApplicantMark | None:
         return self.session.get(ApplicantMark, mark_id)
 
     def get_by_campus_id(self, campus_id: str) -> list[ApplicantMark]:

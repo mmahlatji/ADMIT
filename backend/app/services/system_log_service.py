@@ -1,4 +1,6 @@
 
+import uuid
+
 from app.models.system_logs import ChangeSource, SystemLog
 from app.queries.system_log_repository import SystemLogRepository
 from app.schemas.system_logs import SystemLogCreate
@@ -8,7 +10,7 @@ class SystemLogService:
     def __init__(self, systemLogRepository: SystemLogRepository) -> None:
         self.repository = systemLogRepository
 
-    def get_by_id(self, log_id: int) -> SystemLog | None:
+    def get_by_id(self, log_id: uuid.UUID) -> SystemLog | None:
         return self.repository.get_by_id(log_id)
 
     def get_all(self) -> list[SystemLog]:

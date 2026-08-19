@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 from sqlalchemy import UUID, Boolean, Date, DateTime, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.deps import Base
+from .base import Base
 
 if TYPE_CHECKING:
     from .applicant_marks import ApplicantMark
@@ -16,7 +16,8 @@ if TYPE_CHECKING:
 
 class Applicant(Base):
     __tablename__="applicants"
-    campus_id: Mapped[str] = mapped_column(String(9), primary_key=True, index=True)
+    applicant_id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True)
+    campus_id: Mapped[str] = mapped_column(String(9), unique=True, index=True, nullable=False)
     employee_id: Mapped[str] = mapped_column(String(7), unique=True, nullable=False, index=True)
     first_name: Mapped[str] = mapped_column(String(255), nullable=False,  unique=False)
     last_name: Mapped[str] = mapped_column(String(255), nullable=False, unique=False)

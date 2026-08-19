@@ -1,4 +1,6 @@
 
+import uuid
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -9,8 +11,8 @@ class MotivationRepository:
     def __init__(self, session: Session) -> None:
         self.session = session
 
-    def get_by_id(self, campus_id: str) -> Motivation | None:
-        return self.session.get(Motivation, campus_id)
+    def get_by_id(self, motivation_id: uuid.UUID) -> Motivation | None:
+        return self.session.get(Motivation, motivation_id)
 
     def get_all(self) -> list[Motivation]:
         return list(self.session.scalars(select(Motivation)).all())

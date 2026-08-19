@@ -1,4 +1,6 @@
 
+import uuid
+
 from app.models.votes import Vote, VoteDecision
 from app.queries.vote_repository import VoteRepository
 from app.schemas.votes import VoteCreate
@@ -8,7 +10,7 @@ class VoteService:
     def __init__(self, voteRepository: VoteRepository) -> None:
         self.repository = voteRepository
 
-    def get_by_id(self, vote_id: int) -> Vote | None:
+    def get_by_id(self, vote_id: uuid.UUID) -> Vote | None:
         return self.repository.get_by_id(vote_id)
 
     def get_all(self) -> list[Vote]:

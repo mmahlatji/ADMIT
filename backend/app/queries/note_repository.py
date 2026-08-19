@@ -1,4 +1,6 @@
 
+import uuid
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -9,7 +11,7 @@ class NoteRepository:
     def __init__(self, session: Session) -> None:
         self.session = session
 
-    def get_by_id(self, note_id: int) -> Note | None:
+    def get_by_id(self, note_id: uuid.UUID) -> Note | None:
         return self.session.get(Note, note_id)
 
     def get_all(self) -> list[Note]:

@@ -5,6 +5,7 @@ ApplicationLifecycleResponse -> scalar fields from the DB row.
 """
 
 from datetime import datetime
+from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -20,6 +21,7 @@ class ApplicationLifecycleCreate(BaseModel):
 class ApplicationLifecycleResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
+    application_lifecycle_id: UUID
     application_number: str
     program_action: str
     program_reason: str

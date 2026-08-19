@@ -83,9 +83,9 @@ Backend (`backend/`) — FastAPI + SQLAlchemy + Alembic, Python >=3.11.
 - FastAPI (uvicorn) — entrypoint `app/main.py`; only `/health` exists so far, no routers mounted.
 - SQLAlchemy 2.0 + psycopg3 (Postgres/Supabase) — use the typed ORM style:
   `Mapped[...]` + `mapped_column(...)`, never legacy `Column(...)`.
-- Alembic — migrations (none yet; see Gotchas).
-- Pydantic v2 + pydantic-settings — `Settings` reads `.env`; wire schemas in
-  `app/schemas`, never reuse a model class as a schema.
+- Alembic — migrations for the schema (see Gotchas).
+- Pydantic v2 + pydantic-settings + email-validator — `Settings` reads `.env`;
+  wire schemas in `app/schemas`, never reuse a model class as a schema.
 - python-jose — JWT validation for Supabase access tokens; installed, not wired yet.
 
 ## Model conventions (app/models)
@@ -104,7 +104,9 @@ Package manager is `uv`, NOT pip/poetry. CI uses Python 3.11; the local `.venv` 
 - `uv sync` — install deps (dev group included)
 - `uv run ruff check .` — lint (line-length 100, flake8-bugbear,
   `extend-immutable-calls = ["fastapi.Depends"]`)
-- `uv run pytest` — tests (no test files exist yet)
+- `uv run pytest` — tests (unit tests in `tests/unit_tests/`)
+- `uv run alembic upgrade head` — apply pending migrations
+- `uv run alembic revision --autogenerate -m "..."` — new migration after editing a model
 - `uv run uvicorn app.main:app --reload` — dev server on :8000
 
 ## Layering (enforced by convention — see package docstrings)
@@ -117,13 +119,18 @@ Never skip a layer: router -> service -> queries -> database.
 - `app/models` — DB tables (may hold backend-only fields like password hashes)
 - `app/schemas` — Pydantic wire shapes; never the same class as a model
 
+Naming convention: a `XxxRepository` (in `app/queries`, takes a `Session` in its
+constructor) backs each `XxxService` (in `app/services`), which consumes the
+matching `XxxCreate` schema (in `app/schemas`).
+
 ## Gotchas
 
-- `Base` (DeclarativeBase) is defined in `app/deps.py`, NOT `app/models`.
-  Models import it via `from app.deps import Base`.
-- Alembic is not wired to models yet: `alembic/env.py` has `target_metadata = None`
-  with `from app.models import Base` commented out, so `--autogenerate` will NOT
-  detect models. `alembic.ini` `sqlalchemy.url` is empty; `env.py` sets it from
+- `Base` (DeclarativeBase) is defined in `app/models/base.py`, NOT `app/models`.
+  Models import it via `from .base import Base`. `app/deps.py` holds the engine,
+  session factory, `get_db()`, and the auth deps instead.
+- Alembic is wired to models: `alembic/env.py` imports `from app.models.base
+  import Base` and sets `target_metadata = Base.metadata`, so `--autogenerate`
+  detects models. `alembic.ini` `sqlalchemy.url` is empty; `env.py` sets it from
   `get_settings().database_url`.
 - Config via pydantic-settings (`app/config.py`) reads `.env` in `backend/`
   (`DATABASE_URL`, `SUPABASE_URL`, `ENVIRONMENT`). `.env` is gitignored — copy
@@ -191,9 +198,8 @@ when `backend/**` changes. Order: lint stage -> test stage.
 
 Don't "fix" these without the user; they're in the provided schema:
 
-- Placeholder enums with empty bodies: `ProgramAction`, `ProgramReason`,
-  `ProgramStatus` (`application_lifecycles.py`), `VoteDecision` (`votes.py`).
-- FK typos: `application_lifecycles.py` → `"applicantions.application_number"`;
-  `academic_plans.py` → `"academic_program.academic_program_code"` (singular).
+- Placeholder enums with a single `PLACEHOLDER = "placeholder"` member (no real
+  values yet): `ProgramAction`, `ProgramReason`, `ProgramStatus`
+  (`application_lifecycles.py`), `VoteDecision` (`votes.py`).
 - `applications.py`: `admit_type` annotated `Mapped[Choice]` but mapped to a
   `String` column.

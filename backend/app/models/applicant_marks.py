@@ -1,10 +1,10 @@
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING
-
-from sqlalchemy import CheckConstraint, DateTime, Float, ForeignKey, Integer
+import uuid
+from sqlalchemy import CheckConstraint, DateTime, Float, ForeignKey, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.deps import Base
+from .base import Base
 
 if TYPE_CHECKING:
     from .applicants import Applicant
@@ -12,8 +12,8 @@ if TYPE_CHECKING:
 
 class ApplicantMark(Base):
     __tablename__="applicant_marks"
-    mark_id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    campus_id: Mapped[str] = mapped_column(ForeignKey("applicants.campus_id"))
+    mark_id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True)
+    campus_id: Mapped[str] = mapped_column(ForeignKey("applicants.campus_id"), nullable=False)
     course_code: Mapped[str] = mapped_column(ForeignKey("courses.course_code"), nullable=False, index=True)
     mark: Mapped[float] = mapped_column(Float, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.now(UTC), nullable=False, index=True)

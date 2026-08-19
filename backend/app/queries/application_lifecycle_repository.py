@@ -1,4 +1,6 @@
 
+import uuid
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -9,8 +11,8 @@ class ApplicationLifecycleRepository:
     def __init__(self, session: Session) -> None:
         self.session = session
 
-    def get_by_id(self, application_number: str) -> ApplicationLifecycle | None:
-        return self.session.get(ApplicationLifecycle, application_number)
+    def get_by_id(self, application_lifecycle_id: uuid.UUID) -> ApplicationLifecycle | None:
+        return self.session.get(ApplicationLifecycle, application_lifecycle_id)
 
     def get_all(self) -> list[ApplicationLifecycle]:
         return list(self.session.scalars(select(ApplicationLifecycle)).all())

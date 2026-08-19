@@ -1,5 +1,7 @@
 """Pydantic schemas for academic programs (scalar-only; lookup data)."""
 
+from uuid import UUID
+
 from pydantic import BaseModel, ConfigDict, Field
 
 
@@ -11,6 +13,6 @@ class AcademicProgramCreate(BaseModel):
 class AcademicProgramResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    academic_program_id: int
+    academic_program_id: UUID
     academic_program_code: str
     academic_program: str | None

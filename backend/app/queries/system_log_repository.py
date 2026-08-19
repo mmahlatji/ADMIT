@@ -1,4 +1,6 @@
 
+import uuid
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -9,7 +11,7 @@ class SystemLogRepository:
     def __init__(self, session: Session) -> None:
         self.session = session
 
-    def get_by_id(self, log_id: int) -> SystemLog | None:
+    def get_by_id(self, log_id: uuid.UUID) -> SystemLog | None:
         return self.session.get(SystemLog, log_id)
 
     def get_all(self) -> list[SystemLog]:

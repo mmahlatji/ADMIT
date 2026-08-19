@@ -1,4 +1,6 @@
 
+import uuid
+
 from app.models.academic_programs import AcademicProgram
 from app.queries.academic_program_repository import AcademicProgramRepository
 from app.schemas.academic_programs import AcademicProgramCreate
@@ -8,7 +10,7 @@ class AcademicProgramService:
     def __init__(self, academicProgramRepository: AcademicProgramRepository) -> None:
         self.repository = academicProgramRepository
 
-    def get_by_id(self, academic_program_id: int) -> AcademicProgram | None:
+    def get_by_id(self, academic_program_id: uuid.UUID) -> AcademicProgram | None:
         return self.repository.get_by_id(academic_program_id)
 
     def get_all(self) -> list[AcademicProgram]:

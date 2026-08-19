@@ -5,6 +5,7 @@ ApplicantMarkResponse -> scalar fields from the DB row.
 """
 
 from datetime import datetime
+from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -18,7 +19,7 @@ class ApplicantMarkCreate(BaseModel):
 class ApplicantMarkResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    mark_id: int
+    mark_id: UUID
     campus_id: str
     course_code: str
     mark: float

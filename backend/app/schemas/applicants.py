@@ -36,6 +36,7 @@ class ApplicantCreate(BaseModel):
 class ApplicantResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
+    applicant_id: UUID
     campus_id: str
     employee_id: str
     first_name: str

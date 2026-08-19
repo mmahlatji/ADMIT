@@ -1,4 +1,6 @@
 
+import uuid
+
 from app.models.applications import AcademicCareer, Application, Choice, Semester
 from app.queries.application_repository import ApplicationRepository
 from app.schemas.applications import ApplicationCreate
@@ -8,8 +10,8 @@ class ApplicationService:
     def __init__(self, applicationRepository: ApplicationRepository) -> None:
         self.repository = applicationRepository
 
-    def get_by_id(self, application_number: str) -> Application | None:
-        return self.repository.get_by_id(application_number)
+    def get_by_id(self, application_id: uuid.UUID) -> Application | None:
+        return self.repository.get_by_id(application_id)
 
     def get_all(self) -> list[Application]:
         return list(self.repository.get_all())

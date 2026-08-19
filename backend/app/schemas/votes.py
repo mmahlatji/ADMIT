@@ -5,6 +5,7 @@ VoteResponse -> scalar fields from the DB row.
 """
 
 from datetime import datetime
+from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -19,7 +20,7 @@ class VoteCreate(BaseModel):
 class VoteResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    vote_id: int
+    vote_id: UUID
     application_number: str
     campus_id: str
     vote: str

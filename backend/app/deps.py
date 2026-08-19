@@ -4,7 +4,7 @@ from collections.abc import Generator
 
 from fastapi import Depends, HTTPException, status
 from sqlalchemy import create_engine
-from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
+from sqlalchemy.orm import Session, sessionmaker
 
 from app.config import get_settings
 
@@ -32,6 +32,3 @@ def require_role(*allowed_roles: str):
         return user
 
     return _check
-
-class Base(DeclarativeBase):
-    pass

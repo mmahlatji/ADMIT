@@ -1,8 +1,9 @@
 from typing import TYPE_CHECKING
-from app.deps import Base
+from .base import Base
 from enum import Enum
+import uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import String, ForeignKey, Enum as SQLEnum, DateTime
+from sqlalchemy import String, ForeignKey, Enum as SQLEnum, DateTime, UUID
 from datetime import datetime 
 from .applicants import Applicant
 from .motivations import Motivation
@@ -30,7 +31,8 @@ class Semester(str, Enum):
 
 class Application(Base):
     __tablename__="applications"
-    application_number: Mapped[str] = mapped_column(String(255), primary_key=True, index=True)
+    application_id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True)
+    application_number: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
     campus_id: Mapped[str] = mapped_column(ForeignKey("applicants.campus_id"), nullable=False, index=True)
     academic_program_code: Mapped[str] = mapped_column(ForeignKey("academic_programs.academic_program_code"), nullable=False, index=True)
     academic_plan1: Mapped[str] = mapped_column(String(255), nullable=False)
@@ -38,7 +40,7 @@ class Application(Base):
     academic_career: Mapped[AcademicCareer] = mapped_column(SQLEnum(AcademicCareer, name="academic_career"), nullable=False, default=AcademicCareer.HONOURS, index=True) # can be changed if ASR also includes undergrad
     application_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
     choice: Mapped[Choice] = mapped_column(SQLEnum(Choice, name="choice"), nullable=False, index=True)
-    admit_type: Mapped[Choice] = mapped_column(String(255), nullable=True)
+    admit_type: Mapped[str | None] = mapped_column(String(255), nullable=True)
     semester: Mapped[Semester] = mapped_column(SQLEnum(Semester, name="semester"), nullable=False)
     last_registration: Mapped[datetime] = mapped_column(DateTime, nullable=True)
     application_term: Mapped[datetime] = mapped_column(DateTime, nullable=False)

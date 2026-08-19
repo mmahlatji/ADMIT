@@ -6,6 +6,7 @@ ApplicationResponseWithDetails -> response plus nested related entities.
 """
 
 from datetime import datetime
+from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -32,6 +33,7 @@ class ApplicationCreate(BaseModel):
 class ApplicationResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
+    application_id: UUID
     application_number: str
     campus_id: str
     academic_program_code: str

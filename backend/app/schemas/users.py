@@ -5,6 +5,7 @@ UserResponse -> scalar fields from the DB row.
 """
 
 from datetime import datetime
+from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
@@ -20,6 +21,7 @@ class UserCreate(BaseModel):
 class UserResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
+    user_id: UUID
     employee_id: str
     first_name: str
     last_name: str

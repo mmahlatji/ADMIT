@@ -4,6 +4,8 @@ MotivationCreate -> fields the client supplies.
 MotivationResponse -> scalar fields from the DB row.
 """
 
+from uuid import UUID
+
 from pydantic import BaseModel, ConfigDict, Field
 
 
@@ -17,6 +19,7 @@ class MotivationCreate(BaseModel):
 class MotivationResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
+    motivation_id: UUID
     campus_id: str
     last_name: str
     first_name: str
