@@ -6,14 +6,14 @@ VoteResponse -> scalar fields from the DB row.
 
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class VoteCreate(BaseModel):
-    application_number: str
-    campus_id: str
+    application_number: str = Field(min_length=1)
+    campus_id: str= Field(min_length=1)
     vote: str
-    voter_id: str
+    voter_id: str = Field(min_length=1, max_length=7)
 
 
 class VoteResponse(BaseModel):

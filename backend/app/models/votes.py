@@ -10,6 +10,7 @@ from app.deps import Base
 
 if TYPE_CHECKING:
     from .applications import Application
+    from .users import User
 
 class VoteDecision(Enum):
     PLACEHOLDER = "placeholder"
@@ -25,4 +26,4 @@ class Vote(Base):
     voted_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
 
     application: Mapped["Application"] = relationship(back_populates="votes", foreign_keys=[application_number])
-    
+    voter: Mapped["User"] = relationship(back_populates="votes")

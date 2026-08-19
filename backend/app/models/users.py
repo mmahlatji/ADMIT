@@ -1,10 +1,13 @@
+from typing import TYPE_CHECKING
 from datetime import UTC, datetime
 
 from sqlalchemy import DateTime, ForeignKey, String
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.deps import Base
-
+if TYPE_CHECKING:
+    from .notes import Note
+    from .votes import Vote
 
 class User(Base):
     __tablename__="users"
@@ -16,4 +19,7 @@ class User(Base):
     approved_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True, onupdate=lambda: datetime.now(UTC))
     approved_by: Mapped[str] = mapped_column(ForeignKey("users.employee_id"), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(UTC))
+
+    notes: Mapped[list["Note"]] = relationship(back_populates="author")
+    votes: Mapped[list["Vote"]] = relationship(back_populates="voter")
 

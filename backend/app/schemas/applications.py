@@ -14,14 +14,14 @@ from .votes import VoteResponse
 
 
 class ApplicationCreate(BaseModel):
-    application_number: str
-    campus_id: str
-    academic_program_code: str
-    academic_plan1: str
+    application_number: str = Field(min_length=1)
+    campus_id: str = Field(min_length=1, max_length=9)
+    academic_program_code: str = Field(min_length=1)
+    academic_plan1: str = Field(min_length=1)
     academic_plan2: str | None
-    academic_career: str
+    academic_career: str = Field(min_length=1)
     application_date: datetime
-    choice: str
+    choice: str = Field(min_length=1)
     admit_type: str | None
     semester: str
     last_registration: datetime | None

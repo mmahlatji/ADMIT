@@ -6,13 +6,13 @@ UserResponse -> scalar fields from the DB row.
 
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, EmailStr
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
 class UserCreate(BaseModel):
-    employee_id: str
-    first_name: str
-    last_name: str
+    employee_id: str = Field(min_length=1, max_length=7)
+    first_name: str = Field(min_length=1)
+    last_name: str = Field(min_length=1)
     email: EmailStr
     role: str | None = None
 

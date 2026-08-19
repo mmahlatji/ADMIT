@@ -14,20 +14,6 @@ from app.models import (
     User,
     Vote
 )
-from app.queries import (
-    AcademicPlanRepository,
-    AcademicProgramRepository,
-    ApplicationRepository,
-    ApplicantRepository,
-    ApplicantMarkRepository,
-    ApplicationLifecycleRepository,
-    CourseRepository,
-    MotivationRepository,
-    NoteRepository,
-    SystemLogRepository,
-    UserRepository,
-    VoteRepository
-)
 
 from app.schemas import (
     AcademicPlanCreate,
@@ -72,12 +58,91 @@ from app.services import (
         (
             MotivationService,
             "xxxyyy026",
-            MotivationCreate(campus_id="xxxyyy026", first_name="Noah", last_name="Smith", motivation="Speed please, I need this, my mom is kinda homeless"),
-            Motivation(campus_id="xxxyyy026", first_name="Noah", last_name="Smith", motivation="Speed please, I need this, my mom is kinda homeless")
+            MotivationCreate(campus_id="xxxyyy026", first_name="Noah", last_name="Smith", motivation="Speed please! I need this, my mom is kinda homeless"),
+            Motivation(campus_id="xxxyyy026", first_name="Noah", last_name="Smith", motivation="Speed please! I need this, my mom is kinda homeless")
+        ),
+        (
+            AcademicProgramService,
+            1,
+            AcademicProgramCreate(academic_program_code="csc", academic_program="computer science honours"),
+            AcademicProgram(academic_program_id=1, academic_program_code="csc", academic_program="computer science honours")
+        ),
+        (
+            ApplicantMarkService,
+            1,
+            ApplicantMarkCreate(campus_id="xxxyyy001", course_code="csc2002s", mark=50),
+            ApplicantMark(mark_id=1, campus_id="xxxyyy001", course_code="csc2002s", mark=50)
+        ),
+        (
+            CourseService,
+            1, 
+            CourseCreate(academic_program_code="csc05", course_code="csc2002s", course_name="CS 2002s"),
+            Course(course_id=1, academic_program_code="csc05", course_code="csc2002s", course_name="CS 2002s")
+        ),
+        (
+            NoteService,
+            1,
+            NoteCreate(campus_id="xxxyyy001", author_id="9999999", content="Student seems capable"),
+            Note(note_id=1, campus_id="xxxyyy001", author_id="9999999", content="Student seems capable")
+        ),
+        (
+            VoteService,
+            1,
+            VoteCreate(application_number="111111", campus_id="xxxyyy001", vote="placeholder", voter_id="9999999"),
+            Vote(vote_id=1, application_number="111111", campus_id="xxxyyy001", vote="placeholder", voter_id="9999999")
+        ),
+        (
+            UserService,
+            "1111111",
+            UserCreate(employee_id="1111111", first_name="Palesa", last_name="Louw", email="palesa@mail.net", role=None),
+            User(employee_id="1111111", first_name="Palesa", last_name="Louw", email="palesa@mail.net", role=None)
+        ),
+        (
+            SystemLogService,
+            1,
+            SystemLogCreate(
+                entity_name="applicant_marks",
+                entity_id="xxxyyy001", 
+                old_data={
+                    "mark_id": 1,
+                    "campus_id": "xxxyyy001",
+                    "course_code": "csc2002s",
+                    "mark": 50
+                },
+                new_data={
+                    "mark_id": 1,
+                    "campus_id": "xxxyyy001",
+                    "course_code": "csc2002s",
+                    "mark": 90
+                },
+                changed_by="111111",
+                reason="manual_edit"
+            ),
+            SystemLog(
+                log_id=1,
+                entity_name="applicant_marks",
+                entity_id="xxxyyy001", 
+                old_data={
+                    "mark_id": 1,
+                    "campus_id": "xxxyyy001",
+                    "course_code": "csc2002s",
+                    "mark": 50
+                },
+                new_data={
+                    "mark_id": 1,
+                    "campus_id": "xxxyyy001",
+                    "course_code": "csc2002s",
+                    "mark": 90
+                },
+                changed_by="111111",
+                reason="manual_edit"
+            )
         )
+
+
     ]
 )
-class TestCrudServices:
+class TestCrudServices:                             # DO NOT CHANGE THE UNUSED PARAMETERS 
     def test_get_by_id(self, service, entity_id, create_schema, expected_result):
         mock_repo = MagicMock() # Mock the repository
         mock_servive = service(mock_repo)

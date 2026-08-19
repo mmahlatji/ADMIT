@@ -1,10 +1,10 @@
 """Pydantic schemas for academic programs (scalar-only; lookup data)."""
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class AcademicProgramCreate(BaseModel):
-    academic_program_code: str
+    academic_program_code: str = Field(min_length=1)
     academic_program: str | None = None
 
 

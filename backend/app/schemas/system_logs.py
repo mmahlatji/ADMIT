@@ -3,16 +3,16 @@
 from datetime import datetime
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class SystemLogCreate(BaseModel):
-    entity_name: str
-    entity_id: str
+    entity_name: str = Field(min_length=1)
+    entity_id: str = Field(min_length=1)
     old_data: dict[str, Any]
     new_data: dict[str, Any]
-    changed_by: str
-    reason: str
+    changed_by: str = Field(min_length=1, max_length=7)
+    reason: str = Field(min_length=1)
     import_run_id: str | None = None
 
 

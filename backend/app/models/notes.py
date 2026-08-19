@@ -8,6 +8,7 @@ from app.deps import Base
 
 if TYPE_CHECKING:
     from .applicants import Applicant
+    from .users import User
 
 class Note(Base):
     __tablename__="notes"
@@ -18,3 +19,4 @@ class Note(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(UTC))
 
     applicant: Mapped["Applicant"] = relationship(back_populates="notes", foreign_keys=[campus_id])
+    author: Mapped["User"] = relationship(back_populates="notes")

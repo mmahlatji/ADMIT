@@ -17,17 +17,17 @@ from .notes import NoteResponse
 
 
 class ApplicantCreate(BaseModel):
-    campus_id: str = Field(max_length=9)
-    employee_id: str = Field(max_length=7)
-    first_name: str = Field(max_length=255)
-    last_name: str = Field(max_length=255)
-    sex: str = Field(max_length=255)
-    cell_phone: str = Field(max_length=255)
-    home_phone: str = Field(max_length=255)
-    email: EmailStr = Field(max_length=255)
-    population_group: str = Field(max_length=15)
+    campus_id: str = Field(min_length=1, max_length=9)
+    employee_id: str = Field(min_length=1, max_length=7)
+    first_name: str = Field(min_length=1, max_length=255)
+    last_name: str = Field(min_length=1, max_length=255)
+    sex: str = Field(min_length=1, max_length=255)
+    cell_phone: str = Field(min_length=1, max_length=255)
+    home_phone: str = Field(min_length=1, max_length=255)
+    email: EmailStr = Field(min_length=1, max_length=255)
+    population_group: str = Field(min_length=1, max_length=15)
     birth_date: date
-    citizenship_residency: str = Field(max_length=255)
+    citizenship_residency: str = Field(min_length=1, max_length=255)
     non_sa_citizenship: bool
     applied_for_academic_program: bool
     document_id: UUID | None = None
