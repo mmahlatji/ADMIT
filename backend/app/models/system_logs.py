@@ -1,8 +1,8 @@
-from datetime import UTC, datetime
+from datetime import datetime
 from enum import Enum
 from typing import Any
 import uuid
-from sqlalchemy import DateTime, ForeignKey, String, UUID
+from sqlalchemy import DateTime, ForeignKey, String, UUID, func
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
@@ -25,7 +25,7 @@ class SystemLog(Base):
     old_data: Mapped[dict[str, Any]] = mapped_column(JSONB)
     new_data: Mapped[dict[str, Any]] = mapped_column(JSONB)
     changed_by: Mapped[str] = mapped_column(ForeignKey("users.employee_id"), nullable=False)
-    changed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(UTC))
+    changed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
     reason: Mapped[ChangeSource] = mapped_column(SQLEnum(ChangeSource, name="change_source"))
     import_run_id: Mapped[uuid.UUID | None] = mapped_column(UUID, nullable=True)
 

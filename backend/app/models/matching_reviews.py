@@ -1,10 +1,10 @@
 import uuid
-from datetime import UTC, datetime
+from datetime import datetime
 from typing import TYPE_CHECKING
 from typing import Any
 from enum import Enum
 
-from sqlalchemy import DateTime, ForeignKey, Text, Enum as SQLEnum, JSON, UUID
+from sqlalchemy import DateTime, ForeignKey, Text, Enum as SQLEnum, JSON, UUID, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base
@@ -28,4 +28,4 @@ class MatchingReview(Base):
     resolved_by: Mapped[str] = mapped_column(ForeignKey("users.employee_id"), nullable=False)
     resolution: Mapped[MatchResolution] = mapped_column(SQLEnum(MatchResolution), nullable=True)
     reason: Mapped[str] = mapped_column(Text, nullable=True)
-    resolved_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True, onupdate=lambda: datetime.now(UTC))
+    resolved_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True, onupdate=func.now())

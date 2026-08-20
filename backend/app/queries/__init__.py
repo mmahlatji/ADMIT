@@ -9,8 +9,11 @@ from .applicant_repository import ApplicantRepository
 from .application_lifecycle_repository  import ApplicationLifecycleRepository
 from .application_repository import ApplicationRepository
 from .course_repository import CourseRepository
+from .import_run_repository import ImportRunRepository
+from .matching_review_repository import MatchingReviewRepository
 from .motivation_repository import MotivationRepository
 from .note_repository import NoteRepository
+from .staging_repository import StagingRepository
 from .system_log_repository import SystemLogRepository
 from .user_repository import UserRepository
 from .vote_repository import VoteRepository
@@ -23,8 +26,11 @@ __all__ = [
     "ApplicationLifecycleRepository",
     "ApplicationRepository",
     "CourseRepository",
+    "ImportRunRepository",
+    "MatchingReviewRepository",
     "MotivationRepository",
     "NoteRepository",
+    "StagingRepository",
     "SystemLogRepository",
     "UserRepository",
     "VoteRepository",

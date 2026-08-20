@@ -1,8 +1,8 @@
-from datetime import UTC, datetime
+from datetime import datetime
 from enum import Enum
 from typing import TYPE_CHECKING
 import uuid
-from sqlalchemy import DateTime, ForeignKey, Integer, UUID
+from sqlalchemy import DateTime, ForeignKey, Integer, UUID, func
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -23,7 +23,7 @@ class Vote(Base):
     campus_id: Mapped[str] = mapped_column(ForeignKey("applicants.campus_id"), nullable=False)
     vote: Mapped[VoteDecision] = mapped_column(SQLEnum(VoteDecision, name="vote_decision"), nullable=False)
     voter_id: Mapped[str] = mapped_column(ForeignKey("users.employee_id"), nullable=False)
-    voted_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
+    voted_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, server_default=func.now())
 
     application: Mapped["Application"] = relationship(back_populates="votes", foreign_keys=[application_number])
     voter: Mapped["User"] = relationship(back_populates="votes")

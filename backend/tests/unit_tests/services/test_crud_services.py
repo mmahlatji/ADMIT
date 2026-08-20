@@ -1,4 +1,5 @@
 import uuid
+from datetime import UTC, date, datetime
 
 import pytest
 from unittest.mock import MagicMock
@@ -10,8 +11,11 @@ from app.models import (
     ApplicantMark,
     ApplicationLifecycle,
     Course,
+    ImportRun,
+    MatchingReview,
     Motivation,
     Note,
+    Staging,
     SystemLog,
     User,
     Vote
@@ -25,8 +29,11 @@ from app.schemas import (
     ApplicantMarkCreate,
     ApplicationLifecycleCreate,
     CourseCreate,
+    ImportRunCreate,
+    MatchingReviewCreate,
     MotivationCreate,
     NoteCreate,
+    StagingCreate,
     SystemLogCreate,
     UserCreate,
     VoteCreate
@@ -40,8 +47,11 @@ from app.services import (
     ApplicantMarkService,
     ApplicationLifecycleService,
     CourseService,
+    ImportRunService,
+    MatchingReviewService,
     MotivationService,
     NoteService,
+    StagingService,
     SystemLogService,
     UserService,
     VoteService
@@ -138,6 +148,158 @@ from app.services import (
                 },
                 changed_by="111111",
                 reason="manual_edit"
+            )
+        ),
+        (
+            ImportRunService,
+            uuid.UUID("00000000-0000-0000-0000-000000000011"),
+            ImportRunCreate(
+                source_type="asr",
+                uploaded_by="1111111",
+                file_name="asr.csv",
+                status="pending",
+                rows_total=10,
+                rows_loaded=10,
+                rows_rejected=0,
+                rows_auto_matched=8,
+                rows_auto_new=2,
+                rows_flagged=1
+            ),
+            ImportRun(
+                import_run_id=uuid.UUID("00000000-0000-0000-0000-000000000011"),
+                source_type="asr",
+                uploaded_by="1111111",
+                file_name="asr.csv",
+                status="pending",
+                rows_total=10,
+                rows_loaded=10,
+                rows_rejected=0,
+                rows_auto_matched=8,
+                rows_auto_new=2,
+                rows_flagged=1
+            )
+        ),
+        (
+            MatchingReviewService,
+            uuid.UUID("00000000-0000-0000-0000-000000000012"),
+            MatchingReviewCreate(
+                staging_row_id=uuid.UUID("00000000-0000-0000-0000-000000000013"),
+                status="pending",
+                resolved_by="9999999"
+            ),
+            MatchingReview(
+                match_id=uuid.UUID("00000000-0000-0000-0000-000000000012"),
+                staging_row_id=uuid.UUID("00000000-0000-0000-0000-000000000013"),
+                status="pending",
+                resolved_by="9999999"
+            )
+        ),
+        (
+            StagingService,
+            uuid.UUID("00000000-0000-0000-0000-000000000014"),
+            StagingCreate(
+                import_run_id=uuid.UUID("00000000-0000-0000-0000-000000000011"),
+                source_type="asr",
+                raw_data={"name": "Noah", "surname": "Smith"},
+                normalized_data={"first_name": "Noah", "last_name": "Smith"},
+                validation_status="valid"
+            ),
+            Staging(
+                staging_id=uuid.UUID("00000000-0000-0000-0000-000000000014"),
+                import_run_id=uuid.UUID("00000000-0000-0000-0000-000000000011"),
+                source_type="asr",
+                raw_data={"name": "Noah", "surname": "Smith"},
+                normalized_data={"first_name": "Noah", "last_name": "Smith"},
+                validation_status="valid"
+            )
+        ),
+        (
+            ApplicationService,
+            uuid.UUID("00000000-0000-0000-0000-000000000015"),
+            ApplicationCreate(
+                application_number="111111",
+                campus_id="xxxyyy001",
+                academic_program_code="csc",
+                academic_plan1="csc01",
+                academic_plan2=None,
+                academic_career="hons",
+                application_date=datetime(2025, 1, 15, tzinfo=UTC),
+                choice="first",
+                admit_type=None,
+                semester="first",
+                last_registration=None,
+                application_term=datetime(2025, 2, 1, tzinfo=UTC),
+                previous_application_term=None
+            ),
+            Application(
+                application_id=uuid.UUID("00000000-0000-0000-0000-000000000015"),
+                application_number="111111",
+                campus_id="xxxyyy001",
+                academic_program_code="csc",
+                academic_plan1="csc01",
+                academic_plan2=None,
+                academic_career="hons",
+                application_date=datetime(2025, 1, 15, tzinfo=UTC),
+                choice="first",
+                admit_type=None,
+                semester="first",
+                last_registration=None,
+                application_term=datetime(2025, 2, 1, tzinfo=UTC),
+                previous_application_term=None
+            )
+        ),
+        (
+            ApplicantService,
+            uuid.UUID("00000000-0000-0000-0000-000000000016"),
+            ApplicantCreate(
+                campus_id="xxxyyy002",
+                employee_id="2222222",
+                first_name="Palesa",
+                last_name="Louw",
+                sex="Female",
+                cell_phone="0812345678",
+                home_phone="0211234567",
+                email="noah@mail.net",
+                population_group="African",
+                birth_date=date(2000, 1, 1),
+                citizenship_residency="South African",
+                non_sa_citizenship=False,
+                applied_for_academic_program=True
+            ),
+            Applicant(
+                applicant_id=uuid.UUID("00000000-0000-0000-0000-000000000016"),
+                campus_id="xxxyyy002",
+                employee_id="2222222",
+                first_name="Palesa",
+                last_name="Louw",
+                sex="Female",
+                cell_phone="0812345678",
+                home_phone="0211234567",
+                email="noah@mail.net",
+                population_group="African",
+                birth_date=date(2000, 1, 1),
+                citizenship_residency="South African",
+                non_sa_citizenship=False,
+                applied_for_academic_program=True
+            )
+        ),
+        (
+            ApplicationLifecycleService,
+            uuid.UUID("00000000-0000-0000-0000-000000000017"),
+            ApplicationLifecycleCreate(
+                application_number="111111",
+                program_action="placeholder",
+                program_reason="placeholder",
+                program_status="placeholder",
+                action_processed_by="1111111"
+            ),
+            ApplicationLifecycle(
+                application_lifecycle_id=uuid.UUID("00000000-0000-0000-0000-000000000017"),
+                application_number="111111",
+                program_action="placeholder",
+                program_reason="placeholder",
+                program_status="placeholder",
+                action_processed_by="1111111"
             )
         )
 

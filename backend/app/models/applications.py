@@ -3,7 +3,7 @@ from .base import Base
 from enum import Enum
 import uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import String, ForeignKey, Enum as SQLEnum, DateTime, UUID
+from sqlalchemy import String, ForeignKey, Enum as SQLEnum, DateTime, UUID, func
 from datetime import datetime 
 from .applicants import Applicant
 from .motivations import Motivation
@@ -42,9 +42,10 @@ class Application(Base):
     choice: Mapped[Choice] = mapped_column(SQLEnum(Choice, name="choice"), nullable=False, index=True)
     admit_type: Mapped[str | None] = mapped_column(String(255), nullable=True)
     semester: Mapped[Semester] = mapped_column(SQLEnum(Semester, name="semester"), nullable=False)
-    last_registration: Mapped[datetime] = mapped_column(DateTime, nullable=True)
-    application_term: Mapped[datetime] = mapped_column(DateTime, nullable=False)
-    previous_application_term: Mapped[datetime] = mapped_column(DateTime, nullable=True) # maybe they never applied at all
+    last_registration: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
+    application_term: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    previous_application_term: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True) # maybe they never applied at all
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
 
     applicant: Mapped["Applicant"] = relationship(back_populates="applications")
     votes: Mapped[list["Vote"]] = relationship(back_populates="application", cascade="all, delete-orphan")

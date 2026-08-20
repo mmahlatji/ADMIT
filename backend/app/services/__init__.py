@@ -9,8 +9,11 @@ from .applicant_service import ApplicantService
 from .application_lifecycle_service import ApplicationLifecycleService
 from .application_service import ApplicationService
 from .course_service import CourseService
+from .import_run_service import ImportRunService
+from .matching_review_service import MatchingReviewService
 from .motivation_service import MotivationService
 from .note_service import NoteService
+from .staging_service import StagingService
 from .system_log_service import SystemLogService
 from .user_service import UserService
 from .vote_service import VoteService
@@ -23,8 +26,11 @@ __all__ = [
     "ApplicationLifecycleService",
     "ApplicationService",
     "CourseService",
+    "ImportRunService",
+    "MatchingReviewService",
     "MotivationService",
     "NoteService",
+    "StagingService",
     "SystemLogService",
     "UserService",
     "VoteService",

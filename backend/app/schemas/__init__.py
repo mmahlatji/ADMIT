@@ -9,8 +9,11 @@ from .applicants import ApplicantCreate
 from .application_lifecycles import ApplicationLifecycleCreate
 from .applications import ApplicationCreate
 from .courses import CourseCreate
+from .import_runs import ImportRunCreate
+from .matching_reviews import MatchingReviewCreate
 from .motivations import MotivationCreate
 from .notes import NoteCreate
+from .staging import StagingCreate
 from .system_logs import SystemLogCreate
 from .users import UserCreate
 from .votes import VoteCreate
@@ -23,8 +26,11 @@ __all__ = [
     "ApplicationLifecycleCreate",
     "ApplicationCreate",
     "CourseCreate",
+    "ImportRunCreate",
+    "MatchingReviewCreate",
     "MotivationCreate",
     "NoteCreate",
+    "StagingCreate",
     "SystemLogCreate",
     "UserCreate",
     "VoteCreate",
