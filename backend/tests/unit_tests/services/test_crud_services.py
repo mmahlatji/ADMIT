@@ -199,7 +199,7 @@ from app.services import (
             uuid.UUID("00000000-0000-0000-0000-000000000014"),
             StagingCreate(
                 import_run_id=uuid.UUID("00000000-0000-0000-0000-000000000011"),
-                source_type="asr",
+                entity="applicants",
                 raw_data={"name": "Noah", "surname": "Smith"},
                 normalized_data={"first_name": "Noah", "last_name": "Smith"},
                 validation_status="valid"
@@ -207,7 +207,7 @@ from app.services import (
             Staging(
                 staging_id=uuid.UUID("00000000-0000-0000-0000-000000000014"),
                 import_run_id=uuid.UUID("00000000-0000-0000-0000-000000000011"),
-                source_type="asr",
+                entity="applicants",
                 raw_data={"name": "Noah", "surname": "Smith"},
                 normalized_data={"first_name": "Noah", "last_name": "Smith"},
                 validation_status="valid"

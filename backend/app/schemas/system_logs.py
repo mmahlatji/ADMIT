@@ -21,8 +21,6 @@ class SystemLogResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     log_id: UUID
-    entity_name: str
-    entity_id: UUID
     old_data: dict[str, Any]
     new_data: dict[str, Any]
     changed_by: str

@@ -8,6 +8,8 @@ from sqlalchemy import DateTime, ForeignKey, Text, Enum as SQLEnum, JSON, UUID, 
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base
+if TYPE_CHECKING:
+    from .staging import Staging
 
 
 class MatchStatus(Enum):

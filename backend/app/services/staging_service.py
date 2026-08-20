@@ -20,7 +20,7 @@ class StagingService:
     def add(self, data: StagingCreate) -> None:
         staging = Staging(
             import_run_id=data.import_run_id,
-            source_type=SourceType(data.source_type),
+            entity=data.entity,
             raw_data=data.raw_data,
             normalized_data=data.normalized_data,
             validation_status=ValidationStatus(data.validation_status),

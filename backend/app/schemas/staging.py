@@ -12,7 +12,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 class StagingCreate(BaseModel):
     import_run_id: UUID
-    source_type: str = Field(min_length=1)
+    entity: str = Field(min_length=1)
     raw_data: dict[str, Any]
     normalized_data: dict[str, Any]
     validation_status: str = Field(min_length=1)
@@ -26,7 +26,6 @@ class StagingResponse(BaseModel):
 
     staging_id: UUID
     import_run_id: UUID
-    source_type: str
     raw_data: dict[str, Any]
     normalized_data: dict[str, Any]
     validation_status: str

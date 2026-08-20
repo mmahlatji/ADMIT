@@ -34,7 +34,8 @@ class Application(Base):
     application_id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True)
     application_number: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
     campus_id: Mapped[str] = mapped_column(ForeignKey("applicants.campus_id"), nullable=False, index=True)
-    academic_program_code: Mapped[str] = mapped_column(ForeignKey("academic_programs.academic_program_code"), nullable=False, index=True)
+    # academic_program_code: Mapped[str] = mapped_column(ForeignKey("academic_programs.academic_program_code"), nullable=False, index=True)
+    academic_program_code: Mapped[str] = mapped_column(String(10), nullable=False, index=True)
     academic_plan1: Mapped[str] = mapped_column(String(255), nullable=False)
     academic_plan2: Mapped[str] = mapped_column(String(255), nullable=True) # if you only apply for one program, can even be removed probably because it will exist in another row
     academic_career: Mapped[AcademicCareer] = mapped_column(SQLEnum(AcademicCareer, name="academic_career"), nullable=False, default=AcademicCareer.HONOURS, index=True) # can be changed if ASR also includes undergrad
