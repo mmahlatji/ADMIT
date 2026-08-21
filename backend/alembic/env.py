@@ -4,10 +4,9 @@ from sqlalchemy import engine_from_config, pool
 
 from alembic import context
 from app.config import get_settings
+from app.models import Base
 
-# from app.models import Base
-# target_metadata = Base.metadata
-target_metadata = None
+target_metadata = Base.metadata
 
 config = context.config
 config.set_main_option("sqlalchemy.url", get_settings().database_url)
