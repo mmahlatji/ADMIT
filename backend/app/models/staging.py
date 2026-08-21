@@ -1,13 +1,14 @@
 
-from typing import Any
-from enum import Enum
 import uuid
-from sqlalchemy import ForeignKey, Text, Enum as SQLEnum, UUID, String
+from enum import Enum
+from typing import Any
+
+from sqlalchemy import UUID, ForeignKey, String, Text
+from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column
 
 from .base import Base
-from .matching_reviews import MatchingReview
 
 
 class ValidationStatus(Enum):
@@ -24,4 +25,4 @@ class Staging(Base):
     validation_status: Mapped[ValidationStatus] = mapped_column(SQLEnum(ValidationStatus, name="validation_status"), nullable=False)
     rejection_reason: Mapped[str] = mapped_column(Text, nullable=True)
     matched_application_id: Mapped[str] = mapped_column(ForeignKey("applications.application_number"), nullable=True) # do we need this if asr has data about entire admission cycle
-    matched_campus_id: Mapped[str] = mapped_column(ForeignKey("applications.campus_id"), nullable=True) # some data has no mapping to an application number eg. motivations
+    matched_campus_id: Mapped[str] = mapped_column(ForeignKey("applicants.campus_id"), nullable=True) # some data has no mapping to an application number eg. motivations

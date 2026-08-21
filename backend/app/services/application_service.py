@@ -7,8 +7,8 @@ from app.schemas.applications import ApplicationCreate
 
 
 class ApplicationService:
-    def __init__(self, applicationRepository: ApplicationRepository) -> None:
-        self.repository = applicationRepository
+    def __init__(self, application_repository: ApplicationRepository) -> None:
+        self.repository = application_repository
 
     def get_by_id(self, application_id: uuid.UUID) -> Application | None:
         return self.repository.get_by_id(application_id)

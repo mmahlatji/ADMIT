@@ -2,7 +2,7 @@ import uuid
 from datetime import date, datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import UUID, Boolean, Date, DateTime, String, func
+from sqlalchemy import UUID, Boolean, Date, DateTime, ForeignKey, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base
@@ -18,7 +18,7 @@ class Applicant(Base):
     __tablename__="applicants"
     applicant_id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True)
     campus_id: Mapped[str] = mapped_column(String(9), unique=True, index=True, nullable=False)
-    employee_id: Mapped[str] = mapped_column(String(7), unique=True, nullable=False, index=True)
+    employee_id: Mapped[str] = mapped_column(String(7), unique=True, nullable=False, index=True) # employee ids are generated alongside campus ids
     first_name: Mapped[str] = mapped_column(String(255), nullable=False,  unique=False)
     last_name: Mapped[str] = mapped_column(String(255), nullable=False, unique=False)
     sex: Mapped[str] = mapped_column(String(255), nullable=False) # I dont know if I should use an enum{Male, Female, Other} or what ?
@@ -30,8 +30,8 @@ class Applicant(Base):
     citizenship_residency: Mapped[str] = mapped_column(String(255), nullable=False)
     non_sa_citizenship: Mapped[bool] = mapped_column(Boolean, nullable=False, index=True) # index if we filter based on citizenship
     applied_for_academic_program: Mapped[bool] = mapped_column(Boolean, nullable=False)
-    document_id: Mapped[uuid.UUID] = mapped_column(UUID, nullable=True, unique=True) # TODO: change this when you implement the document table/ remove and have documents refer to applicants
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now())
+    document_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("documents.document_id"), nullable=True, unique=True) # TODO: change this when you implement the document table/ remove and have documents refer to applicants
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
 
     applications: Mapped[list["Application"]] = relationship(back_populates="applicant", cascade="all, delete-orphan") # so now we can access applications with applicant.applications
     applicant_marks: Mapped[list["ApplicantMark"]] = relationship(back_populates="applicant", cascade="all, delete-orphan")

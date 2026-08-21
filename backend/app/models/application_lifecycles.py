@@ -1,8 +1,10 @@
-from datetime import UTC, datetime
+import uuid
+from datetime import datetime
 from enum import Enum
 from typing import TYPE_CHECKING
-import uuid
-from sqlalchemy import Enum as SQLEnum, DateTime, ForeignKey, UUID, func
+
+from sqlalchemy import UUID, DateTime, ForeignKey, func
+from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base

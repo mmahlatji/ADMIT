@@ -1,13 +1,24 @@
-from typing import TYPE_CHECKING
-from datetime import datetime
 import uuid
-from sqlalchemy import DateTime, ForeignKey, String, UUID, func
+from datetime import datetime
+from enum import Enum
+from typing import TYPE_CHECKING
+
+from sqlalchemy import UUID, DateTime, ForeignKey, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base
+
 if TYPE_CHECKING:
     from .notes import Note
     from .votes import Vote
+
+class RoleEnum(str, Enum):
+    """The three roles a user can hold. Null role means not approved yet."""
+
+    admin = "admin"
+    convenor = "convenor"
+    committee = "committee"
+
 
 class User(Base):
     __tablename__="users"

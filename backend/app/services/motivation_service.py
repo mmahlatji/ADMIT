@@ -7,8 +7,8 @@ from app.schemas.motivations import MotivationCreate
 
 
 class MotivationService:
-    def __init__(self, motivationRepository: MotivationRepository) -> None:
-        self.repository = motivationRepository
+    def __init__(self, motivation_repository: MotivationRepository) -> None:
+        self.repository = motivation_repository
 
     def get_by_id(self, motivation_id: uuid.UUID) -> Motivation | None:
         return self.repository.get_by_id(motivation_id)

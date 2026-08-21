@@ -7,8 +7,8 @@ from app.schemas.votes import VoteCreate
 
 
 class VoteService:
-    def __init__(self, voteRepository: VoteRepository) -> None:
-        self.repository = voteRepository
+    def __init__(self, vote_repository: VoteRepository) -> None:
+        self.repository = vote_repository
 
     def get_by_id(self, vote_id: uuid.UUID) -> Vote | None:
         return self.repository.get_by_id(vote_id)

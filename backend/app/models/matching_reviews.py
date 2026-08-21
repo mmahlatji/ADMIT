@@ -1,15 +1,13 @@
 import uuid
 from datetime import datetime
-from typing import TYPE_CHECKING
-from typing import Any
 from enum import Enum
+from typing import Any
 
-from sqlalchemy import DateTime, ForeignKey, Text, Enum as SQLEnum, JSON, UUID, func
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy import JSON, UUID, DateTime, ForeignKey, Text, func
+from sqlalchemy import Enum as SQLEnum
+from sqlalchemy.orm import Mapped, mapped_column
 
 from .base import Base
-if TYPE_CHECKING:
-    from .staging import Staging
 
 
 class MatchStatus(Enum):

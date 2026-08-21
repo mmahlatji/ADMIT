@@ -7,8 +7,8 @@ from app.schemas.users import UserCreate
 
 
 class UserService:
-    def __init__(self, userRepository: UserRepository) -> None:
-        self.repository = userRepository
+    def __init__(self, user_repository: UserRepository) -> None:
+        self.repository = user_repository
 
     def get_by_id(self, user_id: uuid.UUID) -> User | None:
         return self.repository.get_by_id(user_id)

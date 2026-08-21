@@ -7,8 +7,8 @@ from app.schemas.academic_plans import AcademicPlanCreate
 
 
 class AcademicPlanService:
-    def __init__(self, academicPlanRepository: AcademicPlanRepository) -> None:
-        self.repository = academicPlanRepository
+    def __init__(self, academicp_plan_repository: AcademicPlanRepository) -> None:
+        self.repository = academicp_plan_repository
 
     def get_by_id(self, academic_plan_id: uuid.UUID) -> AcademicPlan | None:
         return self.repository.get_by_id(academic_plan_id)

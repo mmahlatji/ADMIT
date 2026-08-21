@@ -1,7 +1,8 @@
+import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING
-import uuid
-from sqlalchemy import DateTime, ForeignKey, Integer, Text, UUID, func
+
+from sqlalchemy import UUID, DateTime, ForeignKey, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base
@@ -16,7 +17,7 @@ class Note(Base):
     campus_id: Mapped[str] = mapped_column(ForeignKey("applicants.campus_id"), nullable=False, index=True)
     author_id: Mapped[str] = mapped_column(ForeignKey("users.employee_id"), nullable=False)
     content: Mapped[str] = mapped_column(Text, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     applicant: Mapped["Applicant"] = relationship(back_populates="notes", foreign_keys=[campus_id])
     author: Mapped["User"] = relationship(back_populates="notes")

@@ -7,8 +7,8 @@ from app.schemas.courses import CourseCreate
 
 
 class CourseService:
-    def __init__(self, courseRepository: CourseRepository) -> None:
-        self.repository = courseRepository
+    def __init__(self, course_repository: CourseRepository) -> None:
+        self.repository = course_repository
 
     def get_by_id(self, course_id: uuid.UUID) -> Course | None:
         return self.repository.get_by_id(course_id)

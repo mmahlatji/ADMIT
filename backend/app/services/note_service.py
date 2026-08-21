@@ -7,8 +7,8 @@ from app.schemas.notes import NoteCreate
 
 
 class NoteService:
-    def __init__(self, noteRepository: NoteRepository) -> None:
-        self.repository = noteRepository
+    def __init__(self, note_repository: NoteRepository) -> None:
+        self.repository = note_repository
 
     def get_by_id(self, note_id: uuid.UUID) -> Note | None:
         return self.repository.get_by_id(note_id)

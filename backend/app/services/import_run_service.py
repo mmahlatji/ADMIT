@@ -7,8 +7,8 @@ from app.schemas.import_runs import ImportRunCreate
 
 
 class ImportRunService:
-    def __init__(self, importRunRepository: ImportRunRepository) -> None:
-        self.repository = importRunRepository
+    def __init__(self, import_run_repository: ImportRunRepository) -> None:
+        self.repository = import_run_repository
 
     def get_by_id(self, import_run_id: uuid.UUID) -> ImportRun | None:
         return self.repository.get_by_id(import_run_id)

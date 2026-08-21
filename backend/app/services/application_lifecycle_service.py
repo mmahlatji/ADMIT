@@ -12,8 +12,8 @@ from app.schemas.application_lifecycles import ApplicationLifecycleCreate
 
 
 class ApplicationLifecycleService:
-    def __init__(self, applicationLifecycleRepository: ApplicationLifecycleRepository) -> None:
-        self.repository = applicationLifecycleRepository
+    def __init__(self, application_lifecycle_repository: ApplicationLifecycleRepository) -> None:
+        self.repository = application_lifecycle_repository
 
     def get_by_id(self, application_lifecycle_id: uuid.UUID) -> ApplicationLifecycle | None:
         return self.repository.get_by_id(application_lifecycle_id)

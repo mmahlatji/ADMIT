@@ -1,11 +1,13 @@
 import uuid
 from datetime import datetime
-from typing import TYPE_CHECKING
 from enum import Enum
-from sqlalchemy import DateTime, ForeignKey, Integer, String, Enum as SQLEnum, UUID, func
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from sqlalchemy import UUID, DateTime, ForeignKey, Integer, String, func
+from sqlalchemy import Enum as SQLEnum
+from sqlalchemy.orm import Mapped, mapped_column
 
 from .base import Base
+
 
 class SourceType(Enum):
     ASR = "asr"

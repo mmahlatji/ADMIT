@@ -7,8 +7,8 @@ from app.schemas.matching_reviews import MatchingReviewCreate
 
 
 class MatchingReviewService:
-    def __init__(self, matchingReviewRepository: MatchingReviewRepository) -> None:
-        self.repository = matchingReviewRepository
+    def __init__(self, matching_review_repository: MatchingReviewRepository) -> None:
+        self.repository = matching_review_repository
 
     def get_by_id(self, match_id: uuid.UUID) -> MatchingReview | None:
         return self.repository.get_by_id(match_id)

@@ -1,6 +1,7 @@
-from typing import TYPE_CHECKING
 import uuid
-from sqlalchemy import ForeignKey, String, Text, UUID
+from typing import TYPE_CHECKING
+
+from sqlalchemy import UUID, ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base
@@ -16,5 +17,4 @@ class Motivation(Base):
     last_name: Mapped[str] = mapped_column(String(255), nullable=False)
     first_name: Mapped[str] = mapped_column(String(255), nullable=False)
     motivation: Mapped[str] = mapped_column(Text, nullable=False)
-
-    applicant: Mapped[Applicant] = relationship(back_populates="motivation")
+    applicant: Mapped["Applicant"] = relationship(back_populates="motivation")

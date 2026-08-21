@@ -7,8 +7,8 @@ from app.schemas.applicant_marks import ApplicantMarkCreate
 
 
 class ApplicantMarkService:
-    def __init__(self, applicantMarkRepository: ApplicantMarkRepository) -> None:
-        self.repository = applicantMarkRepository
+    def __init__(self, applicant_mark_repository: ApplicantMarkRepository) -> None:
+        self.repository = applicant_mark_repository
 
     def get_by_id(self, mark_id: uuid.UUID) -> ApplicantMark | None:
         """

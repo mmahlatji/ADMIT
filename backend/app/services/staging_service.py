@@ -8,8 +8,8 @@ from app.schemas.staging import StagingCreate
 
 
 class StagingService:
-    def __init__(self, stagingRepository: StagingRepository) -> None:
-        self.repository = stagingRepository
+    def __init__(self, staging_repository: StagingRepository) -> None:
+        self.repository = staging_repository
 
     def get_by_id(self, staging_id: uuid.UUID) -> Staging | None:
         return self.repository.get_by_id(staging_id)
