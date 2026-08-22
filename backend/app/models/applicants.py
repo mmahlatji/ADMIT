@@ -27,10 +27,8 @@ class Applicant(Base):
     email: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
     population_group: Mapped[str] = mapped_column(String(15), nullable=False)
     birth_date: Mapped[date] = mapped_column(Date, nullable=False)
-    citizenship_residency: Mapped[str] = mapped_column(String(255), nullable=False)
-    non_sa_citizenship: Mapped[bool] = mapped_column(Boolean, nullable=False, index=True) # index if we filter based on citizenship
-    applied_for_academic_program: Mapped[bool] = mapped_column(Boolean, nullable=False)
-    document_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("documents.document_id"), nullable=True, unique=True) # TODO: change this when you implement the document table/ remove and have documents refer to applicants
+    citizenship_residency: Mapped[str] = mapped_column(String(255), nullable=False) # could possibly be an enum
+    non_sa_citizenship: Mapped[str] = mapped_column(String(3), nullable=False, index=True) # index if we filter based on citizenship
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
 
     applications: Mapped[list["Application"]] = relationship(back_populates="applicant", cascade="all, delete-orphan") # so now we can access applications with applicant.applications

@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, UTC
 from enum import Enum
 from typing import Any
 
@@ -25,7 +25,7 @@ class MatchingReview(Base):
     candidate_keys: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=True)
     match_signals: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=True) # what matched
     status: Mapped[MatchStatus] = mapped_column(SQLEnum(MatchStatus, name="match_status"), nullable=False, default=MatchStatus.PENDING)
-    resolved_by: Mapped[str] = mapped_column(ForeignKey("users.employee_id"), nullable=False)
-    resolution: Mapped[MatchResolution] = mapped_column(SQLEnum(MatchResolution), nullable=True)
+    resolved_by: Mapped[str] = mapped_column(ForeignKey("users.employee_id"), nullable=True)
+    resolution: Mapped[MatchResolution] = mapped_column(SQLEnum(MatchResolution, name="match_resolutions"), nullable=True)
     reason: Mapped[str] = mapped_column(Text, nullable=True)
-    resolved_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True, onupdate=func.now())
+    resolved_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True, onupdate=lambda: datetime.now(UTC))

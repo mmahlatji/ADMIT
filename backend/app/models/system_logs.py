@@ -28,7 +28,7 @@ class SystemLog(Base):
     changed_by: Mapped[str] = mapped_column(ForeignKey("users.employee_id"), nullable=False)
     changed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
     reason: Mapped[ChangeSource] = mapped_column(SQLEnum(ChangeSource, name="change_source"))
-    import_run_id: Mapped[uuid.UUID | None] = mapped_column(UUID, nullable=True)
+    import_run_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("import_runs.import_run_id"), nullable=True)
 
 
 
