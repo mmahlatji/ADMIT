@@ -33,7 +33,7 @@ def test_get_current_user_creates_row_for_new_login(db_session, rsa_keypair, mak
     token = make_token(sub=str(user_id), email="convenor@uct.ac.za", first_name="Jan", last_name="B")
 
     user = get_current_user(_creds(token), db_session)
-    assert user.id == user_id
+    assert user.user_id == user_id
     assert user.role is None
     assert user.first_name == "Jan"
 

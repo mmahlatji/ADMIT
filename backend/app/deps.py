@@ -11,7 +11,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.config import get_settings
-from app.models.user import RoleEnum, User
+from app.models.users import RoleEnum, User
 from app.services.users import DomainNotAllowedError, get_or_create_user
 
 _bearer_scheme = HTTPBearer()

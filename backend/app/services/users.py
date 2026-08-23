@@ -3,7 +3,7 @@ from datetime import UTC, datetime
 
 from sqlalchemy.orm import Session
 
-from app.models.user import RoleEnum, User
+from app.models.users import RoleEnum, User
 from app.queries import users as user_queries
 
 ALLOWED_EMAIL_DOMAINS = {"uct.ac.za", "myuct.ac.za"}

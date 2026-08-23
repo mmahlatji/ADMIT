@@ -1,17 +1,15 @@
-# Placeholder pending reconciliation with teammate's models/schemas/migrations work.
-
 import uuid
 from datetime import datetime
 
 from pydantic import BaseModel
 
-from app.models.user import RoleEnum
+from app.models.users import RoleEnum
 
 
 class UserOut(BaseModel):
     """What a user looks like over the wire."""
 
-    id: uuid.UUID
+    user_id: uuid.UUID
     employee_id: str | None
     first_name: str | None
     last_name: str | None

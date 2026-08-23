@@ -8,7 +8,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from app.models import Base
+from app.models.users import User
 
 
 @pytest.fixture()
@@ -20,7 +20,10 @@ def db_session():
         connect_args={"check_same_thread": False},
         poolclass=StaticPool,
     )
-    Base.metadata.create_all(engine)
+    # Only creating the users table here, not the full Base.metadata: some of
+    # the other models use Postgres-only types (e.g. JSONB) that SQLite can't
+    # compile, and these tests don't touch those tables anyway.
+    User.__table__.create(engine)
     session = sessionmaker(bind=engine)()
     try:
         yield session

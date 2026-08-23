@@ -4,12 +4,12 @@ from datetime import datetime
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models.user import RoleEnum, User
+from app.models.users import RoleEnum, User
 
 
 def get_user_by_id(db: Session, user_id: uuid.UUID) -> User | None:
     """Look up a user by their id. Returns None if they don't exist yet."""
-    return db.execute(select(User).where(User.id == user_id)).scalar_one_or_none()
+    return db.execute(select(User).where(User.user_id == user_id)).scalar_one_or_none()
 
 
 def create_user(
@@ -20,7 +20,7 @@ def create_user(
     last_name: str | None = None,
 ) -> User:
     """Insert a new user row with role=null."""
-    user = User(id=user_id, email=email, first_name=first_name, last_name=last_name, role=None)
+    user = User(user_id=user_id, email=email, first_name=first_name, last_name=last_name, role=None)
     db.add(user)
     db.commit()
     db.refresh(user)

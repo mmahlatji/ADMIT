@@ -2,7 +2,7 @@ import uuid
 
 import pytest
 
-from app.models.user import RoleEnum
+from app.models.users import RoleEnum
 from app.services.users import (
     DomainNotAllowedError,
     assign_role,
@@ -28,12 +28,12 @@ def test_is_allowed_domain():
 def test_get_or_create_user_creates_once(db_session):
     claims = _claims()
     user = get_or_create_user(db_session, claims)
-    assert user.id == uuid.UUID(claims["sub"])
+    assert user.user_id == uuid.UUID(claims["sub"])
     assert user.role is None
     assert user.first_name == "A"
 
     same_user = get_or_create_user(db_session, claims)
-    assert same_user.id == user.id
+    assert same_user.user_id == user.user_id
 
 
 def test_get_or_create_user_rejects_bad_domain(db_session):

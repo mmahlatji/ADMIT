@@ -1,5 +1,5 @@
 import uuid
-from datetime import UTC, datetime
+from datetime import datetime
 from enum import Enum
 from typing import Any
 
@@ -28,4 +28,6 @@ class MatchingReview(Base):
     resolved_by: Mapped[str] = mapped_column(ForeignKey("users.employee_id"), nullable=True)
     resolution: Mapped[MatchResolution] = mapped_column(SQLEnum(MatchResolution, name="match_resolutions"), nullable=True)
     reason: Mapped[str] = mapped_column(Text, nullable=True)
-    resolved_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True, onupdate=lambda: datetime.now(UTC))
+    # set explicitly by whichever service resolves a review, not inferred by the db
+    # (an onupdate would fire on any edit to the row, not just resolution)
+    resolved_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
