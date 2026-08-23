@@ -2,7 +2,7 @@ import uuid
 from datetime import date, datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import UUID, Boolean, Date, DateTime, ForeignKey, String, func
+from sqlalchemy import UUID, Date, DateTime, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base
@@ -23,7 +23,7 @@ class Applicant(Base):
     last_name: Mapped[str] = mapped_column(String(255), nullable=False, unique=False)
     sex: Mapped[str] = mapped_column(String(255), nullable=False) # I dont know if I should use an enum{Male, Female, Other} or what ?
     cell_phone: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
-    home_phone: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
+    home_phone: Mapped[str] = mapped_column(String(255), nullable=False, unique=False)
     email: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
     population_group: Mapped[str] = mapped_column(String(15), nullable=False)
     birth_date: Mapped[date] = mapped_column(Date, nullable=False)

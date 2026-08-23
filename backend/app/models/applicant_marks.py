@@ -28,9 +28,3 @@ class ApplicantMark(Base):
             name="course_mark_constraint"
         ),
     )
-
-
-#TODO: Review
-"""
-1.  Updates should fill the logging table (use a trigger)
-"""
