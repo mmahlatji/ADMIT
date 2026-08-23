@@ -1,8 +1,9 @@
 import uuid
+from enum import Enum
 from datetime import date, datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import UUID, Date, DateTime, String, func
+from sqlalchemy import UUID, Date, DateTime, String, func, Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base
@@ -13,6 +14,12 @@ if TYPE_CHECKING:
     from .motivations import Motivation
     from .notes import Note
 
+class SexEnum(str, Enum):
+    MALE = "male"
+    FEMALE = "female"
+    OTHER = "other"
+
+
 
 class Applicant(Base):
     __tablename__="applicants"
@@ -21,7 +28,7 @@ class Applicant(Base):
     employee_id: Mapped[str] = mapped_column(String(7), unique=True, nullable=False, index=True) # employee ids are generated alongside campus ids
     first_name: Mapped[str] = mapped_column(String(255), nullable=False,  unique=False)
     last_name: Mapped[str] = mapped_column(String(255), nullable=False, unique=False)
-    sex: Mapped[str] = mapped_column(String(255), nullable=False) # I dont know if I should use an enum{Male, Female, Other} or what ?
+    sex: Mapped[SexEnum] = mapped_column(SQLEnum(SexEnum, name="sex_enum"), nullable=False) 
     cell_phone: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
     home_phone: Mapped[str] = mapped_column(String(255), nullable=False, unique=False)
     email: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)

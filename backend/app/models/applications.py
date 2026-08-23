@@ -81,10 +81,3 @@ class Application(Base):
     votes: Mapped[list["Vote"]] = relationship(back_populates="application", cascade="all, delete-orphan")
 
     
-#TODO: Review below
-"""
-1.  Since another application can exist in another row the there would be no need to have an academic plan2 we can can just query applications for an applicant for a 
-    specific term and it would be there
-2.  Admit_type, semester and academic program unknow and might need enums 
-3.  Representation of dates in last registration, application date and previous term application unknown it could be a date or a datetime so could change.
-"""
