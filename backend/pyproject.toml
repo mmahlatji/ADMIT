@@ -12,6 +12,7 @@ dependencies = [
     "pydantic-settings>=2.3",
     "psycopg[binary]>=3.1",
     "pyjwt[crypto]>=2.9",
+    "pandas>=3.0.5",
 ]
 
 [dependency-groups]
