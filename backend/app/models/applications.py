@@ -1,9 +1,9 @@
 import uuid
-from datetime import datetime
+from datetime import date, datetime
 from enum import Enum
 from typing import TYPE_CHECKING
 
-from sqlalchemy import UUID, DateTime, ForeignKey, String, func
+from sqlalchemy import UUID, Boolean, Date, DateTime, ForeignKey, Integer, String, func
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -13,48 +13,32 @@ from .votes import Vote
 
 if TYPE_CHECKING:
     from .applicants import Applicant
+    from .external_applicants_data import ExternalApplicantData
     from .votes import Vote
 
-
 class Choice(str, Enum):
-    FIRST = "first"
-    SECOND = "second"
+    FIRST = "FRST"
+    SECOND = "SCND"
 
 class Semester(str, Enum):
-    FIRST = "first"
-    SECOND = "second"
-
-class AdmitType(str, Enum):
-    NEW = "new"
-    NPG = "npg"
-    UCT = "uct"
-    CON = "con"
-    REM = "rem"
-    RAD = "rad"
-
-# these are how we distinguish if it is a new or continuing student
-NEW_TYPES = {
-    AdmitType.NEW,
-    AdmitType.NPG,
-}
-
-UCT_TYPES = {
-    AdmitType.UCT,
-    AdmitType.CON,
-    AdmitType.REM,
-    AdmitType.RAD,
-}
+    FIRST = "1st Semester"
+    SECOND = "2nd Semester"
 
 class ApplicationStatus(str, Enum):
-    APPLIED = "applied"
-    REVIEWED = "reviewed"
-    CONDITIONALLY_ACCEPTED = "conditionally accepted"
-    ACCEPTED = "accepted"
-    READY_TO_REGISTER = "ready to register"
-    FIRM_OFFER = "firm offer"
-    DENY_R = "deny: requirements not met"
-    DENY_N = "deny: not competitive"
-    DENY_RD = "deny: requirements not met (duplicate application)"
+    APPLIED = "Applied"
+    REVIEWED = "Reviewed"    
+    CONDITIONAL_OFFER = "Conditional Offer"
+    ACCEPTED = "Accepted"
+    READY_TO_REGISTER = "Ready to Register"
+    DENIED = "Denied"
+    CANCELLED = "Cancelled"
+
+
+class DenyReason(str, Enum):
+    NOT_COMPETITIVE = "Not competitive"
+    REQUIREMENTS_NOT_MET = "Requirements not met"
+    DUPLICATE_APPLICATION = "Duplicate application"
+    INCORRECT_PROGRAM = "Incorrect program"
 
 
 class Application(Base):
@@ -62,22 +46,24 @@ class Application(Base):
     application_id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True)
     application_number: Mapped[str] = mapped_column(String(8), unique=True, index=True, nullable=False)
     campus_id: Mapped[str] = mapped_column(ForeignKey("applicants.campus_id"), nullable=False, index=True)
-    academic_program_code: Mapped[str] = mapped_column(String(10), nullable=False)
-    academic_plan1: Mapped[str] = mapped_column(String(255), nullable=False)
-    academic_plan2: Mapped[str] = mapped_column(String(255), nullable=True) # if you only apply for one program, can even be removed probably because it will exist in another row
+    academic_program_code: Mapped[str] = mapped_column(String(5), nullable=False)
+    academic_plan1: Mapped[str] = mapped_column(String(10), nullable=False)
     choice: Mapped[Choice] = mapped_column(SQLEnum(Choice, name="choice"), nullable=False, index=True)
-    admit_type: Mapped[AdmitType] = mapped_column(SQLEnum(AdmitType, name="admit_types"), nullable=True)
-    semester: Mapped[Semester] = mapped_column(SQLEnum(Semester, name="semester"), nullable=False)
-    application_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
-    effective_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    semester: Mapped[Semester] = mapped_column(SQLEnum(Semester, name="semester"), nullable=True)
+    application_date: Mapped[date] = mapped_column(Date, index=True)
+    effective_date: Mapped[date] = mapped_column(Date, index=True)
     application_status: Mapped[ApplicationStatus] = mapped_column(SQLEnum(ApplicationStatus, name="application_status"), nullable=False, index=True)
-    last_registration: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
-    application_term: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-    previous_application_term: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True) # maybe they never applied at all
-    import_run_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("import_runs.import_run_id"), nullable=False)
+    last_registration: Mapped[str] = mapped_column(String(100), nullable=True)
+    previous_application_term: Mapped[int] = mapped_column(Integer, nullable=True) # maybe they never applied at all in the past
+
+    incorrect_plan: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    duplicate_application: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    application_status_reason: Mapped[DenyReason | None] = mapped_column(SQLEnum(DenyReason, name="deny_reson"), nullable=True)
+    requires_plan_correction: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False) # if an application is incorrect and a decision has been made but that is the only application for that applicant
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
 
     applicant: Mapped["Applicant"] = relationship(back_populates="applications")
     votes: Mapped[list["Vote"]] = relationship(back_populates="application", cascade="all, delete-orphan")
+    external_applicant_data: Mapped["ExternalApplicantData"] = relationship(back_populates="application", cascade="all, delete-orphan")
 
     

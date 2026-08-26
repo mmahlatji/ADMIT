@@ -12,8 +12,9 @@ from app.models.applicant_marks import ApplicantMark
 from app.models.applicants import Applicant
 from app.models.applications import Application
 from app.models.courses import Course
-from app.models.department_codes import DepartmentCode
-from app.models.documents import Document
+from app.models.departments import Department
+from app.models.student_documents import StudentDocument
+from app.models.import_documents import Document
 from app.models.import_runs import ImportRun
 from app.models.matching_reviews import MatchingReview
 from app.models.motivations import Motivation
@@ -22,6 +23,7 @@ from app.models.staging import Staging
 from app.models.system_logs import SystemLog
 from app.models.users import User
 from app.models.votes import Vote
+from app.models.external_applicants_data import ExternalApplicantData
 
 from .base import Base
 
@@ -32,7 +34,8 @@ __all__ = [
     "Application",
     "Base",
     "Course",
-    "DepartmentCode",
+    "Department",
+    "StudentDocument",
     "Document",
     "ImportRun",
     "MatchingReview",
@@ -41,5 +44,6 @@ __all__ = [
     "Staging",
     "SystemLog",
     "User",
-    "Vote"
+    "Vote",
+    "ExternalApplicantData"
 ]

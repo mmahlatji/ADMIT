@@ -16,5 +16,5 @@ class Motivation(Base):
     campus_id: Mapped[str] = mapped_column(ForeignKey("applicants.campus_id"), unique=True, nullable=False)
     last_name: Mapped[str] = mapped_column(String(255), nullable=False)
     first_name: Mapped[str] = mapped_column(String(255), nullable=False)
-    motivation: Mapped[str] = mapped_column(Text, nullable=False)
+    motivation: Mapped[str] = mapped_column(Text, nullable=True)
     applicant: Mapped["Applicant"] = relationship(back_populates="motivation")

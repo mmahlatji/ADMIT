@@ -29,10 +29,3 @@ class SystemLog(Base):
     changed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
     reason: Mapped[ChangeSource] = mapped_column(SQLEnum(ChangeSource, name="change_source"))
     import_run_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("import_runs.import_run_id"), nullable=True)
-
-
-
-"""
-The audit table does not have to refer to another row in some table we just need to be able to group related logs by an id
-and we will perform the proper type conversion to link the applicants/applications to a log
-"""
