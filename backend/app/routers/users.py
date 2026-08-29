@@ -5,9 +5,8 @@ from sqlalchemy.orm import Session
 
 from app.deps import get_current_user, get_db, require_role
 from app.models.users import RoleEnum, User
-from app.queries.users import get_user_by_id
 from app.schemas.user import RoleAssignment, UserOut
-from app.services.users import assign_role
+from app.services.users import assign_role, get_user_by_id
 
 router = APIRouter(prefix="/users", tags=["users"])
 

@@ -4,6 +4,8 @@ from datetime import UTC, datetime
 from sqlalchemy.orm import Session
 
 from app.models.users import RoleEnum, User
+from app.models.system_logs import ChangeSource
+from app.queries import system_logs as system_log_queries
 from app.queries import users as user_queries
 
 ALLOWED_EMAIL_DOMAINS = {"uct.ac.za", "myuct.ac.za"}
@@ -44,9 +46,27 @@ def assign_role(db: Session, actor: User, target: User, role: RoleEnum | None) -
     # stays safe if it's ever called from somewhere other than that one endpoint.
     if actor.role != RoleEnum.convenor:
         raise PermissionError("Only a convenor can assign or revoke roles")
-
+    # convenor cannot revoke their own role (lock themselves out basically)
+    if actor.user_id == target.user_id:
+        raise PermissionError("Cannot change your own role")
     # approved_at/approved_by record the last grant, not revocation, so that
     # info survives a later revoke instead of being overwritten by it.
     approved_by = actor.employee_id if role is not None else None
     approved_at = datetime.now(UTC) if role is not None else None
-    return user_queries.update_user_role(db, target, role, approved_by, approved_at)
+    old_role = target.role
+    user = user_queries.update_user_role(db, target, role, approved_by, approved_at)
+    system_log_queries.create_system_log(
+        db,
+        entity_name="users",
+        entity_id=target.user_id,
+        changed_by=actor.employee_id or str(actor.user_id), # this may be a problem 
+        reason=ChangeSource.MANUAL_EDIT,
+        old_data={"role": old_role},
+        new_data={"role": role}
+    )
+    return user
+
+# ther router called the queries directly which violated the layered architecture
+# so i added this
+def get_user_by_id(db: Session, user_id: uuid.UUID) -> User | None: 
+    return user_queries.get_user_by_id(db, user_id)

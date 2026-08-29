@@ -32,3 +32,8 @@ desktop.ini
 run-instructions.txt
 AGENTS.md
 DATA_MODEL.md
+
+# Local example/reference data, not for the repo
+/synthetic_honours_admissions_data/
+*.xlsx
+

@@ -14,7 +14,7 @@ from app.config import get_settings
 from app.models.users import RoleEnum, User
 from app.services.users import DomainNotAllowedError, get_or_create_user
 
-_bearer_scheme = HTTPBearer()
+_bearer_scheme = HTTPBearer(auto_error=False)
 
 
 @lru_cache
@@ -36,6 +36,10 @@ def get_db() -> Generator[Session, None, None]:
     db = session_local()
     try:
         yield db
+        db.commit()  # now this owns the transaction so we dont have to call db.commit everythere, just flush and refresh but services decide success or failure ie
+    except BaseException:
+        db.rollback()
+        raise
     finally:
         db.close()
 
@@ -45,6 +49,8 @@ def get_current_user(
     db: Session = Depends(get_db),
 ) -> User:
     """Verify the request's bearer token and resolve it to a user row."""
+    if credentials is None:
+            raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Not authenticated")
     token = credentials.credentials
     try:
         signing_key = get_jwks_client().get_signing_key_from_jwt(token)
