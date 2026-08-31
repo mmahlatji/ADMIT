@@ -35,5 +35,9 @@ DATA_MODEL.md
 
 # Local example/reference data, not for the repo
 /synthetic_honours_admissions_data/
+# Blanket ban so a real faculty export can never be committed by habit,
+# with one narrow exception for the synthetic sheets the integration
+# tests need. Nothing else may be added there.
 *.xlsx
+!backend/tests/data/*.xlsx
 

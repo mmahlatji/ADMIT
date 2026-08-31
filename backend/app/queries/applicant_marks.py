@@ -40,7 +40,6 @@ def create_applicant_mark(
     )
     db.add(applicant_mark)
     db.flush()
-    db.refresh(applicant_mark)
     return applicant_mark
 
 
@@ -58,7 +57,6 @@ def update_applicant_mark(
         if value is not None:
             setattr(applicant_mark, field, value)
     db.flush()
-    db.refresh(applicant_mark)
     return applicant_mark
 
 

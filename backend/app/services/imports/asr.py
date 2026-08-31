@@ -11,15 +11,21 @@ from sqlalchemy.orm import Session
 
 from app.models.applicants import TitleEnum
 from app.models.applications import ApplicationStatus, DenyReason, Semester
-from app.queries.applicants import create_applicant, get_applicant_by_campus_id, update_applicant
+from app.queries.applicants import (
+    create_applicant,
+    update_applicant,
+)
 from app.queries.applications import (
     create_application,
-    get_active_applications_by_campus_ids,
-    get_application_by_number,
     update_application,
 )
+from app.services.imports import lookups
 from app.services.imports.audit import record_change
-from app.services.imports.results import ReconcileOutcome, RowReconciliationError, combine_outcomes
+from app.services.imports.results import (
+    ReconcileOutcome,
+    RowReconciliationError,
+    combine_outcomes,
+)
 from app.services.imports.value_mapping import (
     CHOICE_MAP,
     CITIZENSHIP_MAP,
@@ -76,7 +82,7 @@ _APPLICATION_FIELDS = (
     "incorrect_plan",
     "duplicate_application",
     "application_status_reason",
-    "requires_plan_correction"
+    "requires_plan_correction",
 )
 # fields that will allow detection of duplicates and or incorrect applications
 _DUPLICATE_FIELDS = (
@@ -85,7 +91,6 @@ _DUPLICATE_FIELDS = (
     "application_status",
     "application_status_reason",
 )
-
 
 
 def _snapshot(obj, fields: tuple[str, ...]) -> dict:
@@ -113,7 +118,7 @@ def reconcile_asr_row(
         "first_name": row["first_name"],
         "last_name": row["last_name"],
         "title": coerce(row.get("title"), TITLE_MAP, "title"),
-        "sex": coerce(row.get("sex"), SEX_MAP, "sex") ,
+        "sex": coerce(row.get("sex"), SEX_MAP, "sex"),
         "cell_phone": row.get("cell_phone"),
         "home_phone": row.get("home_phone"),
         "email": row.get("email"),
@@ -124,22 +129,36 @@ def reconcile_asr_row(
         ),
         "non_sa_citizenship": row.get("non_sa_citizenship"),
     }
-    applicant_fields["title"] = applicant_fields["title"] or TitleEnum.UNSPECIFIED 
-    
-    applicant = get_applicant_by_campus_id(db, campus_id)
+    applicant_fields["title"] = applicant_fields["title"] or TitleEnum.UNSPECIFIED
+
+    applicant = lookups.applicant_by_campus_id(db, campus_id)
     if applicant is None:
-        applicant = create_applicant(
-            db, campus_id=campus_id, **applicant_fields
-        )
+        applicant = create_applicant(db, campus_id=campus_id, **applicant_fields)
+        # so later rows for the same student in this sheet find them
+        lookups.remember_applicant(db, applicant)
         record_change(
-            db, "applicants", applicant.applicant_id, changed_by, import_run_id, {}, applicant_fields
+            db,
+            "applicants",
+            applicant.applicant_id,
+            changed_by,
+            import_run_id,
+            {},
+            applicant_fields,
         )
         applicant_outcome = ReconcileOutcome.CREATED
     else:
         before = _snapshot(applicant, _APPLICANT_FIELDS)
         update_applicant(db, applicant, **applicant_fields)
         after = _snapshot(applicant, _APPLICANT_FIELDS)
-        record_change(db, "applicants", applicant.applicant_id, changed_by, import_run_id, before, after)
+        record_change(
+            db,
+            "applicants",
+            applicant.applicant_id,
+            changed_by,
+            import_run_id,
+            before,
+            after,
+        )
         applicant_outcome = (
             ReconcileOutcome.UPDATED if before != after else ReconcileOutcome.UNCHANGED
         )
@@ -154,14 +173,17 @@ def reconcile_asr_row(
         raise RowReconciliationError(f"Unknown department: {department}")
     internal_plan, external_plan = plans
 
-    last_reg = row.get("last_registration") if row.get("last_registration") is not None else ""
-    incorrect_plan, requires_plan_correction = compute_incorrect_and_requires_plan_change_flags(
-        row["academic_plan1"], last_reg, internal_plan, external_plan
+    last_reg = (
+        row.get("last_registration") if row.get("last_registration") is not None else ""
+    )
+    incorrect_plan, requires_plan_correction = (
+        compute_incorrect_and_requires_plan_change_flags(
+            row["academic_plan1"], last_reg, internal_plan, external_plan
+        )
     )
 
     application_date = parse_date(row.get("application_date"))
     effective_date = parse_date(row.get("effective_date"))
-    
 
     application_fields = {
         "academic_program_code": row["academic_program_code"],
@@ -173,11 +195,13 @@ def reconcile_asr_row(
         "last_registration": row.get("last_registration"),
         "previous_application_term": parse_int(row.get("previous_application_term")),
         "incorrect_plan": incorrect_plan,
-        "requires_plan_correction": requires_plan_correction
+        "requires_plan_correction": requires_plan_correction,
     }
-    application_fields["semester"] = application_fields["semester"] or Semester.UNSPECIFIED
+    application_fields["semester"] = (
+        application_fields["semester"] or Semester.UNSPECIFIED
+    )
 
-    application = get_application_by_number(db, application_number)
+    application = lookups.application_by_number(db, application_number)
     application_errors: list[str] = []
     if application is None:
         # application_date/effective_date are NOT NULL on Application but aren't
@@ -193,8 +217,10 @@ def reconcile_asr_row(
         if action_reason is not None:
             status = infer_initial_state(*action_reason)
             if status is None:
-                raise RowReconciliationError(f"Application {application_number} has an unrecognized program action/reason {action_reason!r}, application state cannot be defined.")
-        
+                raise RowReconciliationError(
+                    f"Application {application_number} has an unrecognized program action/reason {action_reason!r}, application state cannot be defined."
+                )
+
         application = create_application(
             db,
             application_number=application_number,
@@ -202,10 +228,17 @@ def reconcile_asr_row(
             application_status=status,
             **application_fields,
         )
+        lookups.remember_application(db, application)
 
         application_fields["application_status"] = status
         record_change(
-            db, "applications", application.application_id, changed_by, import_run_id, {}, application_fields
+            db,
+            "applications",
+            application.application_id,
+            changed_by,
+            import_run_id,
+            {},
+            application_fields,
         )
         application_outcome = ReconcileOutcome.CREATED
     elif application.campus_id != campus_id:
@@ -234,13 +267,18 @@ def reconcile_asr_row(
             updated_application["requires_plan_correction"] = None  # leave it alone
 
         # checking of the effective date incase data is stale
-        if (effective_date is not None and application.effective_date is not None
-             and effective_date < application.effective_date):
+        if (
+            effective_date is not None
+            and application.effective_date is not None
+            and effective_date < application.effective_date
+        ):
             application_errors.append(
                 f"outdated effective date {effective_date}: earlier than current {application.effective_date}"
             )
         elif effective_date is None or (effective_date == application.effective_date):
-            updated_application["effective_date"] = None # Dont change it when update is called
+            updated_application["effective_date"] = (
+                None  # Dont change it when update is called
+            )
 
         if action_reason is not None:
             transition = get_candidate_transition_state(
@@ -257,10 +295,18 @@ def reconcile_asr_row(
             update_application(db, application, **updated_application)
             after = _snapshot(application, _APPLICATION_FIELDS)
             record_change(
-                db, "applications", application.application_id, changed_by, import_run_id, before, after
+                db,
+                "applications",
+                application.application_id,
+                changed_by,
+                import_run_id,
+                before,
+                after,
             )
             application_outcome = (
-                ReconcileOutcome.UPDATED if before != after else ReconcileOutcome.UNCHANGED
+                ReconcileOutcome.UPDATED
+                if before != after
+                else ReconcileOutcome.UNCHANGED
             )
 
     if application_errors:
@@ -272,7 +318,7 @@ def reconcile_asr_row(
         )
 
     # Duplicate detection and denial
-    applications = get_active_applications_by_campus_ids(db, [campus_id], application.application_date)
+    applications = lookups.active_applications_for(db, campus_id, application.application_date)
 
     # this query isn't department-scoped, so a student applying to three
     # departments lands here with three rows. determine_duplicate can only judge
@@ -320,14 +366,17 @@ def reconcile_asr_row(
     )
     after = _snapshot(duplicate, _DUPLICATE_FIELDS)
     record_change(
-        db, "applications", duplicate.application_id, changed_by, import_run_id, before, after
+        db,
+        "applications",
+        duplicate.application_id,
+        changed_by,
+        import_run_id,
+        before,
+        after,
     )
-    return combine_outcomes(applicant_outcome, application_outcome), campus_id, application_number, None
-
-
-
-
-
-
-
-        
+    return (
+        combine_outcomes(applicant_outcome, application_outcome),
+        campus_id,
+        application_number,
+        None,
+    )

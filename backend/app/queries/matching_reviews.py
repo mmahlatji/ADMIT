@@ -58,7 +58,6 @@ def create_matching_review(
     )
     db.add(review)
     db.flush()
-    db.refresh(review)
     return review
 
 
@@ -93,7 +92,6 @@ def update_matching_review(
         if value is not None:
             setattr(review, field, value)
     db.flush()
-    db.refresh(review)
     return review
 
 

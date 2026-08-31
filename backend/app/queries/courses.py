@@ -28,7 +28,6 @@ def create_course(
     )
     db.add(course)
     db.flush()
-    db.refresh(course)
     return course
 
 
@@ -49,7 +48,6 @@ def update_course(
         if value is not None:
             setattr(course, field, value)
     db.flush()
-    db.refresh(course)
     return course
 
 

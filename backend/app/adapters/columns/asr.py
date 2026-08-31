@@ -41,6 +41,7 @@ class ASRInputColumn(
 
 
 ASR_CRITICAL_COLUMNS = {  # defines what conditions columns have to pass
+    ASRInputColumn.APPLICATION_NUMBER: [vr.NON_NULL],
     ASRInputColumn.CAMPUS_ID: [vr.NON_NULL],
     ASRInputColumn.EMPLOYEE_ID: [vr.NON_NULL],
     ASRInputColumn.FIRST_NAME: [vr.NON_NULL],

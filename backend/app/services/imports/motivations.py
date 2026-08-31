@@ -4,12 +4,11 @@ import uuid
 
 from sqlalchemy.orm import Session
 
-from app.queries.applicants import get_applicant_by_campus_id
 from app.queries.motivations import (
     create_motivation,
-    get_motivation_by_campus_id,
     update_motivation,
 )
+from app.services.imports import lookups
 from app.services.imports.audit import record_change
 from app.services.imports.results import ReconcileOutcome
 
@@ -27,7 +26,7 @@ def reconcile_motivation_row(
     the sheet.
     """
     campus_id = row["campus_id"]
-    applicant = get_applicant_by_campus_id(db, campus_id)
+    applicant = lookups.applicant_by_campus_id(db, campus_id)
     if applicant is None:
         return (
             ReconcileOutcome.SKIPPED_UNMATCHED,
@@ -36,7 +35,7 @@ def reconcile_motivation_row(
         )
 
     motivation_text = row.get("motivation")
-    existing = get_motivation_by_campus_id(db, campus_id)
+    existing = lookups.motivation_by_campus_id(db, campus_id)
 
     if existing is None:
         created = create_motivation(
@@ -46,6 +45,7 @@ def reconcile_motivation_row(
             last_name=applicant.last_name,
             motivation=motivation_text,
         )
+        lookups.remember_motivation(db, created)
         record_change(
             db, "motivations", created.motivation_id, changed_by, import_run_id,
             {}, {"motivation": motivation_text},

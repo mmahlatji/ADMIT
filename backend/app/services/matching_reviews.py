@@ -27,8 +27,6 @@ def resolve_review(
     reason: str | None = None,
 ):
     """Record the resolution of a matching review. Does not merge data."""
-    if actor.employee_id is None:
-        raise ValueError("Cannot resolve a review without an employee id")
     review = match_queries.update_matching_review(
         db,
         review,

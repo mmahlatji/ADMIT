@@ -75,21 +75,6 @@ def test_create_note(db_session):
         _teardown()
 
 
-def test_create_note_requires_employee_id(db_session):
-    create_applicant(db_session)
-    actor = _make_actor(db_session, employee_id=None)
-
-    client = _make_client(db_session, actor)
-    try:
-        res = client.post(
-            "/notes",
-            json={"campus_id": "xxxyyy001", "author_id": "9999999", "content": "Hi"},
-        )
-        assert res.status_code == 400
-    finally:
-        _teardown()
-
-
 def test_delete_note(db_session):
     create_applicant(db_session)
     actor = _make_actor(db_session)

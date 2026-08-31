@@ -29,7 +29,6 @@ def create_department(
     )
     db.add(department)
     db.flush()
-    db.refresh(department)
     return department
 
 
@@ -45,7 +44,6 @@ def update_department(
         if value is not None:
             setattr(department, field, value)
     db.flush()
-    db.refresh(department)
     return department
 
 

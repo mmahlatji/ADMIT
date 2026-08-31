@@ -77,7 +77,6 @@ def create_applicant(
     )
     db.add(applicant)
     db.flush()
-    db.refresh(applicant)
     return applicant
 
 
@@ -118,7 +117,6 @@ def update_applicant(
         if value is not None:
             setattr(applicant, field, value)
     db.flush()
-    db.refresh(applicant)
     return applicant
 
 

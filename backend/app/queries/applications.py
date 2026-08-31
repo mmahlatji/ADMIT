@@ -1,7 +1,7 @@
 import uuid
 from datetime import date
 
-from sqlalchemy import extract, select
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models.applications import Application, ApplicationStatus, Choice, DenyReason, Semester
@@ -12,10 +12,17 @@ def get_active_applications_by_campus_ids(db: Session, campus_ids: list[str], ap
         Look up applications by campus ids within the year given by application date, 
         returns an empty list if applications do not exist yet.
     """
+    # Half-open range rather than extract("year", ...): wrapping the column in a
+    # function makes the index on application_date unusable, so postgres falls
+    # back to scanning. This means the same thing and can use the index. Called
+    # once per imported row, so it is worth keeping sargable.
+    year_start = date(application_date.year, 1, 1)
+    next_year_start = date(application_date.year + 1, 1, 1)
     return list(db.scalars(
             select(Application).where(
-                Application.campus_id.in_(campus_ids), 
-                extract("year", Application.application_date) == application_date.year
+                Application.campus_id.in_(campus_ids),
+                Application.application_date >= year_start,
+                Application.application_date < next_year_start,
             )).all()
     )
 
@@ -98,7 +105,6 @@ def create_application(
     )
     db.add(application)
     db.flush()
-    db.refresh(application)
     return application
 
 
@@ -143,7 +149,6 @@ def update_application(
         if value is not None:
             setattr(application, field, value)
     db.flush()
-    db.refresh(application)
     return application
 
 

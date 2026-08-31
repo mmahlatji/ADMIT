@@ -82,8 +82,6 @@ def transition_status(
     """Manually change an application's status, recording the decision."""
     if status == ApplicationStatus.DENIED and reason is None:
         raise ValueError("Denying an application requires a reason")
-    if actor.employee_id is None:
-        raise ValueError("Cannot transition an application without an employee id")
     old_status = application.application_status
     application = appl_queries.update_application(
         db,

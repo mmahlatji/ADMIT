@@ -8,8 +8,17 @@ from app.models.users import RoleEnum, User
 from app.queries.users import create_user
 
 
-def _create(db_session, email: str) -> User:
-    return create_user(db_session, uuid.uuid4(), email, "Test", "User")
+def _create(db_session, email: str, employee_id: str | None = None) -> User:
+    # employee_id is a positional arg before the names and is unique, so it has
+    # to be distinct per user or the second insert trips the unique constraint
+    return create_user(
+        db_session,
+        uuid.uuid4(),
+        email,
+        employee_id or str(uuid.uuid4().int)[:7],
+        "Test",
+        "User",
+    )
 
 
 def _make_client(db_session, actor: User | None):

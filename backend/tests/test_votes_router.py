@@ -32,18 +32,6 @@ def test_create_vote_requires_existing_application(db_session):
         _teardown()
 
 
-def test_create_vote_requires_employee_id(db_session):
-    create_application(db_session)
-    actor = _make_actor(db_session, role=RoleEnum.committee, employee_id=None)
-
-    client = _make_client(db_session, actor)
-    try:
-        res = client.post("/votes", json={"application_number": "00000001", "vote": "yes"})
-        assert res.status_code == 400
-    finally:
-        _teardown()
-
-
 def test_list_votes_for_application(db_session):
     create_application(db_session)
     actor = _make_actor(db_session, role=RoleEnum.committee)

@@ -45,7 +45,6 @@ def create_external_applicant_data(
     )
     db.add(data)
     db.flush()
-    db.refresh(data)
     return data
 
 
@@ -74,7 +73,6 @@ def update_external_applicant_data(
         if value is not None:
             setattr(data, field, value)
     db.flush()
-    db.refresh(data)
     return data
 
 

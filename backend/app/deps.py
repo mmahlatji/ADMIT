@@ -12,7 +12,11 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from app.config import get_settings
 from app.models.users import RoleEnum, User
-from app.services.users import DomainNotAllowedError, get_or_create_user
+from app.services.users import (
+    DomainNotAllowedError,
+    MissingEmployeeIdError,
+    get_or_create_user,
+)
 
 _bearer_scheme = HTTPBearer(auto_error=False)
 
@@ -67,6 +71,11 @@ def get_current_user(
         return get_or_create_user(db, claims)
     except DomainNotAllowedError as exc:
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Email domain not permitted") from exc
+    except MissingEmployeeIdError as exc:
+        raise HTTPException(
+            status.HTTP_403_FORBIDDEN,
+            "Your account has no employee number on it. Sign up through the app so it gets recorded.",
+        ) from exc
     except (KeyError, ValueError) as exc:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid token claims") from exc
 

@@ -34,7 +34,6 @@ def create_note(db: Session, campus_id: str, author_id: str, content: str) -> No
     )
     db.add(note)
     db.flush()
-    db.refresh(note)
     return note
 
 
@@ -51,7 +50,6 @@ def update_note( # why would you want to update a note ? Just make another one
         if value is not None:
             setattr(note, field, value)
     db.flush()
-    db.refresh(note)
     return note
 
 

@@ -4,6 +4,7 @@ Thin FastAPI app: mounts routers, does no logic of its own.
 Layering is router -> service -> queries -> database, never skip a layer.
 """
 
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI
 
 from app.routers import (
@@ -20,6 +21,15 @@ from app.routers import (
 )
 
 app = FastAPI(title="ADMIT", version="1.0.0")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 app.include_router(users.router)
 app.include_router(imports.router)
 app.include_router(import_documents.router)

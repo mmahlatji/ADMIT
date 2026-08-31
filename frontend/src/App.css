@@ -1,0 +1,63 @@
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap");
+
+/* --- LIGHT MODE (UCT Theme) --- */
+:root {
+  --bg-main: #f5f7f9; /* Slightly cooler gray to compliment the blue */
+  --bg-card: #ffffff;
+  --bg-input: #ffffff;
+
+  --text-primary: #1f2937;
+  --text-secondary: #6b7280;
+  --text-label: #374151;
+  --text-placeholder: #9ca3af;
+
+  --border-card: #e5e7eb;
+  --border-input: #d1d5db;
+
+  --color-primary: #009ada; /* UCT Blue */
+  --color-primary-focus: #00243a; /* UCT Dark Blue */
+  --color-error: #ef4444;
+
+  --shadow-card: 0 20px 50px rgba(0, 0, 0, 0.1);
+  --shadow-focus: 0 0 0 3px rgba(0, 154, 218, 0.15); /* UCT Blue shadow */
+
+  --header-border: #8da4b7;
+}
+
+/* --- DARK MODE (UCT Theme) --- */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-main: #000c14; /* Deep tint of UCT Navy */
+    --bg-card: #001522;
+    --bg-input: #000c14;
+
+    --text-primary: #ffffff;
+    --text-secondary: #8da4b7;
+    --text-label: #b6c9d8;
+    --text-placeholder: #5c778c;
+
+    --border-card: #00243a; /* UCT Dark Blue */
+    --border-input: #002b45;
+
+    --color-primary: #009ada; /* UCT Blue */
+    --color-primary-focus: #33aee1; /* Lighter tint of UCT Blue for dark mode hover */
+    --color-error: #f87171;
+
+    --shadow-card: 0 20px 50px rgba(0, 0, 0, 0.35);
+
+    --header-border: #1f2937;
+  }
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Montserrat", sans-serif;
+  background: var(--bg-main);
+}
+a {
+  color: inherit;
+  text-decoration: none;
+}

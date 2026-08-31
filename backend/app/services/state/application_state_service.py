@@ -45,6 +45,16 @@ def resolve_plans(db: Session, plan_code: str) -> tuple[str | None, str | None] 
         if the department is unknown.
     """
     department = plan_code[5:8]
+
+    # This runs once per imported row and asks the same question every time, so
+    # memoize on Session.info, which is scoped to this session and cleared with
+    # it. Only successful lookups are cached: a department that is missing now
+    # may be seeded later in the same session, and caching the miss would hide
+    # it. Academic plans are reference data and do not change mid-import.
+    cache = db.info.setdefault("_academic_plans_by_department", {})
+    if department in cache:
+        return cache[department]
+
     plans = get_academic_plans_by_department_code(db, department)
     if not plans:
         return None
@@ -54,6 +64,7 @@ def resolve_plans(db: Session, plan_code: str) -> tuple[str | None, str | None] 
     external = next(
         (plan.academic_plan for plan in plans if plan.plan_type == AcademicPlanType.EXTERNAL), None
     )
+    cache[department] = (internal, external)
     return internal, external
 
 

@@ -13,10 +13,9 @@ from app.models.applicant_marks import ResultCode
 from app.models.system_logs import ChangeSource
 from app.queries.applicant_marks import (
     create_applicant_mark,
-    get_applicant_mark_by_campus_and_course,
     update_applicant_mark,
 )
-from app.queries.applicants import get_applicant_by_campus_id
+from app.services.imports import lookups
 from app.services.imports.audit import record_change
 from app.services.imports.results import MarksRowSummary, RowReconciliationError
 from app.services.system_logs import get_latest_log_by_entity_and_entity_id
@@ -109,7 +108,7 @@ def reconcile_marks_row(
     an unknown campus_id flags the row a single time rather than up to 4 times.
     """
     campus_id = row["campus_id"]
-    if get_applicant_by_campus_id(db, campus_id) is None:
+    if lookups.applicant_by_campus_id(db, campus_id) is None:
         return (
             MarksRowSummary(flagged=True),
             campus_id,
@@ -118,11 +117,12 @@ def reconcile_marks_row(
 
     summary = MarksRowSummary()
     for fact in normalize_row(row):
-        existing = get_applicant_mark_by_campus_and_course(
+        existing = lookups.mark_by_campus_and_course(
             db, fact["campus_id"], fact["course_code"]
         )
         if existing is None:
             created = create_applicant_mark(db, **fact)
+            lookups.remember_mark(db, created)
             record_change(
                 db, "applicant_marks", created.mark_id, changed_by, import_run_id,
                 {}, {"mark": fact["mark"], "result_code": fact["result_code"]},

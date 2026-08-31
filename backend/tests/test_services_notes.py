@@ -1,7 +1,5 @@
 import uuid
 
-import pytest
-
 from app.models.users import User
 from app.services import notes as note_service
 from tests.test_queries_applicants import _create as create_applicant
@@ -42,16 +40,6 @@ def test_get_note_by_id(db_session):
 
     assert note_service.get_note_by_id(db_session, note.note_id).content == "Hi"
     assert note_service.get_note_by_id(db_session, uuid.uuid4()) is None
-
-
-def test_create_note_requires_employee_id(db_session):
-    create_applicant(db_session)
-    author = _create_author(db_session)
-    author.employee_id = None
-    db_session.commit()
-
-    with pytest.raises(ValueError):
-        note_service.create_note(db_session, author, "xxxyyy001", "No id")
 
 
 def test_delete_note(db_session):

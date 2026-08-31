@@ -43,7 +43,6 @@ def create_motivation(
     )
     db.add(motivation_row)
     db.flush()
-    db.refresh(motivation_row)
     return motivation_row
 
 
@@ -66,7 +65,6 @@ def update_motivation(
         if value is not None:
             setattr(motivation_row, field, value)
     db.flush()
-    db.refresh(motivation_row)
     return motivation_row
 
 

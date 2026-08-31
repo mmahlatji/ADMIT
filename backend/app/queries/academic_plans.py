@@ -39,7 +39,6 @@ def create_academic_plan(
     )
     db.add(plan)
     db.flush()
-    db.refresh(plan)
     return plan
 
 
@@ -60,7 +59,6 @@ def update_academic_plan(
         if value is not None:
             setattr(plan, field, value)
     db.flush()
-    db.refresh(plan)
     return plan
 
 

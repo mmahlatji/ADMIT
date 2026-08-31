@@ -28,11 +28,14 @@ def _make_import_run(db_session, source_type, file_name, sheet):
         rows_total=len(sheet),
     )
 
-_REPO_ROOT = Path(__file__).resolve().parents[2]
+# committed fixtures, not the repo root: these are synthetic sheets kept
+# here so the integration tests actually run in CI. .gitignore bans *.xlsx
+# everywhere else so a real faculty export can never be committed by habit.
+_DATA = Path(__file__).resolve().parent / "data"
 # Order doesnt matter as long as it works
-_OCTOBER = _REPO_ROOT / "CSC - ASR - 2023 - October 2022.xlsx"
-_DECEMBER = _REPO_ROOT / "CSC - ASR - 2023 - December 2022.xlsx"
-_UCT_MARKS = _REPO_ROOT / "UCT Applicant Marks - December 2022.xlsx"
+_OCTOBER = _DATA / "CSC - ASR - 2023 - October 2022.xlsx"
+_DECEMBER = _DATA / "CSC - ASR - 2023 - December 2022.xlsx"
+_UCT_MARKS = _DATA / "UCT Applicant Marks - December 2022.xlsx"
 
 
 def _seed(db):

@@ -29,8 +29,6 @@ def create_vote(
     application_number: str,
     vote: VoteDecision,
 ) -> Vote:
-    if actor.employee_id is None:
-        raise ValueError("Cannot vote without an employee id")
     application = appl_queries.get_application_by_number(db, application_number)
     if application is None:
         raise ApplicationNotFoundError(application_number)

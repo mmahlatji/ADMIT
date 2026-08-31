@@ -46,8 +46,10 @@ def test_update_matching_review_sets_resolved_at_explicitly(db_session):
         resolved_at=resolved_at,
     )
     assert updated.status == MatchStatus.RESOLVED
-    # SQLite doesn't preserve tzinfo on round-trip, compare naive
-    assert updated.resolved_at == resolved_at.replace(tzinfo=None)
+    # the value we set, tz intact. This used to come back naive because the
+    # query helper re-read it from SQLite, which drops tzinfo; the column is
+    # DateTime(timezone=True) so postgres always kept it.
+    assert updated.resolved_at == resolved_at
 
 
 def test_delete_matching_review(db_session):

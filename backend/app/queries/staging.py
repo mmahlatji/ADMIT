@@ -42,7 +42,6 @@ def create_staging_row(
     )
     db.add(staging)
     db.flush()
-    db.refresh(staging)
     return staging
 
 
@@ -73,7 +72,6 @@ def update_staging_row(
         if value is not None:
             setattr(staging, field, value)
     db.flush()
-    db.refresh(staging)
     return staging
 
 

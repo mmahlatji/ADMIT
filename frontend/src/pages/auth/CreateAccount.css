@@ -1,0 +1,110 @@
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap");
+html,
+body {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Montserrat", sans-serif;
+}
+.create-account-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  background: var(--bg-main);
+}
+
+.create-account-card {
+  width: 100%;
+  max-width: 520px;
+  padding: 40px;
+  border-radius: 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+
+  align-items: center;
+}
+
+.create-account-header {
+  margin-bottom: 32px;
+  text-align: center;
+}
+
+.create-account-header h1 {
+  margin: 0 0 8px;
+  color: var(--text-primary);
+  font-size: 30px;
+  font-weight: 700;
+}
+.create-account-header p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 15px;
+}
+.create-account-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.form-group label {
+  color: var(--text-label);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.form-group input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  border: 1px solid var(--border-input);
+  border-radius: 8px;
+  outline: none;
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-size: 15px;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+.form-group input::placeholder {
+  color: var(--text-placeholder);
+}
+
+.form-group input:focus {
+  border-color: var(--color-primary-focus);
+  box-shadow: var(--shadow-focus);
+}
+
+.error-message {
+  margin: 0;
+  color: var(--color-error);
+  font-size: 13px;
+}
+
+.auth-button {
+  width: 100%;
+  margin-top: 8px;
+  padding: 13px 16px;
+  border: none;
+  border-radius: 8px;
+  background: var(--color-primary);
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    transform 0.1s ease;
+}

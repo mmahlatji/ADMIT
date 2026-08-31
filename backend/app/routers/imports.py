@@ -31,7 +31,11 @@ TO_DATAFRAME = {
 }
 
 
-@router.post("/{source_type}", response_model=ImportRunResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/{source_type}",
+    response_model=ImportRunResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 async def upload_import(
     source_type: SourceType,
     file: UploadFile,
@@ -42,27 +46,22 @@ async def upload_import(
 
     Accepts .csv and .xlsx, see TO_DATAFRAME above.
     """
-    if actor.employee_id is None:
-        raise HTTPException(
-            status.HTTP_400_BAD_REQUEST,
-            "Your profile has no employee_id set yet, so this import can't be attributed to you",
-        )
-    
+
     extension = Path(file.filename).suffix.lower()
     pd_func = TO_DATAFRAME.get(extension)
     if pd_func is None:
         raise HTTPException(status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
-    sheet = pd_func(file.file)
+    sheet = await run_in_threadpool(pd_func, file.file)
 
     # upload the file
     import_run = import_run_service.create_import_run(
-            db,
-            source_type=source_type,
-            uploaded_by=actor.employee_id,
-            file_name=file.filename,
-            status=ImportStatus.PROCESSING,
-            rows_total=len(sheet),
-        )
+        db,
+        source_type=source_type,
+        uploaded_by=actor.employee_id,
+        file_name=file.filename,
+        status=ImportStatus.PROCESSING,
+        rows_total=len(sheet),
+    )
 
     # pd_func(file.file) above left the stream at EOF, so rewind it or the
     # upload below would read 0 bytes and raise FileEmptyException.
@@ -70,9 +69,7 @@ async def upload_import(
 
     try:
         await import_doc_service.upload_document(
-            db=db,
-            import_run=import_run,
-            file=file
+            db=db, import_run=import_run, file=file
         )
     except FileEmptyException as exc:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc))
@@ -84,12 +81,10 @@ async def upload_import(
         raise HTTPException(status.HTTP_409_CONFLICT, str(exc))
     except FileUploadFailedException as exc:
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, str(exc))
-    
+
     # run_import is sync and does the whole sheet inline (~16 queries a row), so
     # calling it directly from this async endpoint would block the event loop and
     # hang every other request for the duration. Hand it to a worker thread,
     # which is what FastAPI does for sync endpoints anyway. The upload above is
     # genuinely async, so the endpoint itself has to stay async.
     return await run_in_threadpool(run_import, db, import_run, sheet=sheet)
-
-

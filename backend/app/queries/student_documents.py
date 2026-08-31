@@ -37,7 +37,6 @@ def create_student_document(
     )
     db.add(document)
     db.flush()
-    db.refresh(document)
     return document
 
 
@@ -62,7 +61,6 @@ def update_student_document(
         if value is not None:
             setattr(document, field, value)
     db.flush()
-    db.refresh(document)
     return document
 
 

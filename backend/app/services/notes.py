@@ -16,8 +16,6 @@ def get_note_by_id(db: Session, note_id: uuid.UUID) -> Note | None:
 
 
 def create_note(db: Session, actor: User, campus_id:str, content: str) -> Note:
-    if actor.employee_id is None:
-        raise ValueError("Cannot create a note without an employee id")
     return note_queries.create_note(db, campus_id, actor.employee_id, content)
 
 def delete_note(db: Session, note: Note) -> None:

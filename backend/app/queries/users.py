@@ -16,11 +16,19 @@ def create_user(
     db: Session,
     user_id: uuid.UUID,
     email: str,
+    employee_id: str,
     first_name: str | None = None,
     last_name: str | None = None,
 ) -> User:
     """Insert a new user row with role=null."""
-    user = User(user_id=user_id, email=email, first_name=first_name, last_name=last_name, role=None)
+    user = User(
+        user_id=user_id,
+        email=email,
+        first_name=first_name,
+        last_name=last_name,
+        employee_id=employee_id,
+        role=None,
+    )
     db.add(user)
     db.commit()
     db.refresh(user)

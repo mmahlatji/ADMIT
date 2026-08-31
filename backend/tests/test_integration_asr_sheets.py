@@ -2,8 +2,8 @@
 pipeline, October first then December, against an in-memory DB seeded with the
 CSC department, its internal/external plans, and an upload user.
 
-These sheets live in the repo root and are not committed; the test skips if
-they are absent, and requires openpyxl to read .xlsx.
+The sheets are synthetic and committed under tests/data/, so this runs in CI.
+Requires openpyxl to read .xlsx.
 """
 
 from pathlib import Path
@@ -35,9 +35,12 @@ def _make_import_run(db_session, source_type, file_name, sheet):
         rows_total=len(sheet),
     )
 
-_REPO_ROOT = Path(__file__).resolve().parents[2]
-_OCTOBER = _REPO_ROOT / "CSC - ASR - 2023 - October 2022.xlsx"
-_DECEMBER = _REPO_ROOT / "CSC - ASR - 2023 - December 2022.xlsx"
+# committed fixtures, not the repo root: these are synthetic sheets kept
+# here so the integration tests actually run in CI. .gitignore bans *.xlsx
+# everywhere else so a real faculty export can never be committed by habit.
+_DATA = Path(__file__).resolve().parent / "data"
+_OCTOBER = _DATA / "CSC - ASR - 2023 - October 2022.xlsx"
+_DECEMBER = _DATA / "CSC - ASR - 2023 - December 2022.xlsx"
 
 
 
@@ -108,7 +111,7 @@ def test_real_asr_sheets_import_sequentially(db_session):
 ### These are just for accounting
 
 
-# _HONOURS = _REPO_ROOT / "HonoursApplicationProcessing December 2022.xlsx"
+# _HONOURS = _DATA / "HonoursApplicationProcessing December 2022.xlsx"
 
 # # An IT/CS offer maps onto any of these statuses: made (CONDITIONAL_OFFER /
 # # ACCEPTED), accepted (READY_TO_REGISTER), or declined (CANCELLED). Grouping

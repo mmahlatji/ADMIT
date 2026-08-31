@@ -63,7 +63,6 @@ def create_system_log(
     )
     db.add(log)
     db.flush()
-    db.refresh(log)
     return log
 
 
@@ -92,7 +91,6 @@ def update_system_log(
         if value is not None:
             setattr(log, field, value)
     db.flush()
-    db.refresh(log)
     return log
 
 
