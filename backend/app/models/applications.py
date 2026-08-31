@@ -23,6 +23,7 @@ class Choice(str, Enum):
 class Semester(str, Enum):
     FIRST = "1st Semester"
     SECOND = "2nd Semester"
+    UNSPECIFIED = "unspecified"
 
 class ApplicationStatus(str, Enum):
     APPLIED = "Applied"

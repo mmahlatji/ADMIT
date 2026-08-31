@@ -3,6 +3,7 @@ Responsible for generating a report on failed import rows
 """
 
 import pandas as pd
+
 from app.adapters.validation.rules import RULE_MESSAGES
 
 

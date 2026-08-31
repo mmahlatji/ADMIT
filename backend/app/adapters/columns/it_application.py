@@ -2,8 +2,9 @@
 Contains the input, output and critical column enum and dictionary for the IT application adapter
 """
 
-from app.adapters.validation.rules import ValidationRules as vr
 from enum import Enum
+
+from app.adapters.validation.rules import ValidationRules as vr
 
 
 class ITApplicationInput(Enum):

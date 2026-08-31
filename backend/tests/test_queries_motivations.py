@@ -50,3 +50,4 @@ def test_delete_motivation(db_session):
     delete_motivation(db_session, motivation)
 
     assert get_motivation_by_id(db_session, motivation.motivation_id) is None
+

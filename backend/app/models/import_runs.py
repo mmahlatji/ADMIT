@@ -31,6 +31,11 @@ class ImportRun(Base):
     uploaded_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
     file_name: Mapped[str] = mapped_column(String(255), nullable=False)
     status: Mapped[ImportStatus] = mapped_column(SQLEnum(ImportStatus, name="import_status"), nullable=False, default=ImportStatus.PENDING, index=True)
+    # rows_total/rows_rejected/rows_flagged are counted at sheet-row grain.
+    # rows_loaded/rows_auto_matched/rows_auto_new are counted at fact grain for
+    # the wide marks sources (a row with 2 of 4 marks changed has no single
+    # accurate row-level answer) and row grain for everything else. See
+    # app/services/imports/results.py:RunCounters for exactly how these tally.
     rows_total: Mapped[int] = mapped_column(Integer, nullable=False)
     rows_loaded: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     rows_rejected: Mapped[int] = mapped_column(Integer, nullable=False, default=0)

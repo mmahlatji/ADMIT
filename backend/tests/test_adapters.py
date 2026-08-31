@@ -1,44 +1,50 @@
 import pandas as pd
 import pytest
 
-from app.adapters.columns.asr import ASRInputColumn, ASR_OUTPUT_COLUMNS
-from app.adapters.validation.rules import ValidationRules
 from app.adapters.asr import ASRAdapter
 from app.adapters.base import BaseAdapter
+from app.adapters.columns.asr import ASR_OUTPUT_COLUMNS, ASRInputColumn
+from app.adapters.exceptions import AdapterValidationError
+from app.adapters.validation.rules import ValidationRules
 
 
 @pytest.fixture
 def valid_sheet():
+    # every ASRInputColumn member needs a value here, or validate_input_columns()
+    # rejects the whole sheet as missing columns - keep this in sync with
+    # app/adapters/columns/asr.py if ASRInputColumn ever grows
     return pd.DataFrame(
         {
             "Application Number": ["100001"],
             "Campus Id": ["123456"],
             "Employee Id": ["EMP001"],
             "Academic Program Code": ["CSC"],
-            "Sex": ["M"],
+            "Title": ["Miss"],
+            "Sex": ["F"],
             "Academic Plan 1": ["CSC-HONS"],
-            "Academic Plan 2": [None],
             "Academic Career": ["hons"],
             "Application Date": [pd.Timestamp("2026-01-15")],
             "Choice": ["first"],
             "Admit Type": ["regular"],
             "Semester": ["first"],
             "Last Registration": [pd.Timestamp("2026-02-28")],
-            "Application Term": [pd.Timestamp("2026-01-01")],
             "Previous Application Term": [None],
-            "First Name": ["John"],
-            "Last Name": ["Doe"],
+            "First Name": ["Noah"],
+            "Last Name": ["Smith"],
             "Cell Phone": ["0821234567"],
-            "Home Phone": [None],
-            "Email Address": ["john.doe@example.com"],
-            "Population Group": ["A"],
+            "Home Phone": ["0211234567"],
+            "Email Address": ["noah@example.com"],
+            "Population Group": ["African"],
             "Birth Date": [pd.Timestamp("2000-01-01")],
-            "Citizenship Residency": ["South Africa"],
+            # "SA Citizen" not "South Africa": this has to match the
+            # CitizenshipResidency enum, or the row fails value mapping the
+            # moment this fixture is used against the database
+            "Citizenship Residency": ["SA Citizen"],
             "Non SA Citizenship": [None],
-            "Effective Date": [pd.Timestamp("2026-01-01")],
-            "Program Action": ["ADMT"],
-            "Program Reason": ["REG"],
-            "Program Status": ["AC"],
+            "Effective Date": [pd.Timestamp("2026-01-15")],
+            "Program Action": ["DDEF"],
+            "Program Reason": ["HOD "],
+            "Program Status": ["Applicant"],
         }
     )
 
@@ -92,7 +98,8 @@ def test_validate_column_numeric():
 
 
 def test_determine_violations_flags_critical_column_rules(valid_sheet):
-
+    # ASR_CRITICAL_COLUMNS only assigns NON_NULL rules today (no column currently
+    # has a NUMERIC rule), so this checks two different NON_NULL columns instead
     invalid_sheet = valid_sheet.copy()
     invalid_sheet[ASRInputColumn.EMPLOYEE_ID.value] = None
     invalid_sheet[ASRInputColumn.ACADEMIC_PLAN1.value] = None
@@ -103,8 +110,11 @@ def test_determine_violations_flags_critical_column_rules(valid_sheet):
     adapter = ASRAdapter(df)
     violations = adapter.determine_violations()
 
-    # Application Number rule checks
+    # Employee Id rule checks
     assert ValidationRules.NON_NULL in violations[ASRInputColumn.EMPLOYEE_ID]
+    assert violations[ASRInputColumn.EMPLOYEE_ID][
+        ValidationRules.NON_NULL
+    ].tolist() == [False, True]
 
     # Academic Plan 1 rule checks
     assert ValidationRules.NON_NULL in violations[ASRInputColumn.ACADEMIC_PLAN1]
@@ -145,33 +155,32 @@ def test_format_for_database_renames_to_schema_fields(valid_sheet):
 
 
 def test_process_separates_clean_and_rejected_data(valid_sheet):
-
+    # APPLICATION_NUMBER has no critical-column rule today, so row 2 is flagged
+    # via EMPLOYEE_ID (NON_NULL) instead - see test_determine_violations above
     df = pd.concat(
         [valid_sheet, valid_sheet, valid_sheet, valid_sheet], ignore_index=True
     )
     df.loc[1, ASRInputColumn.CAMPUS_ID.value] = None
-    df.loc[2, ASRInputColumn.APPLICATION_NUMBER.value] = "INVALID"
+    df.loc[2, ASRInputColumn.EMPLOYEE_ID.value] = None
 
     adapter = ASRAdapter(df)
-    clean, needs_review, violations = adapter.process()
+    clean, needs_review, _violations = adapter.process()
 
-    assert len(clean) == 3
-    assert len(needs_review) == 1
+    # two of the four rows were nulled above, so two of each
+    assert len(clean) == 2
+    assert len(needs_review) == 2
 
     # Clean row must use DB schema column names (e.g. campus_id)
     assert ASR_OUTPUT_COLUMNS[ASRInputColumn.CAMPUS_ID] in clean.columns
 
     # Rejected row retains source sheet header (e.g. "Campus Id")
     assert ASRInputColumn.CAMPUS_ID.value in needs_review.columns
-    assert ASRInputColumn.APPLICATION_NUMBER.value in needs_review.columns
+    assert ASRInputColumn.EMPLOYEE_ID.value in needs_review.columns
 
 
-def test_process_missing_required_column_fails_cleanly(valid_sheet, capsys):
+def test_process_missing_required_column_fails_cleanly(valid_sheet):
     invalid_sheet = valid_sheet.drop(columns=[ASRInputColumn.CAMPUS_ID.value])
     adapter = ASRAdapter(invalid_sheet)
 
-    result = adapter.process()
-    captured = capsys.readouterr()
-
-    assert result is None
-    assert "Input validation failed:" in captured.out
+    with pytest.raises(AdapterValidationError, match="Missing required columns"):
+        adapter.process()

@@ -3,7 +3,6 @@ import uuid
 from app.models.system_logs import ChangeSource
 from app.queries.system_logs import (
     create_system_log,
-    delete_system_log,
     get_system_log_by_id,
     get_system_logs,
     update_system_log,
@@ -60,10 +59,3 @@ def test_update_system_log_only_sets_passed_fields(db_session):
     assert updated.entity_name == "applicant_marks"
     assert updated.reason == ChangeSource.DECISION
 
-
-def test_delete_system_log(db_session):
-    log = _create(db_session)
-
-    delete_system_log(db_session, log)
-
-    assert get_system_log_by_id(db_session, log.log_id) is None

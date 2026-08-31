@@ -2,8 +2,11 @@
 Defines the base class that every sheet adapter inherits from
 """
 
-import pandas as pd
 from enum import Enum
+
+import pandas as pd
+
+from app.adapters.exceptions import AdapterValidationError
 from app.adapters.validation.rules import ValidationRules
 
 
@@ -100,9 +103,10 @@ class BaseAdapter:
             self.validate_input_columns()
 
         except ValueError as e:
-            # log
-            print(f"Input validation failed: {e}")
-            return None
+            # raise instead of swallowing this: a bare None here used to break
+            # any caller unpacking a 3-tuple, and an orchestrator needs a real
+            # exception to reliably tell "this run failed" from "this run worked"
+            raise AdapterValidationError(str(e)) from e
 
         violations = self.determine_violations()
         clean, needs_review = self.separate_rows(violations)

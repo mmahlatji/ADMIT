@@ -5,6 +5,7 @@ from app.queries.applications import (
     create_application,
     delete_application,
     get_application_by_id,
+    get_application_by_number,
     get_applications,
     update_application,
 )
@@ -83,3 +84,13 @@ def test_delete_application(db_session):
     delete_application(db_session, application)
 
     assert get_application_by_id(db_session, application.application_id) is None
+
+
+def test_get_application_by_number(db_session):
+    _create(db_session)
+
+    found = get_application_by_number(db_session, "00000001")
+    assert found is not None
+    assert found.application_number == "00000001"
+
+    assert get_application_by_number(db_session, "doesnotexist") is None

@@ -2,6 +2,7 @@ from app.models.applicants import CitizenshipResidency, SexEnum, TitleEnum
 from app.queries.applicants import (
     create_applicant,
     delete_applicant,
+    get_applicant_by_campus_id,
     get_applicant_by_id,
     get_applicants,
     update_applicant,
@@ -50,3 +51,13 @@ def test_delete_applicant(db_session):
     delete_applicant(db_session, applicant)
 
     assert get_applicant_by_id(db_session, applicant.applicant_id) is None
+
+
+def test_get_applicant_by_campus_id(db_session):
+    _create(db_session)
+
+    found = get_applicant_by_campus_id(db_session, "xxxyyy001")
+    assert found is not None
+    assert found.campus_id == "xxxyyy001"
+
+    assert get_applicant_by_campus_id(db_session, "doesnotexist") is None

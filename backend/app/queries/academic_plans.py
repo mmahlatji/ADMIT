@@ -6,6 +6,15 @@ from sqlalchemy.orm import Session
 from app.models.academic_plans import AcademicPlan, AcademicPlanType
 
 
+def get_academic_plans_by_department_code(db: Session, department_code: str) -> list[AcademicPlan]:
+    return list(
+        db.scalars(
+            select(AcademicPlan).where(
+                AcademicPlan.department_code == department_code
+            )
+        ).all()
+    )
+
 def get_academic_plan_by_id(db: Session, academic_plan_id: uuid.UUID) -> AcademicPlan | None:
     """Look up an academic plan by its id. Returns None if it doesn't exist yet."""
     return db.execute(

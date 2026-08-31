@@ -4,9 +4,9 @@ The sheet adapter for the asr document
 
 from app.adapters.base import BaseAdapter
 from app.adapters.columns.asr import (
-    ASRInputColumn,
     ASR_CRITICAL_COLUMNS,
     ASR_OUTPUT_COLUMNS,
+    ASRInputColumn,
 )
 
 

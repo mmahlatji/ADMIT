@@ -14,6 +14,14 @@ def get_applicant_by_id(db: Session, applicant_id: uuid.UUID) -> Applicant | Non
     ).scalar_one_or_none()
 
 
+def get_applicant_by_campus_id(db: Session, campus_id: str) -> Applicant | None:
+    """Look up an applicant by their campus id (their natural key across imports)."""
+    return db.execute(
+        select(Applicant).where(Applicant.campus_id == campus_id)
+    ).scalar_one_or_none()
+
+
+
 def get_applicants(db: Session, skip: int = 0, limit: int = 100) -> list[Applicant]:
     """List applicants, paginated."""
     # added orderby so each query is determisnistic

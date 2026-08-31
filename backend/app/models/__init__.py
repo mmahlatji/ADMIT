@@ -13,7 +13,7 @@ from app.models.applicants import Applicant
 from app.models.applications import Application
 from app.models.courses import Course
 from app.models.departments import Department
-from app.models.student_documents import StudentDocument
+from app.models.external_applicants_data import ExternalApplicantData
 from app.models.import_documents import Document
 from app.models.import_runs import ImportRun
 from app.models.matching_reviews import MatchingReview
@@ -23,10 +23,10 @@ from app.models.notes import Note
 # skips the table and alembic autogenerate can't see it either
 from app.models.rules import Rules
 from app.models.staging import Staging
+from app.models.student_documents import StudentDocument
 from app.models.system_logs import SystemLog
 from app.models.users import User
 from app.models.votes import Vote
-from app.models.external_applicants_data import ExternalApplicantData
 
 from .base import Base
 
@@ -38,16 +38,16 @@ __all__ = [
     "Base",
     "Course",
     "Department",
-    "StudentDocument",
     "Document",
+    "ExternalApplicantData",
     "ImportRun",
     "MatchingReview",
     "Motivation",
     "Note",
     "Rules",
     "Staging",
+    "StudentDocument",
     "SystemLog",
     "User",
-    "Vote",
-    "ExternalApplicantData"
+    "Vote"
 ]

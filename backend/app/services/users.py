@@ -3,8 +3,8 @@ from datetime import UTC, datetime
 
 from sqlalchemy.orm import Session
 
-from app.models.users import RoleEnum, User
 from app.models.system_logs import ChangeSource
+from app.models.users import RoleEnum, User
 from app.queries import system_logs as system_log_queries
 from app.queries import users as user_queries
 

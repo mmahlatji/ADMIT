@@ -13,6 +13,14 @@ def get_motivation_by_id(db: Session, motivation_id: uuid.UUID) -> Motivation | 
     ).scalar_one_or_none()
 
 
+def get_motivation_by_campus_id(db: Session, campus_id: str) -> Motivation | None:
+    """Look up an applicant's motivation by their campus id (their natural key)."""
+    return db.execute(
+        select(Motivation).where(Motivation.campus_id == campus_id)
+    ).scalar_one_or_none()
+
+
+
 def get_motivations(db: Session, skip: int = 0, limit: int = 100) -> list[Motivation]:
     """List motivations, paginated."""
     return list(db.execute(select(Motivation).offset(skip).order_by(Motivation.campus_id.asc()).limit(limit)).scalars())

@@ -13,6 +13,19 @@ def get_applicant_mark_by_id(db: Session, mark_id: uuid.UUID) -> ApplicantMark |
     ).scalar_one_or_none()
 
 
+def get_applicant_mark_by_campus_and_course(
+    db: Session, campus_id: str, course_code: str
+) -> ApplicantMark | None:
+    """Look up the mark for one applicant's course (their natural key, see the
+    uq_applicant_marks_campus_id_course_code constraint on the model)."""
+    return db.execute(
+        select(ApplicantMark).where(
+            ApplicantMark.campus_id == campus_id, ApplicantMark.course_code == course_code
+        )
+    ).scalar_one_or_none()
+
+
+
 def get_applicant_marks(db: Session, skip: int = 0, limit: int = 100) -> list[ApplicantMark]:
     """List applicant marks, paginated."""
     return list(db.execute(select(ApplicantMark).offset(skip).order_by(ApplicantMark.campus_id.asc()).limit(limit)).scalars())

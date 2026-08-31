@@ -1,17 +1,37 @@
 import uuid
 from datetime import date
 
-from sqlalchemy import select
+from sqlalchemy import extract, select
 from sqlalchemy.orm import Session
 
 from app.models.applications import Application, ApplicationStatus, Choice, DenyReason, Semester
 
+
+def get_active_applications_by_campus_ids(db: Session, campus_ids: list[str], application_date: date) -> list[Application]:
+    """
+        Look up applications by campus ids within the year given by application date, 
+        returns an empty list if applications do not exist yet.
+    """
+    return list(db.scalars(
+            select(Application).where(
+                Application.campus_id.in_(campus_ids), 
+                extract("year", Application.application_date) == application_date.year
+            )).all()
+    )
 
 def get_application_by_id(db: Session, application_id: uuid.UUID) -> Application | None:
     """Look up an application by its id. Returns None if it doesn't exist yet."""
     return db.execute(
         select(Application).where(Application.application_id == application_id)
     ).scalar_one_or_none()
+
+
+def get_application_by_number(db: Session, application_number: str) -> Application | None:
+    """Look up an application by its application number (its natural key across imports)."""
+    return db.execute(
+        select(Application).where(Application.application_number == application_number)
+    ).scalar_one_or_none()
+
 
 
 def get_applications(db: Session, skip: int = 0, limit: int = 100) -> list[Application]:
