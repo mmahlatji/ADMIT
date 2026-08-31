@@ -38,3 +38,10 @@ class MatchingReviewResponse(MatchingReviewCreate):
     resolved_at: datetime | None = None
 
     model_config = {"from_attributes": True}
+
+
+class ResolveReviewRequest(BaseModel):
+    """Request body for resolving a matching review."""
+
+    resolution: MatchResolution
+    reason: str | None = None

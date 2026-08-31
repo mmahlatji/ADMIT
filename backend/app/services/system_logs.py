@@ -20,7 +20,7 @@ def create_log(
     import_run_id: uuid.UUID | None = None,
 ) -> SystemLog:
     """Record a change to an entity in the system log. Does not commit."""
-    return system_log_queries.create_log(
+    return system_log_queries.create_system_log(
         db,
         entity_name=entity_name,
         entity_id=entity_id,
@@ -30,3 +30,18 @@ def create_log(
         reason=reason,
         import_run_id=import_run_id,
     )
+
+
+def list_logs(
+    db: Session,
+    entity_name: str | None = None,
+    entity_id: uuid.UUID | None = None,
+    skip: int = 0,
+    limit: int = 100,
+) -> list[SystemLog]:
+    return system_log_queries.list_logs(db, entity_name, entity_id, skip, limit)
+
+
+
+def get_latest_log_by_entity_and_entity_id(db: Session, entity_name: str, entity_id: uuid.UUID) -> SystemLog | None:
+    return system_log_queries.get_latest_system_log_by_entity_and_entity_id(db, entity_name, entity_id)

@@ -5,6 +5,7 @@ from app.queries.import_documents import (
     delete_import_document,
     get_import_document_by_id,
     get_import_documents,
+    get_import_documents_by_hash,
     update_import_document,
 )
 from tests.test_queries_import_runs import _create as create_import_run
@@ -15,7 +16,7 @@ def _create(db_session, sha256_hash="a" * 64):
     return create_import_document(
         db_session,
         import_run.import_run_id,
-        uuid.uuid4(),
+        f"import_documents/asr/{uuid.uuid4()}",
         "asr.xlsx",
         "application/vnd.ms-excel",
         sha256_hash,
@@ -33,10 +34,10 @@ def test_create_and_get_import_document(db_session):
 def test_get_import_documents_returns_all(db_session):
     import_run = create_import_run(db_session)
     create_import_document(
-        db_session, import_run.import_run_id, uuid.uuid4(), "a.xlsx", "text/csv", "a" * 64
+        db_session, import_run.import_run_id, f"import_documents/asr/{uuid.uuid4()}", "a.xlsx", "text/csv", "a" * 64
     )
     create_import_document(
-        db_session, import_run.import_run_id, uuid.uuid4(), "b.xlsx", "text/csv", "b" * 64
+        db_session, import_run.import_run_id, f"import_documents/asr/{uuid.uuid4()}", "b.xlsx", "text/csv", "b" * 64
     )
 
     assert len(get_import_documents(db_session)) == 2
@@ -56,3 +57,10 @@ def test_delete_import_document(db_session):
     delete_import_document(db_session, document)
 
     assert get_import_document_by_id(db_session, document.document_id) is None
+
+
+def test_get_import_document_by_hash(db_session):
+    _create(db_session, sha256_hash="a" * 64)
+
+    assert get_import_documents_by_hash(db_session, "a" * 64) is not None
+    assert get_import_documents_by_hash(db_session, "b" * 64) is None

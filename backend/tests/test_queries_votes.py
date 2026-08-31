@@ -7,7 +7,7 @@ from tests.test_queries_notes import _create_author
 def _create(db_session):
     create_application(db_session)
     _create_author(db_session)
-    return create_vote(db_session, "00000001", "xxxyyy001", VoteDecision.PLACEHOLDER, "9999999")
+    return create_vote(db_session, "00000001", "xxxyyy001", VoteDecision.YES, "9999999")
 
 
 def test_create_and_get_vote(db_session):
@@ -15,14 +15,14 @@ def test_create_and_get_vote(db_session):
 
     fetched = get_vote_by_id(db_session, vote.vote_id)
     assert fetched is not None
-    assert fetched.vote == VoteDecision.PLACEHOLDER
+    assert fetched.vote == VoteDecision.YES
 
 
 def test_get_votes_returns_all(db_session):
     create_application(db_session)
     _create_author(db_session)
-    create_vote(db_session, "00000001", "xxxyyy001", VoteDecision.PLACEHOLDER, "9999999")
-    create_vote(db_session, "00000001", "xxxyyy001", VoteDecision.PLACEHOLDER, "9999999")
+    create_vote(db_session, "00000001", "xxxyyy001", VoteDecision.YES, "9999999")
+    create_vote(db_session, "00000001", "xxxyyy001", VoteDecision.NO, "9999999")
 
     assert len(get_votes(db_session)) == 2
 

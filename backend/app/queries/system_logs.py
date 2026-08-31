@@ -11,10 +11,33 @@ def get_system_log_by_id(db: Session, log_id: uuid.UUID) -> SystemLog | None:
     """Look up a system log entry by its id. Returns None if it doesn't exist yet."""
     return db.execute(select(SystemLog).where(SystemLog.log_id == log_id)).scalar_one_or_none()
 
+def get_latest_system_log_by_entity_and_entity_id(db: Session, entity: str, entity_id: uuid.UUID) -> SystemLog | None:
+    return db.execute(select(SystemLog).where(
+            SystemLog.entity_name == entity,
+            SystemLog.entity_id == entity_id
+        ).order_by(SystemLog.changed_at.desc()).limit(1)
+    ).scalar_one_or_none()
 
 def get_system_logs(db: Session, skip: int = 0, limit: int = 100) -> list[SystemLog]:
     """List system log entries, paginated."""
     return list(db.execute(select(SystemLog).offset(skip).order_by(SystemLog.changed_at.desc()).limit(limit)).scalars())
+
+
+def list_logs(
+    db: Session,
+    entity_name: str | None = None,
+    entity_id: uuid.UUID | None = None,
+    skip: int = 0,
+    limit: int = 100,
+) -> list[SystemLog]:
+    """List system log entries, optionally filtered by entity name or id."""
+    stmt = select(SystemLog)
+    if entity_name is not None:
+        stmt = stmt.where(SystemLog.entity_name == entity_name)
+    if entity_id is not None:
+        stmt = stmt.where(SystemLog.entity_id == entity_id)
+    stmt = stmt.order_by(SystemLog.changed_at.desc()).offset(skip).limit(limit)
+    return list(db.execute(stmt).scalars())
 
 
 def create_system_log(

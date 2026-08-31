@@ -1,4 +1,3 @@
-import uuid
 
 from app.queries.student_documents import (
     create_student_document,
@@ -15,7 +14,7 @@ def _create(db_session, sha256_hash="a" * 64):
     return create_student_document(
         db_session,
         applicant.applicant_id,
-        uuid.uuid4(),
+        "storage_key",
         "transcript.pdf",
         "application/pdf",
         sha256_hash,
@@ -33,10 +32,10 @@ def test_create_and_get_student_document(db_session):
 def test_get_student_documents_returns_all(db_session):
     applicant = create_applicant(db_session)
     create_student_document(
-        db_session, applicant.applicant_id, uuid.uuid4(), "a.pdf", "application/pdf", "a" * 64
+        db_session, applicant.applicant_id, "somekey", "a.pdf", "application/pdf", "a" * 64
     )
     create_student_document(
-        db_session, applicant.applicant_id, uuid.uuid4(), "b.pdf", "application/pdf", "b" * 64
+        db_session, applicant.applicant_id, "somekey", "b.pdf", "application/pdf", "b" * 64
     )
 
     assert len(get_student_documents(db_session)) == 2

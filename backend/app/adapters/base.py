@@ -100,8 +100,9 @@ class BaseAdapter:
         """
 
         try:
+            
             self.validate_input_columns()
-
+            
         except ValueError as e:
             # raise instead of swallowing this: a bare None here used to break
             # any caller unpacking a 3-tuple, and an orchestrator needs a real

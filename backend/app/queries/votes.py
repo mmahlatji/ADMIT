@@ -16,6 +16,26 @@ def get_votes(db: Session, skip: int = 0, limit: int = 100) -> list[Vote]:
     return list(db.execute(select(Vote).offset(skip).order_by(Vote.voted_at.asc()).limit(limit)).scalars())
 
 
+def get_votes_by_application_number(db: Session, application_number: str) -> list[Vote]:
+    """List votes cast on one application, oldest first."""
+    return list(
+        db.execute(
+            select(Vote)
+            .where(Vote.application_number == application_number)
+            .order_by(Vote.voted_at.asc())
+        ).scalars()
+    )
+
+
+def get_votes_by_campus_id(db: Session, campus_id: str) -> list[Vote]:
+    """List votes cast by one applicant's committee, oldest first."""
+    return list(
+        db.execute(
+            select(Vote).where(Vote.campus_id == campus_id).order_by(Vote.voted_at.asc())
+        ).scalars()
+    )
+
+
 def create_vote(
     db: Session, application_number: str, campus_id: str, vote: VoteDecision, voter_id: str
 ) -> Vote:

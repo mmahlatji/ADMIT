@@ -18,10 +18,22 @@ from app.queries.academic_plans import create_academic_plan
 from app.queries.applicants import get_applicant_by_campus_id
 from app.queries.applications import get_application_by_number
 from app.queries.departments import create_department
+from app.services.import_runs import create_import_run
 from app.services.imports.orchestrator import run_import
 from tests.test_queries_notes import _create_author
 
 UPLOADED_BY = "9999999"
+
+
+def _make_import_run(db_session, source_type, file_name, sheet):
+    return create_import_run(
+        db_session,
+        source_type=source_type,
+        uploaded_by=UPLOADED_BY,
+        file_name=file_name,
+        status=ImportStatus.PROCESSING,
+        rows_total=len(sheet),
+    )
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 _OCTOBER = _REPO_ROOT / "CSC - ASR - 2023 - October 2022.xlsx"
@@ -46,12 +58,11 @@ def test_real_asr_sheets_import_sequentially(db_session):
 
     _seed(db_session)
 
+    oct_sheet = pd.read_excel(_OCTOBER)
     oct_run = run_import(
         db_session,
-        SourceType.ASR,
-        UPLOADED_BY,
-        "CSC - ASR - 2023 - October 2022.xlsx",
-        pd.read_excel(_OCTOBER),
+        _make_import_run(db_session, SourceType.ASR, "CSC - ASR - 2023 - October 2022.xlsx", oct_sheet),
+        oct_sheet,
     )
     assert oct_run.status == ImportStatus.COMPLETED
     assert oct_run.rows_total == 345
@@ -68,12 +79,11 @@ def test_real_asr_sheets_import_sequentially(db_session):
     assert incorrect.duplicate_application is True
     assert get_application_by_number(db_session, "1536605").application_status == ApplicationStatus.APPLIED
 
+    dec_sheet = pd.read_excel(_DECEMBER)
     dec_run = run_import(
         db_session,
-        SourceType.ASR,
-        UPLOADED_BY,
-        "CSC - ASR - 2023 - December 2022.xlsx",
-        pd.read_excel(_DECEMBER),
+        _make_import_run(db_session, SourceType.ASR, "CSC - ASR - 2023 - December 2022.xlsx", dec_sheet),
+        dec_sheet,
     )
     assert dec_run.status == ImportStatus.COMPLETED
     assert dec_run.rows_total == 383

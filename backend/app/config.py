@@ -10,6 +10,7 @@ class Settings(BaseSettings):
 
     # (TBD)
     supabase_url: str = ""
+    supabase_secret_key: str = ""
     environment: str = "development"
 
 

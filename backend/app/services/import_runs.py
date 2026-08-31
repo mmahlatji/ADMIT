@@ -1,12 +1,40 @@
+import uuid
+
 from sqlalchemy.orm import Session
 
 from app.models.import_runs import ImportRun, ImportStatus, SourceType
 from app.queries import import_runs as import_queries
 
 
-def get_import_run_by_source_type(db: Session, source_type: SourceType) -> ImportRun | None:
-    return import_queries.get_pending_import_run_by_source_type(db, source_type)
-
+def create_import_run(
+    db: Session,
+    source_type: SourceType,
+    uploaded_by: str,
+    file_name: str,
+    status: ImportStatus,
+    rows_total: int,
+    rows_loaded: int = 0,
+    rows_rejected: int = 0,
+    rows_auto_matched: int = 0,
+    rows_auto_new: int = 0,
+    rows_flagged: int = 0,
+) -> ImportRun:
+    if uploaded_by.strip() == "":
+        raise ValueError("Cannot create a note without an employee id")
+    import_run = import_queries.create_import_run(
+        db, 
+        source_type, 
+        uploaded_by, 
+        file_name, 
+        status,
+        rows_total,
+        rows_loaded,
+        rows_rejected,
+        rows_auto_matched,
+        rows_auto_new,
+        rows_flagged
+    )
+    return import_run
 
 def update_import_run(
     db: Session,
@@ -38,3 +66,11 @@ def update_import_run(
         rows_flagged
         )
     return import_run
+
+
+def list_import_runs(db: Session, skip: int = 0, limit: int = 100) -> list[ImportRun]:
+    return import_queries.get_import_runs(db, skip, limit)
+
+
+def get_import_run_by_id(db: Session, import_run_id: uuid.UUID) -> ImportRun | None:
+    return import_queries.get_import_run_by_id(db, import_run_id)

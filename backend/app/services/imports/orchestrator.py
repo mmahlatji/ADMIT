@@ -18,8 +18,8 @@ from app.adapters.uct_marks import UCTMarkAdapter
 from app.models.import_runs import ImportRun, ImportStatus, SourceType
 from app.models.matching_reviews import MatchStatus
 from app.models.staging import ValidationStatus
-from app.queries.import_runs import create_import_run, update_import_run
 from app.queries.matching_reviews import create_matching_review
+from app.services.import_runs import update_import_run
 from app.services.imports.asr import reconcile_asr_row
 from app.services.imports.marks import reconcile_marks_row
 from app.services.imports.motivations import reconcile_motivation_row
@@ -62,7 +62,7 @@ def _dispatch(
 
 
 def run_import(
-    db: Session, source_type: SourceType, uploaded_by: str, file_name: str, sheet: pd.DataFrame
+    db: Session, import_run: ImportRun, sheet: pd.DataFrame
 ) -> ImportRun:
     """Run one uploaded sheet through its adapter and reconcile it into the DB.
 
@@ -71,16 +71,17 @@ def run_import(
     Every row (clean or needs-review) lands in Staging regardless of outcome,
     tied to the one ImportRun this call creates. Outcomes that are skipped are
     loaded into the matching review table with the reasons for skipping.
-    """
-    import_run = create_import_run(
-        db,
-        source_type=source_type,
-        uploaded_by=uploaded_by,
-        file_name=file_name,
-        status=ImportStatus.PROCESSING,
-        rows_total=len(sheet),
-    )
 
+    Known cost, tracked as separate work rather than fixed here: this is
+    row-at-a-time and measures ~16 SQL round trips per row (~5.6k for a 345 row
+    ASR sheet). That is fine on local sqlite and slow against a hosted database.
+    The three obvious wins are dropping the db.refresh() that follows every
+    insert, hoisting resolve_plans out of the per-row loop (it issues the same
+    query for every row), and batching the natural-key lookups per sheet
+    instead of per row.
+    """
+    source_type = import_run.source_type
+    uploaded_by = import_run.uploaded_by
     adapter = _ADAPTER_BY_SOURCE[source_type](sheet)
     try:
         clean_df, needs_review_df, _violations = adapter.process()

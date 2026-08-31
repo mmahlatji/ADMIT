@@ -2,7 +2,7 @@ import uuid
 from datetime import date
 
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.models.applicants import Applicant, CitizenshipResidency, SexEnum, TitleEnum
 
@@ -18,6 +18,20 @@ def get_applicant_by_campus_id(db: Session, campus_id: str) -> Applicant | None:
     """Look up an applicant by their campus id (their natural key across imports)."""
     return db.execute(
         select(Applicant).where(Applicant.campus_id == campus_id)
+    ).scalar_one_or_none()
+
+
+def get_applicant_by_campus_id_with_relations(db: Session, campus_id: str) -> Applicant | None:
+    """Look up an applicant by campus id, eager-loading their detail view."""
+    return db.execute(
+        select(Applicant)
+        .options(
+            selectinload(Applicant.applications),
+            selectinload(Applicant.applicant_marks),
+            selectinload(Applicant.motivation),
+            selectinload(Applicant.notes),
+        )
+        .where(Applicant.campus_id == campus_id)
     ).scalar_one_or_none()
 
 

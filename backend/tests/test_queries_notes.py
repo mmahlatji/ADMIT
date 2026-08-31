@@ -1,7 +1,14 @@
 import uuid
 
 from app.models.users import User
-from app.queries.notes import create_note, delete_note, get_note_by_id, get_notes, update_note
+from app.queries.notes import (
+    create_note,
+    delete_note,
+    get_note_by_id,
+    get_notes,
+    get_notes_by_campus_id,
+    update_note,
+)
 from tests.test_queries_applicants import _create as create_applicant
 
 
@@ -49,3 +56,34 @@ def test_delete_note(db_session):
     delete_note(db_session, note)
 
     assert get_note_by_id(db_session, note.note_id) is None
+
+
+def test_get_notes_by_campus_id_filters(db_session):
+    create_applicant(db_session, "xxxyyy001", "1000001")
+    create_applicant(db_session, "xxxyyy002", "1000002")
+    _create_author(db_session)
+    create_note(db_session, "xxxyyy001", "9999999", "First")
+    create_note(db_session, "xxxyyy001", "9999999", "Second")
+    create_note(db_session, "xxxyyy002", "9999999", "Other")
+
+    notes = get_notes_by_campus_id(db_session, "xxxyyy001")
+
+    assert {note.content for note in notes} == {"First", "Second"}
+    assert get_notes_by_campus_id(db_session, "zzzyyy001") == []
+
+
+def test_get_notes_by_campus_id_newest_first(db_session):
+    from datetime import UTC, datetime
+
+    create_applicant(db_session)
+    _create_author(db_session)
+    older = create_note(db_session, "xxxyyy001", "9999999", "Older")
+    newer = create_note(db_session, "xxxyyy001", "9999999", "Newer")
+    older.created_at = datetime(2026, 1, 1, tzinfo=UTC)
+    newer.created_at = datetime(2026, 1, 2, tzinfo=UTC)
+    db_session.commit()
+
+    assert [note.content for note in get_notes_by_campus_id(db_session, "xxxyyy001")] == [
+        "Newer",
+        "Older",
+    ]

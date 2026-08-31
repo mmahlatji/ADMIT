@@ -4,6 +4,10 @@ from datetime import date, datetime
 from pydantic import BaseModel
 
 from app.models.applicants import CitizenshipResidency, SexEnum, TitleEnum
+from app.schemas.applicant_marks import ApplicantMarkResponse
+from app.schemas.applications import ApplicationResponse
+from app.schemas.motivations import MotivationResponse
+from app.schemas.notes import NoteResponse
 
 
 class ApplicantCreate(BaseModel):
@@ -49,3 +53,12 @@ class ApplicantResponse(ApplicantCreate):
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class ApplicantDetail(ApplicantResponse):
+    """An applicant with their related records attached for a detail view."""
+
+    applications: list[ApplicationResponse]
+    applicant_marks: list[ApplicantMarkResponse]
+    motivation: MotivationResponse | None
+    notes: list[NoteResponse]

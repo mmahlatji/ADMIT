@@ -3,8 +3,8 @@ from datetime import date
 
 from app.models.applications import Application, ApplicationStatus, Choice
 from app.services.state.application_state_service import (
-    determine_duplicate,
     compute_incorrect_and_requires_plan_change_flags,
+    determine_duplicate,
 )
 
 

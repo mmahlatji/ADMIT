@@ -13,8 +13,10 @@ if TYPE_CHECKING:
     from .applications import Application
     from .users import User
 
-class VoteDecision(Enum):
-    PLACEHOLDER = "placeholder"
+class VoteDecision(str, Enum):
+    YES = "yes"
+    NO = "no"
+    ABSTAIN = "abstain"
 
 
 class Vote(Base):

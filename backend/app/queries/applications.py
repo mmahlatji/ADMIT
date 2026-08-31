@@ -39,6 +39,26 @@ def get_applications(db: Session, skip: int = 0, limit: int = 100) -> list[Appli
     return list(db.execute(select(Application).offset(skip).order_by(Application.campus_id.asc()).limit(limit)).scalars())
 
 
+def list_applications(
+    db: Session,
+    campus_id: str | None = None,
+    application_status: ApplicationStatus | None = None,
+    application_number: str | None = None,
+    skip: int = 0,
+    limit: int = 100,
+) -> list[Application]:
+    """List applications, optionally filtered by campus id, status or number."""
+    stmt = select(Application)
+    if campus_id is not None:
+        stmt = stmt.where(Application.campus_id == campus_id)
+    if application_status is not None:
+        stmt = stmt.where(Application.application_status == application_status)
+    if application_number is not None:
+        stmt = stmt.where(Application.application_number == application_number)
+    stmt = stmt.order_by(Application.campus_id.asc()).offset(skip).limit(limit)
+    return list(db.execute(stmt).scalars())
+
+
 def create_application(
     db: Session,
     application_number: str,

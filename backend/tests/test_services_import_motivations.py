@@ -18,7 +18,7 @@ def _row(**overrides):
 def test_created_motivation_backfills_name_from_applicant(db_session):
     create_applicant(db_session)
 
-    outcome, campus_id, flag_reason = reconcile_motivation_row(db_session, IMPORT_RUN_ID, CHANGED_BY, _row())
+    outcome, campus_id, _ = reconcile_motivation_row(db_session, IMPORT_RUN_ID, CHANGED_BY, _row())
 
     assert outcome == ReconcileOutcome.CREATED
     assert campus_id == "xxxyyy001"

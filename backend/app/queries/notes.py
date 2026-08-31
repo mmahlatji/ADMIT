@@ -16,6 +16,17 @@ def get_notes(db: Session, skip: int = 0, limit: int = 100) -> list[Note]:
     return list(db.execute(select(Note).offset(skip).order_by(Note.created_at.desc()).limit(limit)).scalars())
 
 
+def get_notes_by_campus_id(db: Session, campus_id: str) -> list[Note]:
+    """List one applicant's notes, newest first"""
+    return list(
+        db.scalars(
+            select(Note).where(
+                Note.campus_id == campus_id
+            ).order_by(Note.created_at.desc())
+        )
+    )
+
+
 def create_note(db: Session, campus_id: str, author_id: str, content: str) -> Note:
     """Insert a new note row."""
     note = Note(
@@ -27,7 +38,7 @@ def create_note(db: Session, campus_id: str, author_id: str, content: str) -> No
     return note
 
 
-def update_note(
+def update_note( # why would you want to update a note ? Just make another one
     db: Session,
     note: Note,
     campus_id: str | None = None,

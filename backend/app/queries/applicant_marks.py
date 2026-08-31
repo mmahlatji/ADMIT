@@ -3,7 +3,7 @@ import uuid
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models.applicant_marks import ApplicantMark
+from app.models.applicant_marks import ApplicantMark, ResultCode
 
 
 def get_applicant_mark_by_id(db: Session, mark_id: uuid.UUID) -> ApplicantMark | None:
@@ -32,11 +32,11 @@ def get_applicant_marks(db: Session, skip: int = 0, limit: int = 100) -> list[Ap
 
 
 def create_applicant_mark(
-    db: Session, campus_id: str, course_code: str, mark: str
+    db: Session, campus_id: str, course_code: str, mark: int, result_code: ResultCode
 ) -> ApplicantMark:
     """Insert a new applicant mark row."""
     applicant_mark = ApplicantMark(
-        mark_id=uuid.uuid4(), campus_id=campus_id, course_code=course_code, mark=mark
+        mark_id=uuid.uuid4(), campus_id=campus_id, course_code=course_code, mark=mark, result_code=result_code
     )
     db.add(applicant_mark)
     db.flush()
@@ -49,10 +49,11 @@ def update_applicant_mark(
     applicant_mark: ApplicantMark,
     campus_id: str | None = None,
     course_code: str | None = None,
-    mark: str | None = None,
+    mark: int | None = None,
+    result_code: ResultCode | None = None,
 ) -> ApplicantMark:
     """Partially update an applicant mark, only sets fields explicitly passed."""
-    fields = {"campus_id": campus_id, "course_code": course_code, "mark": mark}
+    fields = {"campus_id": campus_id, "course_code": course_code, "mark": mark, "result_code": result_code}
     for field, value in fields.items():
         if value is not None:
             setattr(applicant_mark, field, value)

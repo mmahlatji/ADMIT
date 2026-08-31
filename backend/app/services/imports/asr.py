@@ -36,8 +36,8 @@ from app.services.state.application_state_machine import (
 )
 from app.services.state.application_state_service import (
     compute_incorrect_and_requires_plan_change_flags,
-    get_action_reason,
     determine_duplicate,
+    get_action_reason,
     resolve_plans,
 )
 
@@ -103,12 +103,13 @@ def reconcile_asr_row(
     unless the row was skipped for manual matching.
     """
     campus_id = row["campus_id"]
-
+    row["application_number"] = str(row["application_number"])
+    row["employee_id"] = str(row["employee_id"])
     # campus_id/employee_id/first_name/last_name/citizenship_residency are all
     # critical (NON_NULL) columns on the ASR adapter, so a "clean" row is
     # guaranteed to have them - safe to index directly rather than .get()
     applicant_fields = {
-        "employee_id": row["employee_id"],
+        "employee_id": str(row["employee_id"]),
         "first_name": row["first_name"],
         "last_name": row["last_name"],
         "title": coerce(row.get("title"), TITLE_MAP, "title"),
@@ -145,7 +146,6 @@ def reconcile_asr_row(
 
     # Applicant lifecycle management, incorrect flagging and duplicate detection
     application_number = row["application_number"]
-
     action_reason = get_action_reason(row)
     plans = resolve_plans(db, row["academic_plan1"])
 

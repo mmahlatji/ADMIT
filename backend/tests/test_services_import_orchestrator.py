@@ -8,10 +8,22 @@ from app.queries.academic_plans import create_academic_plan
 from app.queries.applicants import get_applicant_by_campus_id
 from app.queries.matching_reviews import get_matching_reviews
 from app.queries.staging import get_staging_rows
+from app.services.import_runs import create_import_run
 from app.services.imports.orchestrator import run_import
 from tests.test_queries_notes import _create_author
 
 UPLOADED_BY = "9999999"
+
+
+def _make_import_run(db_session, source_type, file_name, sheet):
+    return create_import_run(
+        db_session,
+        source_type=source_type,
+        uploaded_by=UPLOADED_BY,
+        file_name=file_name,
+        status=ImportStatus.PROCESSING,
+        rows_total=len(sheet),
+    )
 
 
 def _seed_plans(db_session):
@@ -61,7 +73,7 @@ def test_fresh_import_completes_with_accurate_counters(db_session):
     _seed_plans(db_session)
     sheet = _asr_sheet(rows=1)
 
-    import_run = run_import(db_session, SourceType.ASR, UPLOADED_BY, "asr.xlsx", sheet)
+    import_run = run_import(db_session, _make_import_run(db_session, SourceType.ASR, "asr.xlsx", sheet), sheet)
 
     assert import_run.status == ImportStatus.COMPLETED
     assert import_run.rows_total == 1
@@ -78,7 +90,7 @@ def test_needs_review_rows_are_staged_rejected_and_excluded_from_reconciliation(
     sheet = _asr_sheet(rows=2)
     sheet.loc[1, "Employee Id"] = None  # fails the EMPLOYEE_ID NON_NULL critical rule
 
-    import_run = run_import(db_session, SourceType.ASR, UPLOADED_BY, "asr.xlsx", sheet)
+    import_run = run_import(db_session, _make_import_run(db_session, SourceType.ASR, "asr.xlsx", sheet), sheet)
 
     assert import_run.status == ImportStatus.COMPLETED
     assert import_run.rows_total == 2
@@ -95,7 +107,7 @@ def test_sheet_missing_required_columns_fails_the_whole_run(db_session):
     _create_author(db_session)
     sheet = _asr_sheet(rows=1).drop(columns=["Campus Id"])
 
-    import_run = run_import(db_session, SourceType.ASR, UPLOADED_BY, "asr.xlsx", sheet)
+    import_run = run_import(db_session, _make_import_run(db_session, SourceType.ASR, "asr.xlsx", sheet), sheet)
 
     assert import_run.status == ImportStatus.FAILED
     assert get_staging_rows(db_session) == []
@@ -105,9 +117,9 @@ def _marks_sheet(rows: int = 1) -> pd.DataFrame:
     base = {
         "Student ID": "UNKNOWN1",
         "CSC2001F": "75",
-        "CSC2002F": None,
+        "CSC2002S": None,
         "CSC3002F": None,
-        "CSC3003F": None,
+        "CSC3003S": None,
     }
     return pd.DataFrame([base] * rows)
 
@@ -116,7 +128,7 @@ def test_flagged_marks_row_opens_matching_review(db_session):
     _create_author(db_session)
     sheet = _marks_sheet(rows=1)
 
-    import_run = run_import(db_session, SourceType.UCT_MARKS, UPLOADED_BY, "marks.csv", sheet)
+    import_run = run_import(db_session, _make_import_run(db_session, SourceType.UCT_MARKS, "marks.csv", sheet), sheet)
 
     assert import_run.status == ImportStatus.COMPLETED
 
@@ -140,14 +152,15 @@ def test_asr_app_number_conflict_opens_matching_review(db_session):
     _create_author(db_session)
     _seed_plans(db_session)
 
-    run_import(db_session, SourceType.ASR, UPLOADED_BY, "asr1.csv", _asr_sheet(rows=1))
+    sheet = _asr_sheet(rows=1)
+    run_import(db_session, _make_import_run(db_session, SourceType.ASR, "asr1.csv", sheet), sheet)
 
     conflicting = _asr_sheet(rows=1)
     conflicting.loc[0, "Campus Id"] = "654321"
     conflicting.loc[0, "Employee Id"] = "EMP002"
     conflicting.loc[0, "Cell Phone"] = "0829999999"
     conflicting.loc[0, "Email Address"] = "other@example.com"
-    run_import(db_session, SourceType.ASR, UPLOADED_BY, "asr2.csv", conflicting)
+    run_import(db_session, _make_import_run(db_session, SourceType.ASR, "asr2.csv", conflicting), conflicting)
 
     reviews = get_matching_reviews(db_session)
     assert len(reviews) == 1
@@ -162,11 +175,12 @@ def test_asr_outdated_effective_date_opens_matching_review(db_session):
     _create_author(db_session)
     _seed_plans(db_session)
 
-    run_import(db_session, SourceType.ASR, UPLOADED_BY, "asr1.csv", _asr_sheet(rows=1))
+    sheet = _asr_sheet(rows=1)
+    run_import(db_session, _make_import_run(db_session, SourceType.ASR, "asr1.csv", sheet), sheet)
 
     outdated = _asr_sheet(rows=1)
     outdated.loc[0, "Effective Date"] = pd.Timestamp("2026-01-01")
-    run_import(db_session, SourceType.ASR, UPLOADED_BY, "asr2.csv", outdated)
+    run_import(db_session, _make_import_run(db_session, SourceType.ASR, "asr2.csv", outdated), outdated)
 
     reviews = get_matching_reviews(db_session)
     assert len(reviews) == 1

@@ -8,7 +8,7 @@ class DocumentCreate(BaseModel):
     """Fields the client supplies to create an import-run document (e.g. the raw uploaded file)."""
 
     import_run_id: uuid.UUID
-    storage_key: uuid.UUID
+    storage_key: str
     original_file_name: str
     content_type: str
     sha256_hash: str
@@ -18,7 +18,7 @@ class DocumentUpdate(BaseModel):
     """Partial update for an import-run document, only set fields are applied."""
 
     import_run_id: uuid.UUID | None = None
-    storage_key: uuid.UUID | None = None
+    storage_key: str | None = None
     original_file_name: str | None = None
     content_type: str | None = None
     sha256_hash: str | None = None
@@ -31,3 +31,9 @@ class DocumentResponse(DocumentCreate):
     uploaded_at: datetime
 
     model_config = {"from_attributes": True}
+
+class DocumentDownloadResponse(BaseModel):
+    """Carries the short lived download link"""
+    original_file_name: str
+    signed_url: str
+    content_type: str

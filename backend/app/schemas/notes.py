@@ -1,22 +1,22 @@
 import uuid
 from datetime import datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class NoteCreate(BaseModel):
     """Fields the client supplies to create a note."""
 
-    campus_id: str
-    author_id: str
-    content: str
+    campus_id: str = Field(min_length=1, max_length=9)
+    author_id: str = Field(min_length=1)
+    content: str = Field(min_length=1)
 
 
 class NoteUpdate(BaseModel):
     """Partial update for a note, only set fields are applied."""
 
-    campus_id: str | None = None
-    author_id: str | None = None
+    campus_id: str | None = Field(min_length=1, max_length=9)
+    author_id: str | None = Field(min_length=1, max_length=7)
     content: str | None = None
 
 

@@ -21,7 +21,7 @@ def get_student_documents(db: Session, skip: int = 0, limit: int = 100) -> list[
 def create_student_document(
     db: Session,
     applicant_id: uuid.UUID,
-    storage_key: uuid.UUID,
+    storage_key: str,
     original_file_name: str,
     content_type: str,
     sha256_hash: str,
@@ -45,7 +45,7 @@ def update_student_document(
     db: Session,
     document: StudentDocument,
     applicant_id: uuid.UUID | None = None,
-    storage_key: uuid.UUID | None = None,
+    storage_key: str | None = None,
     original_file_name: str | None = None,
     content_type: str | None = None,
     sha256_hash: str | None = None,

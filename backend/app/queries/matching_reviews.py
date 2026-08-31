@@ -20,6 +20,21 @@ def get_matching_reviews(db: Session, skip: int = 0, limit: int = 100) -> list[M
     return list(db.execute(select(MatchingReview).offset(skip).order_by(MatchingReview.match_id.asc()).limit(limit)).scalars())
 
 
+def get_matching_reviews_by_status(
+    db: Session, status: MatchStatus, skip: int = 0, limit: int = 100
+) -> list[MatchingReview]:
+    """List matching reviews filtered by status, paginated."""
+    return list(
+        db.execute(
+            select(MatchingReview)
+            .where(MatchingReview.status == status)
+            .order_by(MatchingReview.match_id.asc())
+            .offset(skip)
+            .limit(limit)
+        ).scalars()
+    )
+
+
 def create_matching_review(
     db: Session,
     staging_row_id: uuid.UUID,

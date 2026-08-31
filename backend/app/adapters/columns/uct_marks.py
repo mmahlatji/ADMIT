@@ -10,9 +10,9 @@ from app.adapters.validation.rules import ValidationRules as vr
 class UCTMarksInputColumn(Enum):
     STUDENT_ID = "Student ID"
     CSC2001F = "CSC2001F"
-    CSC2002F = "CSC2002F"
+    CSC2002S = "CSC2002S"
     CSC3002F = "CSC3002F"
-    CSC3003F = "CSC3003F"
+    CSC3003S = "CSC3003S"
 
 
 UCT_MARKS_CRITICAL_COLUMNS = {UCTMarksInputColumn.STUDENT_ID: [vr.NON_NULL]}
@@ -24,7 +24,7 @@ the field will remain as ingested and handled in the normalization layer. d
 UCT_MARKS_OUTPUT_COLUMNS = {
     UCTMarksInputColumn.STUDENT_ID: "campus_id",
     UCTMarksInputColumn.CSC2001F: "CSC2001F",
-    UCTMarksInputColumn.CSC2002F: "CSC2002F",
+    UCTMarksInputColumn.CSC2002S: "CSC2002S",
     UCTMarksInputColumn.CSC3002F: "CSC3002F",
-    UCTMarksInputColumn.CSC3003F: "CSC3003F",
+    UCTMarksInputColumn.CSC3003S: "CSC3003S",
 }

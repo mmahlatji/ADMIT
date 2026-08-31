@@ -1,8 +1,10 @@
 import uuid
+from datetime import UTC, datetime
 
 from app.models.system_logs import ChangeSource
 from app.queries.system_logs import (
     create_system_log,
+    get_latest_system_log_by_entity_and_entity_id,
     get_system_log_by_id,
     get_system_logs,
     update_system_log,
@@ -58,4 +60,51 @@ def test_update_system_log_only_sets_passed_fields(db_session):
     updated = update_system_log(db_session, log, reason=ChangeSource.DECISION)
     assert updated.entity_name == "applicant_marks"
     assert updated.reason == ChangeSource.DECISION
+
+
+
+def test_get_latest_system_log_returns_none_when_no_logs(db_session):
+    _create_author(db_session)
+
+    assert (
+        get_latest_system_log_by_entity_and_entity_id(db_session, "applicant_marks", uuid.uuid4())
+        is None
+    )
+
+
+def test_get_latest_system_log_returns_sole_log(db_session):
+    log = _create(db_session)
+
+    found = get_latest_system_log_by_entity_and_entity_id(
+        db_session, "applicant_marks", log.entity_id
+    )
+    assert found is not None
+    assert found.log_id == log.log_id
+
+
+def test_get_latest_system_log_returns_most_recent(db_session):
+    _create_author(db_session)
+    entity_id = uuid.uuid4()
+    older = create_system_log(
+        db_session,
+        entity_name="applicant_marks",
+        entity_id=entity_id,
+        changed_by="9999999",
+        reason=ChangeSource.IMPORT,
+    )
+    newer = create_system_log(
+        db_session,
+        entity_name="applicant_marks",
+        entity_id=entity_id,
+        changed_by="9999999",
+        reason=ChangeSource.MANUAL_EDIT,
+    )
+    # SQLite's CURRENT_TIMESTAMP is second-granular, so force a clear ordering
+    older.changed_at = datetime(2026, 1, 1, tzinfo=UTC)
+    newer.changed_at = datetime(2026, 1, 2, tzinfo=UTC)
+    db_session.flush()
+
+    found = get_latest_system_log_by_entity_and_entity_id(db_session, "applicant_marks", entity_id)
+    assert found is not None
+    assert found.log_id == newer.log_id
 

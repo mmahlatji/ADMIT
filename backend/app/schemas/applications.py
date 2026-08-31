@@ -53,3 +53,10 @@ class ApplicationResponse(ApplicationCreate):
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class ApplicationStatusTransition(BaseModel):
+    """Request body for manually changing an application's status."""
+
+    status: ApplicationStatus
+    reason: DenyReason | None = None

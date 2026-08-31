@@ -15,6 +15,13 @@ class VoteCreate(BaseModel):
     voter_id: str
 
 
+class VoteCreateRequest(BaseModel):
+    """Fields the client supplies to cast a vote. The voter is the logged-in user."""
+
+    application_number: str
+    vote: VoteDecision
+
+
 class VoteUpdate(BaseModel):
     """Partial update for a vote, only set fields are applied."""
 

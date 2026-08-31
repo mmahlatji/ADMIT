@@ -3,15 +3,16 @@ from datetime import datetime
 
 from pydantic import BaseModel
 
+from app.models.applicant_marks import ResultCode
+
 
 class ApplicantMarkCreate(BaseModel):
     """Fields the client supplies to create an applicant mark."""
 
     campus_id: str
     course_code: str
-    # plain string on purpose: real mark cells hold result codes (PA, DE, AB,
-    # 44F, ...) mixed with plain integers, not just numbers.
-    mark: str
+    mark: int
+    result_code: ResultCode
 
 
 class ApplicantMarkUpdate(BaseModel):
@@ -19,7 +20,8 @@ class ApplicantMarkUpdate(BaseModel):
 
     campus_id: str | None = None
     course_code: str | None = None
-    mark: str | None = None
+    mark: int | None = None
+    result_code: ResultCode | None = None
 
 
 class ApplicantMarkResponse(ApplicantMarkCreate):
