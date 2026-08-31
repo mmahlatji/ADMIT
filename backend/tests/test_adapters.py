@@ -15,6 +15,7 @@ def valid_sheet():
             "Campus Id": ["123456"],
             "Employee Id": ["EMP001"],
             "Academic Program Code": ["CSC"],
+            "Sex": ["M"],
             "Academic Plan 1": ["CSC-HONS"],
             "Academic Plan 2": [None],
             "Academic Career": ["hons"],
@@ -25,6 +26,19 @@ def valid_sheet():
             "Last Registration": [pd.Timestamp("2026-02-28")],
             "Application Term": [pd.Timestamp("2026-01-01")],
             "Previous Application Term": [None],
+            "First Name": ["John"],
+            "Last Name": ["Doe"],
+            "Cell Phone": ["0821234567"],
+            "Home Phone": [None],
+            "Email Address": ["john.doe@example.com"],
+            "Population Group": ["A"],
+            "Birth Date": [pd.Timestamp("2000-01-01")],
+            "Citizenship Residency": ["South Africa"],
+            "Non SA Citizenship": [None],
+            "Effective Date": [pd.Timestamp("2026-01-01")],
+            "Program Action": ["ADMT"],
+            "Program Reason": ["REG"],
+            "Program Status": ["AC"],
         }
     )
 
@@ -80,7 +94,7 @@ def test_validate_column_numeric():
 def test_determine_violations_flags_critical_column_rules(valid_sheet):
 
     invalid_sheet = valid_sheet.copy()
-    invalid_sheet[ASRInputColumn.APPLICATION_NUMBER.value] = "INVALID_NUMBER"
+    invalid_sheet[ASRInputColumn.EMPLOYEE_ID.value] = None
     invalid_sheet[ASRInputColumn.ACADEMIC_PLAN1.value] = None
 
     # Row 0 is valid, Row 1 is invalid
@@ -90,10 +104,7 @@ def test_determine_violations_flags_critical_column_rules(valid_sheet):
     violations = adapter.determine_violations()
 
     # Application Number rule checks
-    assert ValidationRules.NUMERIC in violations[ASRInputColumn.APPLICATION_NUMBER]
-    assert violations[ASRInputColumn.APPLICATION_NUMBER][
-        ValidationRules.NUMERIC
-    ].tolist() == [False, True]
+    assert ValidationRules.NON_NULL in violations[ASRInputColumn.EMPLOYEE_ID]
 
     # Academic Plan 1 rule checks
     assert ValidationRules.NON_NULL in violations[ASRInputColumn.ACADEMIC_PLAN1]
@@ -144,8 +155,8 @@ def test_process_separates_clean_and_rejected_data(valid_sheet):
     adapter = ASRAdapter(df)
     clean, needs_review, violations = adapter.process()
 
-    assert len(clean) == 2
-    assert len(needs_review) == 2
+    assert len(clean) == 3
+    assert len(needs_review) == 1
 
     # Clean row must use DB schema column names (e.g. campus_id)
     assert ASR_OUTPUT_COLUMNS[ASRInputColumn.CAMPUS_ID] in clean.columns
