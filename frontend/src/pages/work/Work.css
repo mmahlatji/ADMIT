@@ -1,0 +1,184 @@
+/* Shared styling for the working screens (decisions, reviews, workspace,
+   roles, rules). Uses the same tokens as the rest of the app so these follow
+   the light/dark switch without any extra work. */
+
+.work-page {
+  min-height: 100vh;
+  background: var(--bg-main);
+  color: var(--text-primary);
+}
+
+.work-body {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.work-title {
+  margin: 0 0 0.25rem;
+  font-size: 1.5rem;
+}
+
+.work-subtitle {
+  margin: 0 0 1.5rem;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.work-toolbar {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.work-input,
+.work-select {
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--border-input);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+}
+
+.work-input:focus,
+.work-select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-focus);
+}
+
+.work-input {
+  flex: 1;
+  min-width: 200px;
+}
+
+.work-button {
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  border: none;
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.work-button:disabled {
+  background: var(--text-placeholder);
+  cursor: not-allowed;
+}
+
+.work-button.secondary {
+  background: transparent;
+  border: 1px solid var(--border-input);
+  color: var(--text-primary);
+}
+
+.work-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: 8px;
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.work-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.work-table th,
+.work-table td {
+  padding: 0.65rem 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border-card);
+}
+
+.work-table th {
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.work-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.work-table tbody tr:hover {
+  background: var(--bg-main);
+}
+
+/* wide tables scroll inside their own box rather than the page */
+.work-scroll {
+  overflow-x: auto;
+}
+
+.pill {
+  display: inline-block;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 1px solid var(--border-card);
+  white-space: nowrap;
+}
+
+.pill.applied { color: #2563eb; }
+.pill.reviewed { color: #7c3aed; }
+.pill.offer { color: #d97706; }
+.pill.accepted { color: #059669; }
+.pill.ready { color: #059669; }
+.pill.denied { color: var(--color-error); }
+.pill.cancelled { color: var(--text-secondary); }
+.pill.flag { color: #d97706; }
+
+.work-empty,
+.work-loading {
+  padding: 2rem;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.work-error {
+  color: var(--color-error);
+  font-size: 0.875rem;
+  margin: 0.5rem 0;
+}
+
+.work-stat-row {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.work-stat {
+  min-width: 120px;
+}
+
+.work-stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.work-stat-label {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.work-muted {
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+}

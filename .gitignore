@@ -18,6 +18,8 @@ npm-debug.log*
 
 # Env files (never commit real secrets, .env.example stays tracked)
 .env
+# local backups of .env: these hold real credentials
+.env.backup-*
 .env.local
 .env.*.local
 
@@ -41,3 +43,5 @@ DATA_MODEL.md
 *.xlsx
 !backend/tests/data/*.xlsx
 
+# local editor/agent tooling, not part of the project
+.claude/

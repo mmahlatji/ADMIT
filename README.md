@@ -1,93 +1,275 @@
-# admit-management-system
+# ADMIT
 
+Postgraduate admissions management for the UCT Computer Science honours intake.
+Admissions data arrives in waves across the cycle, from several systems, in
+spreadsheets that do not agree with each other. ADMIT ingests those sheets,
+reconciles them against what is already on file, and keeps a record of what
+changed and why.
 
+- **Heterogeneous ingestion**, one adapter per source sheet (ASR, UCT marks, IT
+  transcripts, motivations), each normalising its own column vocabulary.
+- **Incremental updates**: re-importing a sheet updates records in place
+  instead of duplicating them, and never silently overturns a decision a
+  convenor has already made.
+- **Configurable admissions rules**, a rule engine that previews the effect of
+  a proposed rule on the current intake before it's saved.
+- **Applicant lifecycle**, a state machine driving each application through
+  applied, reviewed, offered, accepted, denied or cancelled.
 
-## Getting started
+## Stack
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+| | |
+|---|---|
+| Backend | FastAPI, SQLAlchemy 2.0, Alembic, pandas, uv |
+| Frontend | React 18, TypeScript, Vite, React Router, Zod |
+| Database | PostgreSQL 17 (Supabase) |
+| Auth & storage | Supabase (JWT auth, object storage for uploaded sheets) |
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+## Prerequisites
 
-## Add your files
+- Docker, if you just want the app running (see below)
+- Python 3.11+ and [uv](https://docs.astral.sh/uv/), if you're developing the backend
+- Node 18+, if you're developing the frontend
+- Access to the team's Supabase project either way. There's no offline mode,
+  auth and the database both go through it
 
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
+## Running it with Docker
+
+This is the fastest way to get the whole app up, and it's what to use if you
+just need it running rather than actively developing it.
+
+**1. Get both `.env` files sorted first.** Docker doesn't create these for
+you, and the containers will start and immediately fail without them:
+
+```bash
+cp backend/.env.example backend/.env
+cp frontend/.env.example frontend/.env
+```
+
+Then fill both in following the [Environment variables](#environment-variables)
+section below, same as the non-Docker setup. `docker-compose.yml` reads
+`backend/.env` and `frontend/.env` directly, so once these two files are
+correct, Docker is correct.
+
+**2. Build and run the api and web services:**
+
+```bash
+docker compose up api web
+```
+
+First build takes a few minutes (pulling base images, `npm install`, `uv sync`
+inside the containers). After that, `docker compose up api web` again reuses
+the built images and starts in seconds.
+
+**3. Wait for the api to say it's ready.** Watch the logs; you want to see:
 
 ```
-cd existing_repo
-git remote add origin https://gitlab.cs.uct.ac.za/mwlche003/admit-management-system.git
-git branch -M main
-git push -uf origin main
+api-1  | INFO:     Application startup complete.
+api-1  | INFO:     Uvicorn running on http://0.0.0.0:8000
 ```
 
-## Integrate with your tools
+**4. Open the app.** Frontend at http://localhost:5173, API at
+http://localhost:8000, interactive API docs at http://localhost:8000/docs.
 
-- [ ] [Set up project integrations](https://gitlab.cs.uct.ac.za/mwlche003/admit-management-system/-/settings/integrations)
+**5. Run migrations once, from your host, against the same database the
+containers are pointed at:**
 
-## Collaborate with your team
+```bash
+cd backend && uv run alembic upgrade head
+```
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
+(This needs `uv sync` on your host too, just for this one command. The
+containers run the app; they don't run one-off admin commands for you.)
 
-## Test and Deploy
+To stop everything: `Ctrl+C`, or `docker compose down` from another terminal.
+To rebuild after pulling changes that touch dependencies:
+`docker compose build api web`.
 
-Use the built-in continuous integration in GitLab.
+`docker-compose.yml` also defines a `test_db` service, a throwaway local
+Postgres used only for testing a migration before it touches Supabase.
+Nothing in normal day-to-day use needs it; see [Migrations](#migrations).
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+## Running it without Docker
 
-***
+### 1. Backend environment
 
-# Editing this README
+```bash
+cd backend
+cp .env.example .env
+```
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+Then see [Environment variables](#environment-variables) below.
 
-## Suggestions for a good README
+### 2. Frontend environment
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+```bash
+cd frontend
+cp .env.example .env
+```
 
-## Name
-Choose a self-explaining name for your project.
+Same section below.
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+### 3. Install and migrate
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+```bash
+cd backend && uv sync
+uv run alembic upgrade head
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+cd ../frontend && npm install
+```
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+### 4. Run
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+Two terminals:
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+```bash
+cd backend && uv run uvicorn app.main:app --reload --port 8000
+```
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+```bash
+cd frontend && npm run dev
+```
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+The app is at http://localhost:5173, the API at http://localhost:8000, and
+interactive API docs at http://localhost:8000/docs.
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+## Environment variables
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+### Backend (`backend/.env`)
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+| Variable | Where to find it |
+|---|---|
+| `DATABASE_URL` | Supabase dashboard, Connect, **Session pooler** (see note below) |
+| `SUPABASE_URL` | Project Settings, Data API, Project URL |
+| `SUPABASE_SECRET_KEY` | Project Settings, API Keys, **Secret keys**. Required, without it every file upload fails |
+| `ENVIRONMENT` | `development` |
 
-## License
-For open source projects, say how it is licensed.
+**Two things about `DATABASE_URL` that will bite you.**
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+Use the **Session pooler** string, not Direct connection. Direct connections
+are IPv6-only, and most networks (including, apparently, most of ours) can't
+reach them:
+
+```
+postgresql+psycopg://postgres.<project-ref>:<password>@aws-1-eu-west-1.pooler.supabase.com:5432/postgres
+```
+
+The scheme has to be `postgresql+psycopg` (psycopg 3). A plain `postgresql://`
+resolves to psycopg2, which isn't installed, and fails with
+`ModuleNotFoundError: No module named 'psycopg2'`.
+
+If your database password contains any of ``$ % & + [ ] / @ : #`` it needs to
+be percent-encoded, or the URL gets silently misparsed:
+
+```bash
+python -c "import urllib.parse,getpass; print(urllib.parse.quote(getpass.getpass('pw: '), safe=''))"
+```
+
+### Frontend (`frontend/.env`)
+
+| Variable | Value |
+|---|---|
+| `VITE_SUPABASE_URL` | same as `SUPABASE_URL` |
+| `VITE_SUPABASE_ANON_KEY` | Project Settings, API Keys, **Publishable key** (safe in a browser) |
+| `VITE_API_BASE_URL` | `http://localhost:8000` |
+
+## First account
+
+Roles aren't self-assigned. Sign up at `/signup` (a UCT email and a 7-digit
+employee number are both required), which creates the account with **no
+role** and leaves it pending. A convenor then grants a role via
+`POST /users/{user_id}/role`. Until then the account can sign in but reaches
+nothing else.
+
+For the very first convenor on a fresh database, set the role directly:
+
+```sql
+UPDATE users SET role = 'convenor' WHERE employee_id = '<your employee id>';
+```
+
+## Tests
+
+```bash
+cd backend
+uv run pytest -q
+uv run ruff check .
+```
+
+The integration tests under `backend/tests/data/` run real synthetic sheets
+through the whole import pipeline. That data is committed deliberately; every
+other spreadsheet is gitignored, so a real faculty export can't get committed
+by habit.
+
+Frontend:
+
+```bash
+cd frontend
+npx tsc --noEmit
+npm run build
+```
+
+## Importing sheets
+
+Upload at `/file-upload`, or `POST /imports/{source_type}` with `source_type`
+one of `asr`, `uct_marks`, `it_transcripts`, `motivations`. Convenor or admin
+only.
+
+**Order matters.** Only the ASR sheet creates applicants; marks, transcripts
+and motivations all look one up by campus id and flag the row if it's
+missing. Upload ASR first. The upload page enforces this, the API doesn't.
+
+**Import older sheets first.** A sheet whose effective dates predate what's
+on file is treated as stale and flagged, which is deliberate. Loading
+December before October will flag almost every October row.
+
+**Uploads are slow from a laptop.** The database is in `eu-west-1`, so from
+South Africa each query costs about 160ms and a 345-row sheet takes several
+minutes. That's network latency, not the import itself: the same work takes
+seconds when the API runs in the same region. Use a trimmed sheet for demos.
+
+## Migrations
+
+```bash
+cd backend
+uv run alembic upgrade head                        # apply
+uv run alembic revision --autogenerate -m "..."    # create
+uv run alembic check                               # models vs schema
+```
+
+Autogenerate output always needs review. On Postgres it won't create enum
+types before using them, it emits `NOT NULL` columns with no default (which
+fails on a populated table), and it won't add the `USING` clause a type
+change needs. Run every generated migration against a scratch database
+before committing it, using the `test_db` service from `docker-compose.yml`:
+
+```bash
+docker compose up -d test_db
+DATABASE_URL="postgresql+psycopg://admin:admin@localhost:5433/admit_db" uv run alembic upgrade head
+```
+
+## Layout
+
+```
+backend/
+  app/
+    adapters/     one module per source sheet, column vocab and validation
+    models/       SQLAlchemy tables
+    queries/      data access, no business logic
+    routers/      HTTP endpoints, thin
+    schemas/      Pydantic request and response shapes
+    services/
+      imports/    reconciling adapter output into the database
+      state/      applicant lifecycle state machine
+      storage/    Supabase object storage
+    rule_engine.py
+  alembic/versions/
+  tests/
+frontend/src/
+  context/    auth context
+  lib/        supabase client, api wrapper, auth helpers
+  pages/      signin, signup, dashboard, uploads, and the convenor workspace
+```
+
+Layering is `router -> service -> queries -> database`. Never skip a layer.
+`get_db` owns the transaction: query helpers `flush()`, and the request
+commits once at the end.

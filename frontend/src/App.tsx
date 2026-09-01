@@ -4,6 +4,11 @@ import SignIn from "./pages/auth/SignIn";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import Dashboard from "./pages/dashboard/Dashboard";
 import { FileUpload } from "./pages/uploads/FileUpload";
+import Decisions from "./pages/work/Decisions";
+import Reviews from "./pages/work/Reviews";
+import Workspace from "./pages/work/Workspace";
+import Roles from "./pages/work/Roles";
+import RulesPage from "./pages/work/Rules";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { session, user, loading } = useAuth();
@@ -41,8 +46,48 @@ function App() {
               </ProtectedRoute>
             }
           />
-          {/* Several dashboard tiles point at pages that aren't built yet.
-              Without this they render a blank screen, since no route matches. */}
+          <Route
+            path="/decisions"
+            element={
+              <ProtectedRoute>
+                <Decisions />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/matching-reviews"
+            element={
+              <ProtectedRoute>
+                <Reviews />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/workspace"
+            element={
+              <ProtectedRoute>
+                <Workspace />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/assign"
+            element={
+              <ProtectedRoute>
+                <Roles />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/rules"
+            element={
+              <ProtectedRoute>
+                <RulesPage />
+              </ProtectedRoute>
+            }
+          />
+          {/* Anything unrecognised goes back to the dashboard rather than
+              rendering a blank screen. */}
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </AuthProvider>

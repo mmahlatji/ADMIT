@@ -4,8 +4,8 @@ Thin FastAPI app: mounts routers, does no logic of its own.
 Layering is router -> service -> queries -> database, never skip a layer.
 """
 
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.routers import (
     applicants,
@@ -15,6 +15,7 @@ from app.routers import (
     imports,
     matching_reviews,
     notes,
+    rules,
     system_logs,
     users,
     votes,
@@ -40,6 +41,7 @@ app.include_router(matching_reviews.router)
 app.include_router(votes.router)
 app.include_router(import_runs.router)
 app.include_router(system_logs.router)
+app.include_router(rules.router)
 
 
 @app.get("/health")

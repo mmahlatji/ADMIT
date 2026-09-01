@@ -105,3 +105,62 @@ def test_offer_decisions_are_granular_but_consistent():
         application_state_machine.infer_initial_state("DEIN", "NDPF")
         == ApplicationStatus.READY_TO_REGISTER
     )
+
+
+def test_reimporting_the_same_decision_is_idempotent():
+    """Loading the same ASR sheet twice must not flag rows whose decision is
+    already recorded. Every state an (action, reason) can produce has to accept
+    that same pair again as a no-op, or a re-import reports invalid transitions
+    for work that has not changed.
+    """
+    for (_from_state, action, reason), new_state in list(
+        application_state_machine.TRANSITIONS.items()
+    ):
+        assert (
+            application_state_machine.get_candidate_transition_state(
+                new_state, action, reason
+            )
+            == new_state
+        ), f"{new_state.value} rejects a repeat of {action}/{reason}"
+
+
+def test_end_states_accept_their_own_repeat():
+    # the specific ones that were missing: a re-import of an unchanged December
+    # sheet flagged 251 of 383 rows because of these
+    cases = [
+        (ApplicationStatus.READY_TO_REGISTER, "DEIN", "NDPC"),
+        (ApplicationStatus.READY_TO_REGISTER, "DEIN", "NDPF"),
+        (ApplicationStatus.CONDITIONAL_OFFER, "COND", "TERT"),
+        (ApplicationStatus.CONDITIONAL_OFFER, "COND", "CERT"),
+        (ApplicationStatus.ACCEPTED, "ADMT", "FIRM"),
+    ]
+    for state, action, reason in cases:
+        assert (
+            application_state_machine.get_candidate_transition_state(state, action, reason)
+            == state
+        )
+
+
+def test_terminal_states_absorb_recognised_actions():
+    """Duplicate detection can deny an application locally while the ASR export
+    still carries its original action for weeks. That arrives as DENIED plus a
+    perfectly ordinary action, which is a stale source rather than a real
+    lifecycle move, so it holds instead of erroring.
+    """
+    for state in (ApplicationStatus.DENIED, ApplicationStatus.CANCELLED):
+        for action, reason in (("DDEF", "HOD"), ("DEIN", "NDPC"), ("WADM", "CHNG"), ("APPL", "FRST")):
+            assert (
+                application_state_machine.get_candidate_transition_state(state, action, reason)
+                == state
+            ), f"{state.value} should hold on {action}/{reason}"
+
+
+def test_terminal_states_still_reject_unknown_actions():
+    # absorbing is only for the known vocabulary: a genuinely unrecognised pair
+    # is a data-quality signal and must still surface
+    assert (
+        application_state_machine.get_candidate_transition_state(
+            ApplicationStatus.DENIED, "ZZZZ", "XXXX"
+        )
+        is None
+    )

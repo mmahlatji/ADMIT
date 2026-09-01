@@ -2,7 +2,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { signIn } from "../../lib/auth";
 import "./SignIn.css";
-import { useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 
@@ -11,10 +11,6 @@ import { signInSchema, type SignInFormData } from "../../schemas/auth";
 export default function SignIn() {
   const { session } = useAuth();
   const navigate = useNavigate();
-
-  if (session) {
-    navigate("/dashboard");
-  }
   const [authError, setAuthError] = useState<string | null>(null);
   const {
     register,
@@ -33,6 +29,12 @@ export default function SignIn() {
       setAuthError("Incorrect email or password");
     }
   }
+
+  // <Navigate> rather than calling navigate() during render. The old version
+  // redirected as a side effect of rendering, which paired with ProtectedRoute
+  // to make an infinite /signin <-> /dashboard loop whenever a session existed
+  // but the user had not been fetched yet.
+  if (session) return <Navigate to="/dashboard" replace />;
 
   return (
     <div className="sign-in-page">

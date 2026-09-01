@@ -85,3 +85,8 @@ def assign_role(db: Session, actor: User, target: User, role: RoleEnum | None) -
 # so i added this
 def get_user_by_id(db: Session, user_id: uuid.UUID) -> User | None:
     return user_queries.get_user_by_id(db, user_id)
+
+
+def list_users(db: Session, skip: int = 0, limit: int = 200) -> list[User]:
+    """Everyone with an account, for the role-assignment screen."""
+    return user_queries.get_users(db, skip=skip, limit=limit)

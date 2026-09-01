@@ -6,6 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models.matching_reviews import MatchingReview, MatchResolution, MatchStatus
+from app.models.staging import Staging
 
 
 def get_matching_review_by_id(db: Session, match_id: uuid.UUID) -> MatchingReview | None:
@@ -99,3 +100,34 @@ def delete_matching_review(db: Session, review: MatchingReview) -> None:
     """Delete a matching review row."""
     db.delete(review)
     db.flush()
+
+
+def get_open_review_for(
+    db: Session,
+    *,
+    reason: str | None,
+    matched_campus_id: str | None,
+    matched_application_id: str | None,
+) -> MatchingReview | None:
+    """Find an unresolved review already raised for the same thing.
+
+    Reviews hang off a staging row, and every import writes fresh staging rows,
+    so without this the same unchanged problem is re-raised on every import and
+    the queue fills with duplicates of work nobody has done yet. Matching on the
+    staging row's matched keys plus the reason identifies "this same complaint
+    about this same record". Only PENDING counts: once someone resolves one, a
+    later recurrence is genuinely new and should be raised again.
+    """
+    if matched_campus_id is None and matched_application_id is None:
+        return None
+    return db.execute(
+        select(MatchingReview)
+        .join(Staging, Staging.staging_id == MatchingReview.staging_row_id)
+        .where(
+            MatchingReview.status == MatchStatus.PENDING,
+            MatchingReview.reason == reason,
+            Staging.matched_campus_id == matched_campus_id,
+            Staging.matched_application_id == matched_application_id,
+        )
+        .limit(1)
+    ).scalar_one_or_none()

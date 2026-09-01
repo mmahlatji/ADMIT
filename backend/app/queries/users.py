@@ -51,3 +51,15 @@ def update_user_role(
     db.commit()
     db.refresh(user)
     return user
+
+
+def get_users(db: Session, skip: int = 0, limit: int = 200) -> list[User]:
+    """List users, unapproved first so the approval queue is what you see."""
+    return list(
+        db.execute(
+            select(User)
+            .order_by(User.role.is_(None).desc(), User.created_at.asc())
+            .offset(skip)
+            .limit(limit)
+        ).scalars()
+    )

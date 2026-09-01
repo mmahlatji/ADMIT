@@ -18,7 +18,7 @@ from app.adapters.uct_marks import UCTMarkAdapter
 from app.models.import_runs import ImportRun, ImportStatus, SourceType
 from app.models.matching_reviews import MatchStatus
 from app.models.staging import ValidationStatus
-from app.queries.matching_reviews import create_matching_review
+from app.queries.matching_reviews import create_matching_review, get_open_review_for
 from app.services.import_runs import update_import_run
 from app.services.imports import lookups
 from app.services.imports.asr import reconcile_asr_row
@@ -103,7 +103,6 @@ def run_import(db: Session, import_run: ImportRun, sheet: pd.DataFrame) -> Impor
         normalized = to_json_safe(
             adapter.format_for_database(needs_review_df.loc[[idx]]).iloc[0].to_dict()
         )
-        print("++++++HERE++++\n", normalized)
         stage_row(
             db,
             import_run.import_run_id,
@@ -181,7 +180,16 @@ def run_import(db: Session, import_run: ImportRun, sheet: pd.DataFrame) -> Impor
             matched_campus_id=matched_campus_id,
             matched_application_id=matched_application_id,
         )
-        if flagged:
+        # Only raise a review if this exact complaint about this exact record is
+        # not already sitting unresolved. Every import writes new staging rows,
+        # so without this check a re-import re-raises everything it raised last
+        # time and the queue becomes noise nobody can work through.
+        if flagged and not get_open_review_for(
+            db,
+            reason=flag_reason,
+            matched_campus_id=matched_campus_id,
+            matched_application_id=matched_application_id,
+        ):
             create_matching_review(
                 db,
                 staging_row_id=staged.staging_id,

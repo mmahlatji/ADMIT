@@ -21,13 +21,22 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 
   if (!res.ok) {
     const body = await res.text();
-    let detail = body;
+    let detail: unknown = body;
     try {
       detail = JSON.parse(body)?.detail ?? body;
     } catch {
       // not JSON, keep raw text
     }
-    throw new Error(detail);
+    // a 422 hands back a list of {loc, msg} objects rather than a string, and
+    // stringifying that gave the user a useless "[object Object]"
+    if (Array.isArray(detail)) {
+      detail = detail
+        .map((e) => (typeof e?.msg === "string" ? `${e.msg} (${e?.loc?.join(".")})` : JSON.stringify(e)))
+        .join("; ");
+    } else if (typeof detail !== "string") {
+      detail = JSON.stringify(detail);
+    }
+    throw new Error(String(detail));
   }
 
   return res.json() as Promise<T>;

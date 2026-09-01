@@ -1,7 +1,9 @@
-from sympy.parsing.sympy_parser import parse_expr
-import pandas as pd
 import math
 import re
+
+import pandas as pd
+from sympy.parsing.sympy_parser import parse_expr
+
 from app.models.rules import Institution, RuleStatus
 
 """
@@ -192,12 +194,33 @@ class RuleEngine:
         except Exception as e:  # for now
             raise VariableError("Invalid rule expression") from e
 
-        # does it matter if they see the actual applicants, or just the effects?
-        proposed_decisions = self.marks.apply(
-            lambda row: bool(expr.subs(row.to_dict())), axis=1
-        )
+        # An applicant with no mark for a course the rule uses cannot be judged
+        # by it. Real intakes are full of these: the pivot leaves NaN wherever
+        # someone has not done a course, and substituting one made sympy raise
+        # "Invalid NaN comparison", which took down the whole preview rather
+        # than the one row. Not evaluable means not admitted by this rule, which
+        # is the safe reading, and _generate_summary reports how many were
+        # skipped so the number is not silently wrong.
+        needed = {str(symbol) for symbol in expr.free_symbols}
+
+        def decide(row):
+            values = row.to_dict()
+            if any(pd.isna(values.get(name)) for name in needed):
+                return False
+            return bool(expr.subs(values))
+
+        proposed_decisions = self.marks.apply(decide, axis=1)
 
         return proposed_decisions
+
+    def incomplete_for(self, expression: str) -> int:
+        """How many applicants lack a mark the expression needs."""
+        expr = parse_expr(self._sanitize_expression(expression))
+        needed = {str(symbol) for symbol in expr.free_symbols}
+        missing = [name for name in needed if name not in self.marks.columns]
+        if missing:
+            return len(self.marks)
+        return int(self.marks[list(needed)].isna().any(axis=1).sum())
 
     def process_proposed_rule(
         self, institution: Institution, intake_year: int, expression: str

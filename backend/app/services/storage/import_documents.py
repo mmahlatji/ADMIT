@@ -6,9 +6,11 @@ from fastapi.concurrency import run_in_threadpool
 from sqlalchemy.orm import Session
 
 from app.models.import_documents import Document
-from app.models.import_runs import ImportRun
+from app.models.import_runs import ImportRun, ImportStatus
+from app.queries.import_documents import update_import_document as import_doc_queries_update
 from app.queries.storage import import_document as import_queries
 from app.services import import_documents as import_doc_queries
+from app.services import import_runs as import_run_queries
 from app.services.storage.exceptions import (
     FileAlreadyExistsException,
     FileEmptyException,
@@ -50,7 +52,22 @@ async def upload_document(
     # check if document already exists
     existing_document = import_doc_queries.get_document_by_hash(db, file_hash)
     if existing_document is not None:
-        raise FileAlreadyExistsException("Document has already been uploaded")
+        # Only a run that actually succeeded should block re-uploading the same
+        # file. Blocking on the hash alone meant a FAILED import could never be
+        # retried: you would fix the cause and then be told the document had
+        # already been uploaded, with no way through short of editing the file.
+        prior_run = import_run_queries.get_import_run_by_id(
+            db, existing_document.import_run_id
+        )
+        if prior_run is not None and prior_run.status is not ImportStatus.FAILED:
+            raise FileAlreadyExistsException("Document has already been uploaded")
+
+        # The bytes are identical, so the object already in storage is still
+        # good. Re-point the document at this run rather than uploading a
+        # second copy or breaking the unique hash constraint.
+        return import_doc_queries_update(
+            db, existing_document, import_run_id=import_run.import_run_id
+        )
 
     try:
         # upload the document

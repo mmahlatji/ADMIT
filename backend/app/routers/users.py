@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from app.deps import get_current_user, get_db, require_role
 from app.models.users import RoleEnum, User
 from app.schemas.user import RoleAssignment, UserOut
+from app.services import users as users_service
 from app.services.users import assign_role, get_user_by_id
 
 router = APIRouter(prefix="/users", tags=["users"])
@@ -15,6 +16,17 @@ router = APIRouter(prefix="/users", tags=["users"])
 def read_current_user(user: User = Depends(get_current_user)) -> User:
     """Return the logged-in user, even if their role is still null."""
     return user
+
+
+@router.get("", response_model=list[UserOut])
+def list_users(
+    skip: int = 0,
+    limit: int = 200,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_role(RoleEnum.convenor, RoleEnum.admin)),
+) -> list[User]:
+    """Everyone with an account, so a convenor can see who is waiting."""
+    return users_service.list_users(db, skip=skip, limit=limit)
 
 
 @router.post("/{user_id}/role", response_model=UserOut)

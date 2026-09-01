@@ -42,6 +42,13 @@ export const dashboardTiles: TileConfig[] = [
     roles: ["convenor", "admin", "committee"],
   },
   {
+    title: "Admission rules",
+    icon: <Scale size={40} />,
+    to: "/rules",
+    // rules decide who gets in, so only the roles that can write them
+    roles: ["convenor", "admin"],
+  },
+  {
     title: "Assign roles",
     icon: <Users size={40} />,
     to: "/assign",

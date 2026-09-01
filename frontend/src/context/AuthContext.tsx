@@ -46,6 +46,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setTimeout(async () => {
+        // loading has to go back up while the new session's user is fetched.
+        // Without it there is a render where session is set but user is still
+        // null and loading is already false, which ProtectedRoute reads as
+        // "logged in but no profile" and bounces to /signin.
+        setLoading(true);
         setSession(session);
         setCurrentSession(session);
         if (session) {
@@ -53,6 +58,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } else {
           setUser(null);
         }
+        setLoading(false);
       }, 0);
     });
     return () => {

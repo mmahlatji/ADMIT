@@ -104,6 +104,45 @@ TRANSITIONS = {
     (ApplicationStatus.CANCELLED, "WAPP", "WDRN"): ApplicationStatus.CANCELLED,
 }
 
+# Re-importing a sheet has to be idempotent: the same ASR export can be loaded
+# twice, and rows whose decision is already recorded must not come back as
+# "invalid transition". If (action, reason) legitimately produces state X, then
+# seeing that same pair again while already in X is a repeat of a decision we
+# have, not a new one. Only DENIED and CANCELLED had these loops written out by
+# hand above, which left Accepted, Conditional Offer and Ready to Register
+# rejecting their own repeats: re-importing an unchanged December sheet flagged
+# 251 of 383 rows. Derived from TRANSITIONS rather than listed, so it cannot
+# drift as new transitions are added.
+TRANSITIONS.update(
+    {
+        (new_state, action, reason): new_state
+        for (_from_state, action, reason), new_state in list(TRANSITIONS.items())
+        if (new_state, action, reason) not in TRANSITIONS
+    }
+)
+
+# Terminal states absorb any recognised action instead of erroring. An
+# application can reach DENIED or CANCELLED here without the sheet knowing:
+# duplicate detection denies the weaker of a pair locally, while the ASR export
+# still carries that application's original action for weeks afterwards. The
+# next import then arrives with, say, DENIED + DDEF/HOD, which is not a real
+# lifecycle move at all, just a source that has not caught up. Holding is right:
+# the decision stands, and a convenor can still change it from the decisions
+# screen. Only pairs already in the vocabulary are absorbed, so a genuinely
+# unknown action/reason still flags as the data-quality signal it is.
+_TERMINAL_STATES = (ApplicationStatus.DENIED, ApplicationStatus.CANCELLED)
+_KNOWN_PAIRS = {(a, r) for (a, r) in INITIAL_STATES} | {
+    (a, r) for (_s, a, r) in TRANSITIONS
+}
+TRANSITIONS.update(
+    {
+        (state, action, reason): state
+        for state in _TERMINAL_STATES
+        for (action, reason) in _KNOWN_PAIRS
+        if (state, action, reason) not in TRANSITIONS
+    }
+)
+
 
 def infer_initial_state(action: str, reason: str) -> ApplicationStatus | None:
     """
