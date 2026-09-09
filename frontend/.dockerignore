@@ -1,4 +1,9 @@
 node_modules
 dist
-.env
-.env.*
+# .env is NOT ignored here on purpose: Vite bakes VITE_* vars into the bundle
+# at `npm run build` time, inside the Dockerfile's build stage. Unlike the
+# backend, there is no later runtime env_file injection that could supply
+# them - the build step needs to see this file directly, or every VITE_*
+# value compiles in as undefined.
+.env.local
+.env.*.local
