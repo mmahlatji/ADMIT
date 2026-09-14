@@ -42,3 +42,13 @@ export async function signIn(email: string, password: string) {
     throw error;
   }
 }
+
+// There was no way to sign out before, so a shared machine kept whoever
+// logged in last. onAuthStateChange in AuthContext handles the rest.
+export async function signOut() {
+  const { error } = await supabase.auth.signOut();
+
+  if (error) {
+    throw error;
+  }
+}

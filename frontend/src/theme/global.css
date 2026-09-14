@@ -1,0 +1,102 @@
+:root {
+  color-scheme: light dark;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Campus ids, application numbers, marks and rule expressions are read
+   character by character and compared down a column, so they get the
+   monospace face and lining figures wherever they appear. */
+.identifier {
+  font-family: var(--mantine-font-family-monospace);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.9em;
+  letter-spacing: -0.01em;
+}
+
+/* Keyboard focus stays visible everywhere; pointer focus does not draw one. */
+:focus-visible {
+  outline: 2px solid var(--mantine-color-uct-filled);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: var(--mantine-color-uct-2);
+  color: var(--mantine-color-uct-9);
+}
+
+[data-mantine-color-scheme="dark"] ::selection {
+  background: var(--mantine-color-uct-8);
+  color: var(--mantine-color-white);
+}
+
+/* Lands keyboard users on the page content without tabbing the whole nav. */
+.skip-link {
+  position: absolute;
+  left: var(--mantine-spacing-sm);
+  top: calc(var(--mantine-spacing-sm) * -6);
+  z-index: 400;
+  padding: var(--mantine-spacing-xs) var(--mantine-spacing-md);
+  border-radius: var(--mantine-radius-sm);
+  background: var(--mantine-color-uct-filled);
+  color: var(--mantine-color-white);
+  transition: top 150ms ease;
+}
+
+.skip-link:focus {
+  top: var(--mantine-spacing-sm);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Status palette.
+   Checked with the dataviz validator rather than picked by eye. The first pass
+   put Accepted on #40c057 and Ready to Register on #12b886, which sit at a
+   normal-vision delta-E of 6.9: two different outcomes that look identical to
+   everyone, colour vision or not. These steps clear the CVD-separation and
+   normal-vision floors in both modes, and the dark steps are chosen against the
+   dark surface rather than flipped from the light ones.
+   Colour is never the only cue: every status ships as a dot beside its label. */
+:root {
+  --status-applied: #868e96;
+  --status-reviewed: #4c6ef5;
+  --status-offer: #ffab06;
+  --status-accepted: #2f9e44;
+  --status-ready: #1098ad;
+  --status-denied: #fa5252;
+  --status-cancelled: #25262b;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-mantine-color-scheme="light"]) {
+    --status-applied: #909296;
+    --status-reviewed: #91a7ff;
+    --status-offer: #ffd43b;
+    --status-accepted: #37b24d;
+    --status-ready: #66d9e8;
+    --status-denied: #ff8787;
+    --status-cancelled: #c1c2c5;
+  }
+}
+
+[data-mantine-color-scheme="dark"] {
+  --status-applied: #909296;
+  --status-reviewed: #91a7ff;
+  --status-offer: #ffd43b;
+  --status-accepted: #37b24d;
+  --status-ready: #66d9e8;
+  --status-denied: #ff8787;
+  --status-cancelled: #c1c2c5;
+}

@@ -1,0 +1,56 @@
+.brand {
+  font-family: var(--mantine-font-family-headings);
+  font-size: var(--mantine-font-size-xl);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  line-height: 1;
+  color: var(--mantine-color-uct-filled);
+  text-decoration: none;
+}
+
+[data-mantine-color-scheme="dark"] .brand {
+  color: var(--mantine-color-uct-3);
+}
+
+.institution {
+  font-size: var(--mantine-font-size-xs);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--mantine-color-dimmed);
+  line-height: 1;
+}
+
+.navbar {
+  background-color: var(--mantine-color-body);
+}
+
+.sectionTitle {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--mantine-color-dimmed);
+  padding: 0 var(--mantine-spacing-xs);
+  margin-bottom: var(--mantine-spacing-xs);
+}
+
+/* The active item is marked by a solid rule on the leading edge as well as a
+   tint, so it does not rely on colour alone to say where you are. */
+.navLink {
+  border-radius: var(--mantine-radius-sm);
+  border-left: 3px solid transparent;
+  transition: background-color 150ms ease, border-color 150ms ease;
+}
+
+.navLink[data-active] {
+  border-left-color: var(--mantine-color-uct-filled);
+  font-weight: 700;
+}
+
+.main {
+  background-color: var(--mantine-color-gray-0);
+}
+
+[data-mantine-color-scheme="dark"] .main {
+  background-color: var(--mantine-color-dark-8);
+}

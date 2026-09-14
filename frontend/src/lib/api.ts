@@ -39,6 +39,13 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
     throw new Error(String(detail));
   }
 
+  // DELETE /notes/{id} answers 204 with no body. Calling res.json() on that
+  // throws "Unexpected end of JSON input", so a delete that actually succeeded
+  // was reported to the user as a failure and the list never refreshed.
+  if (res.status === 204 || res.headers.get("content-length") === "0") {
+    return undefined as T;
+  }
+
   return res.json() as Promise<T>;
 }
 

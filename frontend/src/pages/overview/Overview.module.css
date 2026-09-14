@@ -1,0 +1,23 @@
+.track {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--mantine-color-default-border);
+  overflow: hidden;
+}
+
+.bar {
+  height: 100%;
+  /* Rounded data-end anchored to the baseline, so a bar never reads as
+     floating and a zero-width bar stays invisible rather than a stray dot. */
+  border-radius: 0 4px 4px 0;
+  min-width: 0;
+  transition: width 250ms ease;
+}
+
+.statValue {
+  font-family: var(--mantine-font-family-monospace);
+  font-variant-numeric: tabular-nums;
+  font-size: 1.75rem;
+  font-weight: 500;
+  line-height: 1.1;
+}

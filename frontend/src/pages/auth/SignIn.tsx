@@ -1,32 +1,35 @@
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { signIn } from "../../lib/auth";
-import "./SignIn.css";
-import { Navigate, useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { Alert, Anchor, Button, PasswordInput, Stack, TextInput } from "@mantine/core";
+import { useForm } from "@mantine/form";
+import { zod4Resolver } from "mantine-form-zod-resolver";
+import { CircleAlert } from "lucide-react";
+import { Link, Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-
+import { signIn } from "../../lib/auth";
 import { signInSchema, type SignInFormData } from "../../schemas/auth";
+import AuthLayout from "./AuthLayout";
 
 export default function SignIn() {
   const { session } = useAuth();
   const navigate = useNavigate();
   const [authError, setAuthError] = useState<string | null>(null);
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-  } = useForm<SignInFormData>({
-    resolver: zodResolver(signInSchema),
+
+  const form = useForm<SignInFormData>({
+    mode: "uncontrolled",
+    initialValues: { email: "", password: "" },
+    validate: zod4Resolver(signInSchema),
   });
 
-  async function onSubmit(data: SignInFormData) {
+  async function onSubmit(values: SignInFormData) {
+    setAuthError(null);
     try {
-      await signIn(data.email, data.password);
-      navigate("/dashboard");
+      await signIn(values.email, values.password);
+      navigate("/");
     } catch (error) {
       console.error(error);
-      setAuthError("Incorrect email or password");
+      // Deliberately not distinguishing unknown email from wrong password:
+      // that difference tells an outsider which addresses have accounts.
+      setAuthError("Incorrect email or password.");
     }
   }
 
@@ -34,51 +37,50 @@ export default function SignIn() {
   // redirected as a side effect of rendering, which paired with ProtectedRoute
   // to make an infinite /signin <-> /dashboard loop whenever a session existed
   // but the user had not been fetched yet.
-  if (session) return <Navigate to="/dashboard" replace />;
+  if (session) return <Navigate to="/" replace />;
 
   return (
-    <div className="sign-in-page">
-      <div className="sign-in-card">
-        <div className="sign-in-header">
-          <h1>Sign In</h1>
-        </div>
-        <form onSubmit={handleSubmit(onSubmit)} className="sign-in-form">
-          {authError && <p className="error-message auth-error">{authError}</p>}
-          <div className="form-group">
-            {" "}
-            <label htmlFor="email">Email</label>
-            <input {...register("email")} placeholder="Email" type="email" />
-            {errors.email && (
-              <p className="error-message">{errors.email.message}</p>
-            )}
-          </div>
-          <div className="form-group">
-            {" "}
-            <label htmlFor="password">Password</label>
-            <input
-              {...register("password")}
-              placeholder="Password"
-              type="password"
-            />
-            {errors.password && (
-              <p className="error-message">{errors.password.message}</p>
-            )}
-          </div>
-          <div className="btn-group">
-            <p>
-              Don't have an account? <a href="/signup">sign up</a>
-            </p>
-
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="auth-button"
+    <AuthLayout title="Sign in" subtitle="Use your UCT account.">
+      <form onSubmit={form.onSubmit(onSubmit)} noValidate>
+        <Stack gap="md">
+          {authError && (
+            <Alert
+              color="red"
+              variant="light"
+              icon={<CircleAlert size={18} />}
+              title="Could not sign you in"
             >
-              {isSubmitting ? "Signing In..." : "Sign In"}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+              {authError}
+            </Alert>
+          )}
+
+          <TextInput
+            withAsterisk
+            label="Email"
+            type="email"
+            autoComplete="email"
+            placeholder="you@uct.ac.za"
+            key={form.key("email")}
+            {...form.getInputProps("email")}
+          />
+
+          <PasswordInput
+            withAsterisk
+            label="Password"
+            autoComplete="current-password"
+            key={form.key("password")}
+            {...form.getInputProps("password")}
+          />
+
+          <Button type="submit" loading={form.submitting} fullWidth mt="xs">
+            Sign in
+          </Button>
+
+          <Anchor component={Link} to="/signup" size="sm" ta="center">
+            No account yet? Create one
+          </Anchor>
+        </Stack>
+      </form>
+    </AuthLayout>
   );
 }

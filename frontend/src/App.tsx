@@ -1,98 +1,94 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import CreateAccount from "./pages/auth/CreateAccount";
+import { lazy, Suspense } from "react";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { AuthProvider } from "./context/AuthContext";
+import AppLayout from "./app/AppLayout";
+import ProtectedRoute from "./app/ProtectedRoute";
+import { LoadingState } from "./components/States";
+import { CONVENOR_ADMIN, CONVENOR_ONLY } from "./lib/roles";
+
 import SignIn from "./pages/auth/SignIn";
-import { AuthProvider, useAuth } from "./context/AuthContext";
-import Dashboard from "./pages/dashboard/Dashboard";
-import { FileUpload } from "./pages/uploads/FileUpload";
-import Decisions from "./pages/work/Decisions";
-import Reviews from "./pages/work/Reviews";
-import Workspace from "./pages/work/Workspace";
-import Roles from "./pages/work/Roles";
-import RulesPage from "./pages/work/Rules";
+import CreateAccount from "./pages/auth/CreateAccount";
+import PendingApproval from "./pages/PendingApproval";
 
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { session, user, loading } = useAuth();
+// Split per route. The whole app in one chunk was 780 kB, and most of it is
+// pages a given role never opens.
+const Overview = lazy(() => import("./pages/overview/Overview"));
+const Applicants = lazy(() => import("./pages/applicants/Applicants"));
+const ApplicantDetail = lazy(
+  () => import("./pages/applicants/ApplicantDetail"),
+);
+const Decisions = lazy(() => import("./pages/decisions/Decisions"));
+const Rules = lazy(() => import("./pages/rules/Rules"));
+const Imports = lazy(() => import("./pages/imports/Imports"));
+const Conflicts = lazy(() => import("./pages/conflicts/Conflicts"));
+const People = lazy(() => import("./pages/people/People"));
+const Audit = lazy(() => import("./pages/audit/Audit"));
 
-  if (loading) return <div>Loading...</div>; //for now
-  if (!session) return <Navigate to="/signin" replace />;
-  // no user means /users/me failed, not that they're allowed through: the old
-  // `user && user.role === null` check skipped entirely when user was null,
-  // so a failed lookup rendered the page as if the person were approved
-  if (!user) return <Navigate to="/signin" replace />;
-  if (user.role === null) return <Navigate to="/signup" replace />;
-  return <>{children}</>;
-}
-
-function App() {
+export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <Routes>
-          <Route path="/signup" element={<CreateAccount />} />
-          <Route path="/signin" element={<SignIn />} />
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/file-upload"
-            element={
-              <ProtectedRoute>
-                <FileUpload />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/decisions"
-            element={
-              <ProtectedRoute>
-                <Decisions />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/matching-reviews"
-            element={
-              <ProtectedRoute>
-                <Reviews />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/workspace"
-            element={
-              <ProtectedRoute>
-                <Workspace />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/assign"
-            element={
-              <ProtectedRoute>
-                <Roles />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/rules"
-            element={
-              <ProtectedRoute>
-                <RulesPage />
-              </ProtectedRoute>
-            }
-          />
-          {/* Anything unrecognised goes back to the dashboard rather than
-              rendering a blank screen. */}
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
-        </Routes>
+        <Suspense fallback={<LoadingState />}>
+          <Routes>
+            <Route path="/signin" element={<SignIn />} />
+            <Route path="/signup" element={<CreateAccount />} />
+            <Route path="/pending" element={<PendingApproval />} />
+
+            <Route
+              element={
+                <ProtectedRoute>
+                  <AppLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<Overview />} />
+              <Route path="applicants" element={<Applicants />} />
+              <Route
+                path="applicants/:campusId"
+                element={<ApplicantDetail />}
+              />
+              <Route path="decisions" element={<Decisions />} />
+              <Route path="rules" element={<Rules />} />
+              <Route
+                path="imports"
+                element={
+                  <ProtectedRoute allowed={CONVENOR_ADMIN}>
+                    <Imports />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="conflicts"
+                element={
+                  <ProtectedRoute allowed={CONVENOR_ADMIN}>
+                    <Conflicts />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="audit"
+                element={
+                  <ProtectedRoute allowed={CONVENOR_ADMIN}>
+                    <Audit />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="people"
+                element={
+                  <ProtectedRoute allowed={CONVENOR_ONLY}>
+                    <People />
+                  </ProtectedRoute>
+                }
+              />
+            </Route>
+
+            {/* Anything unrecognised goes back to the overview rather than
+                rendering a blank screen. */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Suspense>
       </AuthProvider>
     </BrowserRouter>
   );
 }
-
-export default App;

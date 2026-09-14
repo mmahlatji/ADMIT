@@ -1,0 +1,93 @@
+.page {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 62em) {
+  .page {
+    grid-template-columns: minmax(0, 42%) minmax(0, 58%);
+  }
+}
+
+/* Left panel: the institutional half. Deep blue with a faint diagonal rule
+   pattern so it reads as a printed form rather than a flat block of colour. */
+.aside {
+  display: none;
+  position: relative;
+  overflow: hidden;
+  padding: var(--mantine-spacing-xl);
+  background-color: var(--mantine-color-uct-9);
+  color: var(--mantine-color-white);
+}
+
+@media (min-width: 62em) {
+  .aside {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+}
+
+.aside::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.07;
+  background-image: repeating-linear-gradient(
+    135deg,
+    transparent 0 22px,
+    var(--mantine-color-white) 22px 23px
+  );
+  pointer-events: none;
+}
+
+.asideContent {
+  position: relative;
+  z-index: 1;
+  max-width: 30rem;
+}
+
+.wordmark {
+  font-family: var(--mantine-font-family-headings);
+  font-size: clamp(2.75rem, 5vw, 4rem);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1;
+}
+
+.rule {
+  width: 3rem;
+  height: 3px;
+  background: var(--mantine-color-attention-5);
+  margin: var(--mantine-spacing-md) 0;
+}
+
+.form {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--mantine-spacing-xl) var(--mantine-spacing-md);
+  background: var(--mantine-color-body);
+}
+
+.formInner {
+  width: 100%;
+  max-width: 26rem;
+}
+
+/* Mobile only: the wordmark still has to appear somewhere. */
+.mobileBrand {
+  font-family: var(--mantine-font-family-headings);
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  color: var(--mantine-color-uct-filled);
+}
+
+@media (min-width: 62em) {
+  .mobileBrand {
+    display: none;
+  }
+}

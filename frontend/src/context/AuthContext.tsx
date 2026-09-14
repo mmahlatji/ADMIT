@@ -2,7 +2,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabaseClient";
-import type { User } from "../types/user";
+import type { User } from "../types/api";
 import { api } from "../lib/api";
 import { setCurrentSession } from "../lib/authStore";
 
@@ -10,6 +10,11 @@ type AuthContextType = {
   session: Session | null;
   user: User | null;
   loading: boolean;
+  /** Why /users/me failed, when it did. A valid session with no profile is a
+      recoverable error, not a signed-out state, and has to be told apart from
+      one or the redirect guards bounce it back and forth forever. */
+  profileError: string | null;
+  reloadUser: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -18,15 +23,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
+  const [profileError, setProfileError] = useState<string | null>(null);
 
   async function loadUser() {
     try {
       const currentUser = await api.request<User>("/users/me");
       setUser(currentUser);
+      setProfileError(null);
     } catch (error) {
-      console.error("Failed to load user:", error);
       setUser(null);
+      setProfileError(
+        error instanceof Error ? error.message : "Could not load your profile",
+      );
     }
+  }
+
+  async function reloadUser() {
+    setLoading(true);
+    await loadUser();
+    setLoading(false);
   }
 
   useEffect(() => {
@@ -57,6 +72,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           await loadUser();
         } else {
           setUser(null);
+          setProfileError(null);
         }
         setLoading(false);
       }, 0);
@@ -67,7 +83,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ session, user, loading }}>
+    <AuthContext.Provider
+      value={{ session, user, loading, profileError, reloadUser }}
+    >
       {children}
     </AuthContext.Provider>
   );

@@ -1,117 +1,180 @@
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { useState } from "react";
+import {
+  Alert,
+  Anchor,
+  Button,
+  Group,
+  PasswordInput,
+  Stack,
+  Text,
+  TextInput,
+} from "@mantine/core";
+import { useForm } from "@mantine/form";
+import { zod4Resolver } from "mantine-form-zod-resolver";
+import { CircleAlert, MailCheck } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { signUp } from "../../lib/auth";
 import {
   createAccountSchema,
   type CreateAccountFormData,
 } from "../../schemas/auth";
-import { signUp } from "../../lib/auth";
-import { useNavigate } from "react-router-dom";
-import "./CreateAccount.css";
+import AuthLayout from "./AuthLayout";
 
 export default function CreateAccount() {
   const navigate = useNavigate();
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<CreateAccountFormData>({
-    resolver: zodResolver(createAccountSchema),
+  const [error, setError] = useState<string | null>(null);
+  const [confirmEmail, setConfirmEmail] = useState<string | null>(null);
+
+  const form = useForm<CreateAccountFormData>({
+    mode: "uncontrolled",
+    initialValues: {
+      employeeId: "",
+      firstName: "",
+      lastName: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+    },
+    validate: zod4Resolver(createAccountSchema),
   });
 
-  async function onSubmit(data: CreateAccountFormData) {
+  async function onSubmit(values: CreateAccountFormData) {
+    setError(null);
     try {
+      // employee_id, first_name and last_name go into the Supabase user's
+      // metadata, and the backend reads them straight off the JWT claims in
+      // get_or_create_user. Without employee_id every request 403s, and it is
+      // the id notes, rules, imports and audit entries are attributed to.
       const result = await signUp(
-        data.email,
-        data.password,
-        data.firstName,
-        data.lastName,
-        data.employeeId,
+        values.email,
+        values.password,
+        values.firstName,
+        values.lastName,
+        values.employeeId,
       );
-      console.log(result);
 
       if (result.session) {
-        navigate("/dashboard");
+        navigate("/", { replace: true });
+        return;
       }
-    } catch (error) {
-      console.error("Failed to create account", error);
+
+      // No session means the project requires email confirmation. The old
+      // build fell through silently here and looked like nothing happened.
+      setConfirmEmail(values.email);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Could not create the account.",
+      );
     }
   }
 
+  if (confirmEmail) {
+    return (
+      <AuthLayout
+        title="Check your email"
+        subtitle="One step left before a convenor can approve you."
+      >
+        <Alert
+          color="uct"
+          variant="light"
+          icon={<MailCheck size={18} />}
+          title="Confirm your address"
+        >
+          <Text size="sm">
+            We sent a confirmation link to <strong>{confirmEmail}</strong>.
+            Open it, then sign in. A convenor assigns your role after that.
+          </Text>
+        </Alert>
+        <Button component={Link} to="/signin" variant="default" fullWidth>
+          Back to sign in
+        </Button>
+      </AuthLayout>
+    );
+  }
+
   return (
-    <div className="create-account-page">
-      <div className="create-account-card">
-        <div className="create-account-header">
-          <h1>Create Account</h1>
-          <p>Create an account for convenor approval</p>
-        </div>
-        <form onSubmit={handleSubmit(onSubmit)} className="create-account-form">
-          <div className="form-group">
-            {" "}
-            <label htmlFor="emloyeeId">Employee ID</label>
-            <input {...register("employeeId")} placeholder="Employee ID" />
-            {errors.employeeId && (
-              <p className="error-message">{errors.employeeId.message}</p>
-            )}
-          </div>
+    <AuthLayout
+      title="Create account"
+      subtitle="Accounts start with no access. A convenor grants your role once the account exists."
+    >
+      <form onSubmit={form.onSubmit(onSubmit)} noValidate>
+        <Stack gap="md">
+          {error && (
+            <Alert
+              color="red"
+              variant="light"
+              icon={<CircleAlert size={18} />}
+              title="Could not create the account"
+            >
+              {error}
+            </Alert>
+          )}
 
-          <div className="form-group">
-            {" "}
-            <label htmlFor="firstName">First Name</label>
-            <input {...register("firstName")} placeholder="First name" />
-            {errors.firstName && (
-              <p className="error-message">{errors.firstName.message}</p>
-            )}
-          </div>
+          <TextInput
+            withAsterisk
+            label="Employee ID"
+            description="Seven digits, as it appears on your staff card"
+            inputMode="numeric"
+            maxLength={7}
+            placeholder="1234567"
+            key={form.key("employeeId")}
+            {...form.getInputProps("employeeId")}
+          />
 
-          <div className="form-group">
-            {" "}
-            <label htmlFor="lastName">Last Name</label>
-            <input {...register("lastName")} placeholder="Last Name" />
-            {errors.lastName && (
-              <p className="error-message">{errors.lastName.message}</p>
-            )}
-          </div>
-
-          <div className="form-group">
-            {" "}
-            <label htmlFor="email">Email</label>
-            <input {...register("email")} placeholder="Email" type="email" />
-            {errors.email && (
-              <p className="error-message">{errors.email.message}</p>
-            )}
-          </div>
-
-          <div className="form-group">
-            {" "}
-            <label htmlFor="password">Password</label>
-            <input
-              {...register("password")}
-              placeholder="Password"
-              type="password"
+          <Group grow align="flex-start">
+            <TextInput
+              withAsterisk
+              label="First name"
+              autoComplete="given-name"
+              key={form.key("firstName")}
+              {...form.getInputProps("firstName")}
             />
-            {errors.password && (
-              <p className="error-message">{errors.password.message}</p>
-            )}
-          </div>
-
-          <div className="form-group">
-            {" "}
-            <label htmlFor="confirmPassword">Confirm password</label>
-            <input
-              {...register("confirmPassword")}
-              placeholder="Confirm password"
-              type="password"
+            <TextInput
+              withAsterisk
+              label="Surname"
+              autoComplete="family-name"
+              key={form.key("lastName")}
+              {...form.getInputProps("lastName")}
             />
-            {errors.confirmPassword && (
-              <p className="error-message">{errors.confirmPassword.message}</p>
-            )}
-          </div>
+          </Group>
 
-          <button type="submit" className="auth-button">
-            Create Account
-          </button>
-        </form>
-      </div>
-    </div>
+          <TextInput
+            withAsterisk
+            label="Email"
+            type="email"
+            autoComplete="email"
+            description="A uct.ac.za or myuct.ac.za address"
+            placeholder="you@uct.ac.za"
+            key={form.key("email")}
+            {...form.getInputProps("email")}
+          />
+
+          <PasswordInput
+            withAsterisk
+            label="Password"
+            autoComplete="new-password"
+            description="At least 8 characters, with an uppercase letter, a lowercase letter and a number"
+            key={form.key("password")}
+            {...form.getInputProps("password")}
+          />
+
+          <PasswordInput
+            withAsterisk
+            label="Confirm password"
+            autoComplete="new-password"
+            key={form.key("confirmPassword")}
+            {...form.getInputProps("confirmPassword")}
+          />
+
+          <Button type="submit" loading={form.submitting} fullWidth mt="xs">
+            Create account
+          </Button>
+
+          <Anchor component={Link} to="/signin" size="sm" ta="center">
+            Already have an account? Sign in
+          </Anchor>
+        </Stack>
+      </form>
+    </AuthLayout>
   );
 }
