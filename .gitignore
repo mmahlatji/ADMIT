@@ -34,7 +34,9 @@ desktop.ini
 run-instructions.txt
 AGENTS.md
 DATA_MODEL.md
+NL_QUERY_SYSTEM.md
 scripts/
+
 # Local example/reference data, not for the repo
 /synthetic_honours_admissions_data/
 # Blanket ban so a real faculty export can never be committed by habit,

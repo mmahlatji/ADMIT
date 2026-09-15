@@ -1,15 +1,15 @@
 import uuid
 from datetime import datetime
-from sqlalchemy import UUID, UniqueConstraint, ForeignKey, DateTime, String, func
-from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy import Enum as SQLEnum
-
-
-from .base import Base
 from enum import Enum
 
+from sqlalchemy import UUID, DateTime, ForeignKey, String, UniqueConstraint, func
+from sqlalchemy import Enum as SQLEnum
+from sqlalchemy.orm import Mapped, mapped_column
 
-class Institution(Enum):
+from .base import Base
+
+
+class Institution(Enum): 
     UCT = "University of Cape Town"
     UJ = "University of Johannesburg"
 
@@ -18,6 +18,10 @@ class RuleStatus(Enum):
     ACTIVE = "active"
     INACTIVE = "inactive"
     EXPIRED = "expired"
+
+class RuleAction(str, Enum):
+    REJECT = "reject"  # Deny Requirements Not Met
+    ACCEPT = "accept"   # Accept 
 
 
 class Rules(Base):
@@ -40,6 +44,9 @@ class Rules(Base):
     status: Mapped[RuleStatus] = mapped_column(
         SQLEnum(RuleStatus, name="status"), nullable=False
     )
+    rule_action: Mapped[RuleAction] = mapped_column(
+            SQLEnum(RuleAction, name="rule_action" ), nullable=False
+        )
     # str, not uuid: users.employee_id is a String(7), not the user's uuid pk
     created_by: Mapped[str] = mapped_column(
         ForeignKey("users.employee_id"), nullable=False

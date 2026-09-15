@@ -14,6 +14,7 @@ from app.routers import (
     import_runs,
     imports,
     matching_reviews,
+    nl_query,
     notes,
     rules,
     system_logs,
@@ -42,6 +43,7 @@ app.include_router(votes.router)
 app.include_router(import_runs.router)
 app.include_router(system_logs.router)
 app.include_router(rules.router)
+app.include_router(nl_query.router)
 
 
 @app.get("/health")

@@ -24,7 +24,7 @@ class Vote(Base):
     vote_id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True)
     application_number: Mapped[str] = mapped_column(ForeignKey("applications.application_number"), primary_key=True,nullable=False, index=True)
     campus_id: Mapped[str] = mapped_column(ForeignKey("applicants.campus_id"), nullable=False)
-    vote: Mapped[VoteDecision] = mapped_column(SQLEnum(VoteDecision, name="vote_decision"), nullable=False)
+    vote: Mapped[VoteDecision] = mapped_column(SQLEnum(VoteDecision, name="vote_decision", values_callable=lambda enum_cls: [e.value for e in enum_cls]), nullable=False)
     voter_id: Mapped[str] = mapped_column(ForeignKey("users.employee_id"), nullable=False)
     voted_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
 

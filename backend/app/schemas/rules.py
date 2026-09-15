@@ -3,7 +3,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict
 
-from app.models.rules import Institution, RuleStatus
+from app.models.rules import Institution, RuleAction, RuleStatus
 
 
 class RulePreviewRequest(BaseModel):
@@ -12,6 +12,7 @@ class RulePreviewRequest(BaseModel):
     institution: Institution
     intake_year: int
     expression: str
+    rule_action: RuleAction
 
 
 class RuleCreate(RulePreviewRequest):
@@ -48,5 +49,6 @@ class RuleResponse(BaseModel):
     version: int
     rule: str
     status: RuleStatus
+    rule_action: RuleAction
     created_by: str
     created_at: datetime

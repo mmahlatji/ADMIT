@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 
 from app.models.applicant_marks import ApplicantMark
 from app.models.applications import Application
-from app.models.rules import Institution, Rules, RuleStatus
+from app.models.rules import Institution, RuleAction, Rules, RuleStatus
 from app.queries import rules as rule_queries
 from app.services.rule_engine import RuleEngine
 
@@ -49,12 +49,13 @@ def _load_frames(
                 "intake_year": r.intake_year,
                 "status": r.status,
                 "rule": r.rule,
+                "rule_action": r.rule_action
             }
             for r in saved
         ],
         # named up front so an empty intake still has the columns the engine
         # filters on, instead of raising KeyError on the first rule
-        columns=["rule_id", "institution", "intake_year", "status", "rule"],
+        columns=["rule_id", "institution", "intake_year", "status", "rule", "rule_action"],
     )
     return applications, marks, rules
 
@@ -81,6 +82,7 @@ def save_rule(
     institution: Institution,
     intake_year: int,
     expression: str,
+    rule_action: RuleAction,
     created_by: str,
 ) -> Rules:
     """Save a rule as the active one for this intake.
@@ -96,6 +98,7 @@ def save_rule(
         version=rule_queries.next_version(db, institution, intake_year),
         rule=expression,
         status=RuleStatus.ACTIVE,
+        action=rule_action,
         created_by=created_by,
     )
 

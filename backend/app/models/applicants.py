@@ -37,16 +37,23 @@ class Applicant(Base):
     applicant_id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True)
     campus_id: Mapped[str] = mapped_column(String(9), unique=True, index=True, nullable=False)
     employee_id: Mapped[str] = mapped_column(String(7), unique=True, nullable=False, index=True) # employee ids are generated alongside campus ids
-    title: Mapped[TitleEnum] = mapped_column(SQLEnum(TitleEnum, name="title_enum"), nullable=False)
+    title: Mapped[TitleEnum] = mapped_column(
+            SQLEnum(TitleEnum, name="title_enum", values_callable=lambda enum_cls: [e.value for e in enum_cls]),
+            nullable=False
+        )
     first_name: Mapped[str] = mapped_column(String(255), nullable=False,  unique=False)
     last_name: Mapped[str] = mapped_column(String(255), nullable=False, unique=False)
-    sex: Mapped[SexEnum] = mapped_column(SQLEnum(SexEnum, name="sex_enum"), nullable=True) 
+    sex: Mapped[SexEnum] = mapped_column(
+            SQLEnum(SexEnum, name="sex_enum", values_callable=lambda enum_cls: [e.value for e in enum_cls]), nullable=True
+        ) 
     cell_phone: Mapped[str] = mapped_column(String(255), nullable=True, unique=True)
     home_phone: Mapped[str] = mapped_column(String(255), nullable=True, unique=False)
     email: Mapped[str] = mapped_column(String(255), nullable=True, unique=True)
     population_group: Mapped[str] = mapped_column(String(50), nullable=True)
     birth_date: Mapped[date] = mapped_column(Date, nullable=True)
-    citizenship_residency: Mapped[CitizenshipResidency] = mapped_column(SQLEnum(CitizenshipResidency, name="citizenship_residency"), nullable=False, index=True) # could possibly be an enum
+    citizenship_residency: Mapped[CitizenshipResidency] = mapped_column(
+            SQLEnum(CitizenshipResidency, name="citizenship_residency", values_callable=lambda enum_cls: [e.value for e in enum_cls]), nullable=False, index=True
+        ) # could possibly be an enum
     non_sa_citizenship: Mapped[str] = mapped_column(String(3), nullable=True) 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now(), index=True)
 

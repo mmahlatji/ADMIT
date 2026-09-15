@@ -83,9 +83,12 @@ async def upload_document(
             extension,
             import_run.source_type,
         )
+    # Deliberately broad: this wraps a third-party HTTP call and every way it
+    # can fail means the same thing to the caller. Chaining with `from exc`
+    # keeps the original cause on the traceback instead of discarding it.
     except Exception as exc:
         print(f"UPLOAD FAILED: {type(exc).__name__}: {exc}")
-        raise FileUploadFailedException(f"Could not upload file {file.filename}")
+        raise FileUploadFailedException(f"Could not upload file {file.filename}") from exc
 
     try:
         document = import_doc_queries.create_document(

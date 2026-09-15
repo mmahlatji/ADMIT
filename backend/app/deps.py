@@ -92,3 +92,4 @@ def require_role(*allowed_roles: RoleEnum):
     # endpoint that forgets its role check fails the suite instead of shipping
     _check.enforces_role = True
     return _check
+

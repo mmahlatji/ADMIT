@@ -19,9 +19,11 @@ from app.models.import_runs import ImportRun
 from app.models.matching_reviews import MatchingReview
 from app.models.motivations import Motivation
 from app.models.notes import Note
+
 # without this import Rules never registers on Base.metadata, so create_all
 # skips the table and alembic autogenerate can't see it either
 from app.models.rules import Rules
+from app.models.saved_queries import SavedQuery
 from app.models.staging import Staging
 from app.models.student_documents import StudentDocument
 from app.models.system_logs import SystemLog
@@ -45,6 +47,7 @@ __all__ = [
     "Motivation",
     "Note",
     "Rules",
+    "SavedQuery",
     "Staging",
     "StudentDocument",
     "SystemLog",

@@ -1,15 +1,15 @@
-import pytest
-import pandas as pd
-from enum import Enum
-from sympy.parsing.sympy_parser import parse_expr
-from app.services.rule_engine import (
-    RuleEngine,
-    VariableError,
-    RuleConflict,
-    Institution,
-    RuleStatus,
-)
 import uuid
+
+import pandas as pd
+import pytest
+
+from app.services.rule_engine import (
+    Institution,
+    RuleConflict,
+    RuleEngine,
+    RuleStatus,
+    VariableError,
+)
 
 
 @pytest.fixture

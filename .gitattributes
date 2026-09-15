@@ -1,0 +1,5 @@
+# Shell scripts run inside Linux containers. core.autocrlf=true would otherwise
+# check them out CRLF on Windows, and Docker builds from the working copy, so
+# the container gets a CRLF script and bash dies on "set: pipefail: invalid
+# option name" at the first line.
+*.sh text eol=lf

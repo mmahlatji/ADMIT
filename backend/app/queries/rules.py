@@ -3,7 +3,7 @@ import uuid
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models.rules import Institution, Rules, RuleStatus
+from app.models.rules import Institution, RuleAction, Rules, RuleStatus
 
 
 def get_rule_by_id(db: Session, rule_id: uuid.UUID) -> Rules | None:
@@ -71,6 +71,7 @@ def create_rule(
     version: int,
     rule: str,
     status: RuleStatus,
+    action: RuleAction,
     created_by: str,
 ) -> Rules:
     """Insert a new rule row."""
@@ -81,6 +82,7 @@ def create_rule(
         version=version,
         rule=rule,
         status=status,
+        rule_action=action,
         created_by=created_by,
     )
     db.add(row)
@@ -96,6 +98,7 @@ def update_rule(
     version: int | None = None,
     expression: str | None = None,
     status: RuleStatus | None = None,
+    action: RuleAction | None = None,
 ) -> Rules:
     """Partially update a rule, only sets fields explicitly passed."""
     fields = {
@@ -104,6 +107,7 @@ def update_rule(
         "version": version,
         "rule": expression,
         "status": status,
+        "rule_action": action
     }
     for field, value in fields.items():
         if value is not None:

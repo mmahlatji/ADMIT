@@ -18,4 +18,4 @@ class AcademicPlan(Base):
     # was department_codes.department_code, that table got renamed to departments and this FK never got updated
     department_code: Mapped[str] = mapped_column(ForeignKey("departments.department_code"), nullable=False)
     academic_plan: Mapped[str] = mapped_column(String(10), nullable=False, unique=True, index=True)
-    plan_type: Mapped[AcademicPlanType] = mapped_column(SQLEnum(AcademicPlanType, name="academic_plan_type"), nullable=False)
+    plan_type: Mapped[AcademicPlanType] = mapped_column(SQLEnum(AcademicPlanType, name="academic_plan_type"),nullable=False)
