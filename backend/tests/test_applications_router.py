@@ -97,3 +97,32 @@ def test_list_applications_forbidden_for_unapproved_staff(db_session):
         assert res.status_code == 403
     finally:
         _teardown()
+
+
+def test_transition_status_clears_stale_reason_on_override(db_session):
+    """Denied -> Accepted must not leave the old denial reason on the row.
+
+    update_application only writes fields it is explicitly given, so a plain
+    reason=None on the way out of DENIED used to leave the prior deny reason
+    in place.
+    """
+    application = create_application(db_session)
+    actor = _make_actor(db_session, role=RoleEnum.convenor)
+
+    client = _make_client(db_session, actor)
+    try:
+        deny = client.post(
+            f"/applications/{application.application_id}/status",
+            json={"status": "Denied", "reason": "Not competitive"},
+        )
+        assert deny.json()["application_status_reason"] == "Not competitive"
+
+        override = client.post(
+            f"/applications/{application.application_id}/status",
+            json={"status": "Accepted"},
+        )
+        assert override.status_code == 200
+        assert override.json()["application_status"] == "Accepted"
+        assert override.json()["application_status_reason"] is None
+    finally:
+        _teardown()

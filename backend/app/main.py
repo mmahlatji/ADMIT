@@ -17,6 +17,7 @@ from app.routers import (
     nl_query,
     notes,
     rules,
+    student_documents,
     system_logs,
     users,
     votes,
@@ -43,6 +44,7 @@ app.include_router(votes.router)
 app.include_router(import_runs.router)
 app.include_router(system_logs.router)
 app.include_router(rules.router)
+app.include_router(student_documents.router)
 app.include_router(nl_query.router)
 
 

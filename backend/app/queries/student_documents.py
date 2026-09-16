@@ -18,6 +18,18 @@ def get_student_documents(db: Session, skip: int = 0, limit: int = 100) -> list[
     return list(db.execute(select(StudentDocument).offset(skip).order_by(StudentDocument.applicant_id.asc()).limit(limit)).scalars())
 
 
+def get_student_documents_by_hash(
+    db: Session, applicant_id: uuid.UUID, sha256_hash: str
+) -> StudentDocument | None:
+    """Look up one applicant's document by content hash, for upload dedup."""
+    return db.execute(
+        select(StudentDocument).where(
+            StudentDocument.applicant_id == applicant_id,
+            StudentDocument.sha256_hash == sha256_hash,
+        )
+    ).scalar_one_or_none()
+
+
 def create_student_document(
     db: Session,
     applicant_id: uuid.UUID,

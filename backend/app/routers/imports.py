@@ -1,6 +1,6 @@
 """Endpoints for uploading source spreadsheets and reconciling them into the DB."""
 
-from pathlib import Path
+import io
 
 import pandas as pd
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, status
@@ -14,6 +14,7 @@ from app.schemas.import_runs import ImportRunResponse
 from app.services import import_runs as import_run_service
 from app.services.imports.orchestrator import run_import
 from app.services.storage import import_documents as import_doc_service
+from app.services.storage.base import read_and_validate
 from app.services.storage.exceptions import (
     FileAlreadyExistsException,
     FileEmptyException,
@@ -44,43 +45,48 @@ async def upload_import(
 ) -> ImportRun:
     """Upload one source spreadsheet and reconcile it into the database.
 
-    Accepts .csv and .xlsx, see TO_DATAFRAME above.
+    Accepts .csv and .xlsx by content, see TO_DATAFRAME above.
     """
 
-    extension = Path(file.filename).suffix.lower()
-    pd_func = TO_DATAFRAME.get(extension)
-    if pd_func is None:
-        raise HTTPException(status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
-    sheet = await run_in_threadpool(pd_func, file.file)
+    try:
+        content, extension = await read_and_validate(
+            file, import_doc_service.IMPORT_DOCUMENT_EXTENSIONS
+        )
+    except FileEmptyException as exc:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc)) from exc
+    except FileNotAllowedException as exc:
+        raise HTTPException(status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, str(exc)) from exc
+    except FileTooLargeException as exc:
+        raise HTTPException(status.HTTP_413_CONTENT_TOO_LARGE, str(exc)) from exc
 
-    # upload the file
+    sheet = await run_in_threadpool(TO_DATAFRAME[extension], io.BytesIO(content))
+
     import_run = import_run_service.create_import_run(
         db,
         source_type=source_type,
         uploaded_by=actor.employee_id,
-        file_name=file.filename,
+        # Starlette only builds an UploadFile when Content-Disposition
+        # carries a filename, but that attribute can be empty ("") for a
+        # non-browser client. NOT NULL does not reject an empty string, so
+        # without this the run would store a genuinely useless file_name
+        # rather than fail loudly.
+        file_name=file.filename or f"import{extension}",
         status=ImportStatus.PROCESSING,
         rows_total=len(sheet),
     )
 
-    # pd_func(file.file) above left the stream at EOF, so rewind it or the
-    # upload below would read 0 bytes and raise FileEmptyException.
-    await file.seek(0)
-
     try:
         await import_doc_service.upload_document(
-            db=db, import_run=import_run, file=file
+            db=db,
+            import_run=import_run,
+            content=content,
+            extension=extension,
+            original_file_name=file.filename,
         )
-    except FileEmptyException as exc:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc))
-    except FileNotAllowedException as exc:
-        raise HTTPException(status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, str(exc))
-    except FileTooLargeException as exc:
-        raise HTTPException(status.HTTP_413_CONTENT_TOO_LARGE, str(exc))
     except FileAlreadyExistsException as exc:
-        raise HTTPException(status.HTTP_409_CONFLICT, str(exc))
+        raise HTTPException(status.HTTP_409_CONFLICT, str(exc)) from exc
     except FileUploadFailedException as exc:
-        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, str(exc))
+        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, str(exc)) from exc
 
     # run_import is sync and does the whole sheet inline (~16 queries a row), so
     # calling it directly from this async endpoint would block the event loop and

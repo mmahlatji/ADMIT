@@ -11,7 +11,7 @@ from app.services.storage import import_documents as import_doc_storage_service
 
 router = APIRouter(prefix="/import_documents", tags=["imports"])
 
-ALLOWED_ROLES = [RoleEnum.convenor, RoleEnum.committee, RoleEnum.admin]
+ALLOWED_ROLES = [RoleEnum.convenor, RoleEnum.admin]
 
 
 @router.get("/{document_id}", response_model=DocumentDownloadResponse, status_code=status.HTTP_200_OK)

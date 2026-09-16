@@ -83,6 +83,14 @@ def transition_status(
     if status == ApplicationStatus.DENIED and reason is None:
         raise ValueError("Denying an application requires a reason")
     old_status = application.application_status
+
+    # update_application only writes fields it was explicitly given a value
+    # for, so leaving DENIED with reason=None would silently keep the old
+    # denial reason on the row instead of clearing it. Clear it directly
+    # first; the DENIED branch below then sets the new one.
+    if status != ApplicationStatus.DENIED:
+        application.application_status_reason = None
+
     application = appl_queries.update_application(
         db,
         application,
@@ -96,6 +104,9 @@ def transition_status(
         changed_by=actor.employee_id,
         reason=ChangeSource.DECISION,
         old_data={"application_status": old_status},
-        new_data={"application_status": status, "application_status_reason": reason},
+        new_data={
+            "application_status": status,
+            "application_status_reason": application.application_status_reason,
+        },
     )
     return application

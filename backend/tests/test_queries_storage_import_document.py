@@ -1,5 +1,4 @@
-from app.models.import_runs import SourceType
-from app.queries.storage import import_document as storage
+from app.queries.storage import bucket as storage
 
 
 class _FakeBucket:
@@ -20,48 +19,48 @@ class _FakeBucket:
 
 
 class _FakeStorage:
-    def __init__(self, bucket):
+    def __init__(self, name, bucket):
+        self.name = name
         self.bucket = bucket
 
     def from_(self, name):
-        assert name == "import_documents"
+        assert name == self.name
         return self.bucket
 
 
 class _FakeClient:
-    def __init__(self, bucket):
-        self.storage = _FakeStorage(bucket)
+    def __init__(self, name, bucket):
+        self.storage = _FakeStorage(name, bucket)
 
 
-def test_upload_documents_builds_path_and_uploads(monkeypatch):
+def test_upload_file_targets_bucket_and_uploads(monkeypatch):
     bucket = _FakeBucket()
-    monkeypatch.setattr(storage, "get_supabase_client", lambda: _FakeClient(bucket))
+    monkeypatch.setattr(storage, "get_supabase_client", lambda: _FakeClient("student_documents", bucket))
 
-    path = storage.upload_documents(b"data", "application/vnd.ms-excel", ".xlsx", SourceType.ASR)
+    path = storage.upload_file("student_documents", b"data", "application/pdf", "abc/def.pdf")
 
-    assert path.startswith("asr/")
-    assert path.endswith(".xlsx")
+    assert path == "abc/def.pdf"
     assert len(bucket.uploads) == 1
     upload_path, content, options = bucket.uploads[0]
-    assert upload_path == path
+    assert upload_path == "abc/def.pdf"
     assert content == b"data"
-    assert options == {"content-type": "application/vnd.ms-excel", "upsert": "false"}
+    assert options == {"content-type": "application/pdf", "upsert": "false"}
 
 
-def test_delete_document_removes_key(monkeypatch):
+def test_delete_file_removes_key(monkeypatch):
     bucket = _FakeBucket()
-    monkeypatch.setattr(storage, "get_supabase_client", lambda: _FakeClient(bucket))
+    monkeypatch.setattr(storage, "get_supabase_client", lambda: _FakeClient("student_documents", bucket))
 
-    storage.delete_document("asr/abc.xlsx")
+    storage.delete_file("student_documents", "abc/def.pdf")
 
-    assert bucket.removals == [["asr/abc.xlsx"]]
+    assert bucket.removals == [["abc/def.pdf"]]
 
 
 def test_generate_signed_url(monkeypatch):
     bucket = _FakeBucket()
-    monkeypatch.setattr(storage, "get_supabase_client", lambda: _FakeClient(bucket))
+    monkeypatch.setattr(storage, "get_supabase_client", lambda: _FakeClient("student_documents", bucket))
 
-    url = storage.generate_signed_url("import_documents/asr/abc.xlsx")
+    url = storage.generate_signed_url("student_documents", "abc/def.pdf", 300)
 
-    assert url == "https://example.com/import_documents/asr/abc.xlsx"
-    assert bucket.signed_urls == [("import_documents/asr/abc.xlsx", 300)]
+    assert url == "https://example.com/abc/def.pdf"
+    assert bucket.signed_urls == [("abc/def.pdf", 300)]

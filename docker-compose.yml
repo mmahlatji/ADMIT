@@ -32,6 +32,7 @@ services:
       - ollama_data:/root/.ollama
     environment:
       OLLAMA_MODEL: qwen2.5-coder:7b-instruct-q4_K_M
+      OLLAMA_KEEP_ALIVE: "-1"
 
     healthcheck:
       # Both halves matter: the marker says the model finished pulling, the

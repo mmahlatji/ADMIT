@@ -35,5 +35,13 @@ ollama pull "$OLLAMA_MODEL"
 touch /tmp/model-ready
 echo "--> Model $OLLAMA_MODEL ready"
 
+# Load the model into memory now so the first real query isn't slow. Backgrounded
+# so it can't block the daemon's `wait` below (or the api container, whose
+# healthcheck reads the model-ready marker written above, not this request).
+echo "--> Warming up model $OLLAMA_MODEL"
+curl -s http://localhost:11434/api/generate \
+  -d "{\"model\": \"$OLLAMA_MODEL\", \"prompt\": \"ping\", \"keep_alive\": -1, \"options\": {\"num_predict\": 1}}" \
+  > /dev/null &
+
 # Keep background daemon process running
 wait $pid

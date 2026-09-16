@@ -38,6 +38,7 @@ from app.services.imports.value_mapping import (
 )
 from app.services.state.application_state_machine import (
     get_candidate_transition_state,
+    get_deny_reason,
     infer_initial_state,
 )
 from app.services.state.application_state_service import (
@@ -214,23 +215,29 @@ def reconcile_asr_row(
                 "required to create a new application"
             )
         status = ApplicationStatus.APPLIED
+        deny_reason = None
         if action_reason is not None:
             status = infer_initial_state(*action_reason)
             if status is None:
                 raise RowReconciliationError(
                     f"Application {application_number} has an unrecognized program action/reason {action_reason!r}, application state cannot be defined."
                 )
+            if status == ApplicationStatus.DENIED:
+                deny_reason = get_deny_reason(*action_reason)
+
 
         application = create_application(
             db,
             application_number=application_number,
             campus_id=campus_id,
             application_status=status,
+            application_status_reason=deny_reason,
             **application_fields,
         )
         lookups.remember_application(db, application)
 
         application_fields["application_status"] = status
+        application_fields["application_status_reason"] = deny_reason
         record_change(
             db,
             "applications",
@@ -290,6 +297,10 @@ def reconcile_asr_row(
                 )
             elif transition != application.application_status:
                 updated_application["application_status"] = transition
+                if transition == ApplicationStatus.DENIED:
+                    deny_reason = get_deny_reason(*action_reason)
+                    if deny_reason is not None:
+                        updated_application["application_status_reason"] = deny_reason
 
         if not application_errors:
             update_application(db, application, **updated_application)

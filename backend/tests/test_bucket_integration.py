@@ -23,7 +23,7 @@ from app.models.import_runs import ImportStatus
 from app.models.users import RoleEnum
 from app.queries.academic_plans import create_academic_plan
 from app.queries.departments import create_department
-from app.queries.storage import import_document as storage_queries
+from app.queries.storage import bucket as storage_queries
 from app.services.storage import import_documents as storage_service
 from tests.test_queries_notes import _create_author
 
@@ -96,5 +96,5 @@ def test_upload_via_router_stores_in_sqlite_and_bucket(db_session):
         print(f"UPLOAD OK -> storage_key={document.storage_key}\nSIGNED_URL={signed_url}")
     finally:
         if document is not None:
-            storage_queries.delete_document(document.storage_key)
+            storage_queries.delete_file("import_documents", document.storage_key)
         _teardown()

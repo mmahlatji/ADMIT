@@ -1,4 +1,4 @@
-from app.models.applications import ApplicationStatus
+from app.models.applications import ApplicationStatus, DenyReason
 
 # if the user does not have an existing application in the database then infer the state
 INITIAL_STATES = {
@@ -26,6 +26,13 @@ INITIAL_STATES = {
     ("WADM", "ICOM"): ApplicationStatus.CANCELLED,       # Cancelled  info not provided
     ("WADM", "CHNG"): ApplicationStatus.CANCELLED,       # Cancelled  changed programme
     ("WAPP", "WDRN"): ApplicationStatus.CANCELLED,       # Applicant withdrew   
+}
+
+
+DENY_REASON_MAPPING = {
+    ("DENY", "COMP"): DenyReason.NOT_COMPETITIVE,
+    ("DENY", "ENRQ"): DenyReason.REQUIREMENTS_NOT_MET,
+
 }
 
 #  (current state, new pa, new pr): new state
@@ -166,6 +173,15 @@ def get_candidate_transition_state(state: ApplicationStatus, action: str, reason
     candidate_state = TRANSITIONS.get(key)
     return candidate_state
 
+
+
+
+def get_deny_reason(action: str, reason: str) -> DenyReason | None:
+    """Return the deny reason of an application"""
+
+    key = (action.strip().upper(), reason.strip().upper())
+    deny_reason = DENY_REASON_MAPPING.get(key)
+    return deny_reason
 
 
 

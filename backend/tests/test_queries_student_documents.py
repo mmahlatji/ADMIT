@@ -4,6 +4,7 @@ from app.queries.student_documents import (
     delete_student_document,
     get_student_document_by_id,
     get_student_documents,
+    get_student_documents_by_hash,
     update_student_document,
 )
 from tests.test_queries_applicants import _create as create_applicant
@@ -55,3 +56,22 @@ def test_delete_student_document(db_session):
     delete_student_document(db_session, document)
 
     assert get_student_document_by_id(db_session, document.document_id) is None
+
+
+def test_get_student_document_by_hash(db_session):
+    document = _create(db_session, sha256_hash="a" * 64)
+    applicant_id = document.applicant_id
+
+    assert get_student_documents_by_hash(db_session, applicant_id, "a" * 64) is not None
+    assert get_student_documents_by_hash(db_session, applicant_id, "b" * 64) is None
+
+
+def test_get_student_document_by_hash_is_scoped_to_the_applicant(db_session):
+    document = _create(db_session, sha256_hash="a" * 64)
+    other = create_applicant(db_session, campus_id="cccddd002", employee_id="1000002")
+
+    # Same bytes, different applicant: not a duplicate.
+    assert get_student_documents_by_hash(db_session, other.applicant_id, "a" * 64) is None
+    assert (
+        get_student_documents_by_hash(db_session, document.applicant_id, "a" * 64) is not None
+    )
