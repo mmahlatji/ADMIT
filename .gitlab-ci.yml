@@ -16,7 +16,7 @@ stages:
 
 backend-lint:
   stage: lint
-  image: python:3.11-slim
+  image: python:3.14-slim
   rules:
     - changes:
         - backend/**/*
@@ -29,7 +29,7 @@ backend-lint:
 
 backend-test:
   stage: test
-  image: python:3.11-slim
+  image: python:3.14-slim
   rules:
     - changes:
         - backend/**/*

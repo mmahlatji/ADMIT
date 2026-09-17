@@ -21,7 +21,20 @@ def get_applicant_by_campus_id(db: Session, campus_id: str) -> Applicant | None:
     ).scalar_one_or_none()
 
 
-def get_applicant_by_campus_id_with_relations(db: Session, campus_id: str) -> Applicant | None:
+def get_applicants_by_campus_ids(db: Session, campus_ids: list[str]) -> list[Applicant]:
+    """Look up applicants by a list of campus ids. Returns an empty list if none exist."""
+    return list(
+        db.execute(
+            select(Applicant)
+            .where(Applicant.campus_id.in_(campus_ids))
+            .order_by(Applicant.campus_id.asc())
+        ).scalars()
+    )
+
+
+def get_applicant_by_campus_id_with_relations(
+    db: Session, campus_id: str
+) -> Applicant | None:
     """Look up an applicant by campus id, eager-loading their detail view."""
     return db.execute(
         select(Applicant)
@@ -35,11 +48,17 @@ def get_applicant_by_campus_id_with_relations(db: Session, campus_id: str) -> Ap
     ).scalar_one_or_none()
 
 
-
 def get_applicants(db: Session, skip: int = 0, limit: int = 100) -> list[Applicant]:
     """List applicants, paginated."""
     # added orderby so each query is determisnistic
-    return list(db.execute(select(Applicant).offset(skip).order_by(Applicant.campus_id.asc()).limit(limit)).scalars())
+    return list(
+        db.execute(
+            select(Applicant)
+            .offset(skip)
+            .order_by(Applicant.campus_id.asc())
+            .limit(limit)
+        ).scalars()
+    )
 
 
 def create_applicant(

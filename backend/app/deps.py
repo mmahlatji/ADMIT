@@ -34,7 +34,7 @@ def get_jwks_client() -> PyJWKClient:
     return PyJWKClient(url)
 
 
-def get_db() -> Generator[Session, None, None]:
+def get_db() -> Generator[Session]:
     """Per-request DB session, closed once the request is done."""
     session_local = sessionmaker(bind=get_engine(), autoflush=False, autocommit=False)
     db = session_local()

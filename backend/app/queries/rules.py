@@ -8,7 +8,9 @@ from app.models.rules import Institution, RuleAction, Rules, RuleStatus
 
 def get_rule_by_id(db: Session, rule_id: uuid.UUID) -> Rules | None:
     """Look up a rule by its id. Returns None if it doesn't exist yet."""
-    return db.execute(select(Rules).where(Rules.rule_id == rule_id)).scalar_one_or_none()
+    return db.execute(
+        select(Rules).where(Rules.rule_id == rule_id)
+    ).scalar_one_or_none()
 
 
 def get_rules(db: Session, skip: int = 0, limit: int = 100) -> list[Rules]:
@@ -107,7 +109,7 @@ def update_rule(
         "version": version,
         "rule": expression,
         "status": status,
-        "rule_action": action
+        "rule_action": action,
     }
     for field, value in fields.items():
         if value is not None:

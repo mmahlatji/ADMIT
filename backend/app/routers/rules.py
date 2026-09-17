@@ -10,7 +10,7 @@ from app.schemas.rules import (
     RuleResponse,
 )
 from app.services import rules as rules_service
-from app.services.rule_engine import RuleConflict, VariableError
+from app.services.engine.tools import RuleConflict, VariableError
 
 router = APIRouter(prefix="/rules", tags=["rules"])
 
@@ -45,7 +45,7 @@ def preview_rule(
     """
     try:
         return rules_service.preview_rule(
-            db, body.institution, body.intake_year, body.expression
+            db, body.institution, body.intake_year, body.expression, body.rule_action
         )
     except VariableError as exc:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc)) from exc
@@ -64,7 +64,12 @@ def create_rule(
     """Save a rule as active for this intake."""
     try:
         return rules_service.save_rule(
-            db, body.institution, body.intake_year, body.expression, actor.employee_id
+            db,
+            body.institution,
+            body.intake_year,
+            body.expression,
+            body.rule_action,
+            actor.employee_id,
         )
     except VariableError as exc:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc)) from exc
@@ -72,3 +77,18 @@ def create_rule(
         raise HTTPException(status.HTTP_409_CONFLICT, str(exc)) from exc
     except rules_service.NoMarksError as exc:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc)) from exc
+
+
+@router.post("/apply", status_code=status.HTTP_200_OK)
+def apply_rules(
+    intake_year: int,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_role(*WRITE_ROLES)),
+):
+    """Recompute admission statuses for the given intake using current active rules."""
+    try:
+        rules_service.apply_rules(db, intake_year)
+
+        return {"status": "applied"}
+    except rules_service.NoRuleException as exc:
+        raise HTTPException(status.HTTP_409_CONFLICT, str(exc)) from exc

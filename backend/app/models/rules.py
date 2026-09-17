@@ -11,7 +11,7 @@ from .base import Base
 
 class Institution(Enum): 
     UCT = "University of Cape Town"
-    UJ = "University of Johannesburg"
+    OTHER = "Other university"
 
 
 class RuleStatus(Enum):
@@ -19,9 +19,16 @@ class RuleStatus(Enum):
     INACTIVE = "inactive"
     EXPIRED = "expired"
 
-class RuleAction(str, Enum):
+# Not a str mixin: pandas 3 coerces a str-subclass column to str dtype, and
+# rules["rule_action"] == RuleAction.ACCEPT then compares False, so the rule
+# engine silently matches nobody.
+class RuleAction(Enum):
     REJECT = "reject"  # Deny Requirements Not Met
-    ACCEPT = "accept"   # Accept 
+    ACCEPT = "accept"  # Accept
+
+    @property
+    def opposite(self) -> RuleAction:
+        return RuleAction.REJECT if self is RuleAction.ACCEPT else RuleAction.ACCEPT
 
 
 class Rules(Base):
@@ -45,8 +52,8 @@ class Rules(Base):
         SQLEnum(RuleStatus, name="status"), nullable=False
     )
     rule_action: Mapped[RuleAction] = mapped_column(
-            SQLEnum(RuleAction, name="rule_action" ), nullable=False
-        )
+        SQLEnum(RuleAction, name="rule_action"), nullable=False
+    )
     # str, not uuid: users.employee_id is a String(7), not the user's uuid pk
     created_by: Mapped[str] = mapped_column(
         ForeignKey("users.employee_id"), nullable=False

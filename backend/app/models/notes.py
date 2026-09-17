@@ -19,5 +19,5 @@ class Note(Base):
     content: Mapped[str] = mapped_column(Text, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
 
-    applicant: Mapped["Applicant"] = relationship(back_populates="notes", foreign_keys=[campus_id])
-    author: Mapped["User"] = relationship(back_populates="notes")
+    applicant: Mapped[Applicant] = relationship(back_populates="notes", foreign_keys=[campus_id])
+    author: Mapped[User] = relationship(back_populates="notes")

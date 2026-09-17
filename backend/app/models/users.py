@@ -54,5 +54,5 @@ class User(Base):
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
 
-    notes: Mapped[list["Note"]] = relationship(back_populates="author")
-    votes: Mapped[list["Vote"]] = relationship(back_populates="voter")
+    notes: Mapped[list[Note]] = relationship(back_populates="author")
+    votes: Mapped[list[Vote]] = relationship(back_populates="voter")

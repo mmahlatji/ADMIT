@@ -20,23 +20,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   });
 
   if (!res.ok) {
-    const body = await res.text();
-    let detail: unknown = body;
-    try {
-      detail = JSON.parse(body)?.detail ?? body;
-    } catch {
-      // not JSON, keep raw text
-    }
-    // a 422 hands back a list of {loc, msg} objects rather than a string, and
-    // stringifying that gave the user a useless "[object Object]"
-    if (Array.isArray(detail)) {
-      detail = detail
-        .map((e) => (typeof e?.msg === "string" ? `${e.msg} (${e?.loc?.join(".")})` : JSON.stringify(e)))
-        .join("; ");
-    } else if (typeof detail !== "string") {
-      detail = JSON.stringify(detail);
-    }
-    throw new Error(String(detail));
+    throw new Error(await parseErrorBody(res));
   }
 
   // DELETE /notes/{id} answers 204 with no body. Calling res.json() on that
@@ -49,4 +33,54 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-export const api = { request };
+async function parseErrorBody(res: Response): Promise<string> {
+  const body = await res.text();
+  let detail: unknown = body;
+  try {
+    detail = JSON.parse(body)?.detail ?? body;
+  } catch {
+    // not JSON, keep raw text
+  }
+  if (Array.isArray(detail)) {
+    detail = detail
+      .map((e) =>
+        typeof e?.msg === "string"
+          ? `${e.msg} (${e?.loc?.join(".")})`
+          : JSON.stringify(e),
+      )
+      .join("; ");
+  } else if (typeof detail !== "string") {
+    detail = JSON.stringify(detail);
+  }
+  return String(detail);
+}
+
+// File-download endpoints (StreamingResponse) return a binary body plus a
+// Content-Disposition filename — request<T>'s res.json() would throw on
+// that body, and it has nowhere to hand back the filename anyway.
+async function requestBlob(
+  path: string,
+  init: RequestInit = {},
+): Promise<{ blob: Blob; filename?: string }> {
+  const token = getCurrentToken();
+
+  const res = await fetch(`${API_BASE_URL}${path}`, {
+    ...init,
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...init.headers,
+    },
+  });
+
+  if (!res.ok) {
+    throw new Error(await parseErrorBody(res));
+  }
+
+  const match = res.headers
+    .get("Content-Disposition")
+    ?.match(/filename="([^"]+)"/);
+
+  return { blob: await res.blob(), filename: match?.[1] };
+}
+
+export const api = { request, requestBlob };

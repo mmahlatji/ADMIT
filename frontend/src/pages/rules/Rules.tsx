@@ -12,6 +12,7 @@ import {
   Table,
   Text,
   TextInput,
+  Select,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { CircleAlert, Play, Save } from "lucide-react";
@@ -27,6 +28,7 @@ import {
   RULE_VARIABLES,
   type Rule,
   type RulePreview,
+  type RuleAction,
 } from "../../types/api";
 import classes from "./Rules.module.css";
 
@@ -68,9 +70,13 @@ export default function Rules() {
   const [intakeYear, setIntakeYear] = useState<number>(
     new Date().getFullYear(),
   );
+  const [action, setAction] = useState<RuleAction>("accept");
   const [preview, setPreview] = useState<RulePreview | null>(null);
-  const [busy, setBusy] = useState<"preview" | "save" | null>(null);
+  const [busy, setBusy] = useState<"preview" | "save" | "apply" | null>(null);
   const [ruleError, setRuleError] = useState<string | null>(null);
+  const [applyIntakeYear, setApplyIntakeYear] = useState<number>(
+    new Date().getFullYear(),
+  );
 
   const rules = data ?? [];
 
@@ -84,6 +90,7 @@ export default function Rules() {
           institution: INSTITUTION,
           intake_year: intakeYear,
           expression,
+          rule_action: action,
         }),
       });
       if (path === "/rules/preview") {
@@ -101,6 +108,31 @@ export default function Rules() {
       setRuleError(
         e instanceof Error ? e.message : "Could not evaluate that rule",
       );
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function applyRules() {
+    setBusy("apply");
+    try {
+      await api.request(`/rules/apply?intake_year=${applyIntakeYear}`, {
+        method: "POST",
+      });
+      notifications.show({
+        color: "green",
+        title: "Rules applied",
+        message: `Admission statuses for ${applyIntakeYear} have been recomputed.`,
+      });
+    } catch (e) {
+      notifications.show({
+        color: "red",
+        title: "Could not apply rules",
+        message:
+          e instanceof Error
+            ? e.message
+            : "Something went wrong applying the rule set.",
+      });
     } finally {
       setBusy(null);
     }
@@ -161,6 +193,16 @@ export default function Rules() {
                 max={2100}
                 w={140}
                 allowDecimal={false}
+              />
+              <Select
+                label="Action"
+                value={action}
+                onChange={(v) => setAction((v as RuleAction) || action)}
+                data={[
+                  { value: "accept", label: "Accept" },
+                  { value: "reject", label: "Reject" },
+                ]}
+                w={140}
               />
               <Button
                 leftSection={<Play size={16} />}
@@ -275,9 +317,34 @@ export default function Rules() {
       )}
 
       <div>
-        <Text fw={700} mb="xs">
-          Saved rules
-        </Text>
+        <Group justify="space-between" align="center" mb="xs">
+          <Text fw={700}>Saved rules</Text>
+          {canWrite && (
+            <Group gap="xs" align="center">
+              <NumberInput
+                aria-label="Intake year to apply"
+                value={applyIntakeYear}
+                onChange={(v) =>
+                  setApplyIntakeYear(Number(v) || applyIntakeYear)
+                }
+                min={2000}
+                max={2100}
+                w={100}
+                size="xs"
+                allowDecimal={false}
+              />
+              <Button
+                size="xs"
+                variant="default"
+                leftSection={<Play size={14} />}
+                loading={busy === "apply"}
+                onClick={applyRules}
+              >
+                Apply all rules
+              </Button>
+            </Group>
+          )}
+        </Group>
         {error && <ErrorState error={error} />}
         {loading ? (
           <LoadingState label="Loading rules" />

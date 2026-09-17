@@ -13,6 +13,22 @@ def get_applicant_mark_by_id(db: Session, mark_id: uuid.UUID) -> ApplicantMark |
     ).scalar_one_or_none()
 
 
+def get_applicant_marks_by_ids(
+    db: Session, campus_ids: list[str]
+) -> list[ApplicantMark]:
+    """Fetch all marks for a given set of campus ids ."""
+    if not campus_ids:
+        return []
+
+    return list(
+        db.execute(
+            select(ApplicantMark)
+            .where(ApplicantMark.campus_id.in_(campus_ids))
+            .order_by(ApplicantMark.campus_id.asc())
+        ).scalars()
+    )
+
+
 def get_applicant_mark_by_campus_and_course(
     db: Session, campus_id: str, course_code: str
 ) -> ApplicantMark | None:
@@ -20,15 +36,24 @@ def get_applicant_mark_by_campus_and_course(
     uq_applicant_marks_campus_id_course_code constraint on the model)."""
     return db.execute(
         select(ApplicantMark).where(
-            ApplicantMark.campus_id == campus_id, ApplicantMark.course_code == course_code
+            ApplicantMark.campus_id == campus_id,
+            ApplicantMark.course_code == course_code,
         )
     ).scalar_one_or_none()
 
 
-
-def get_applicant_marks(db: Session, skip: int = 0, limit: int = 100) -> list[ApplicantMark]:
+def get_applicant_marks(
+    db: Session, skip: int = 0, limit: int = 100
+) -> list[ApplicantMark]:
     """List applicant marks, paginated."""
-    return list(db.execute(select(ApplicantMark).offset(skip).order_by(ApplicantMark.campus_id.asc()).limit(limit)).scalars())
+    return list(
+        db.execute(
+            select(ApplicantMark)
+            .offset(skip)
+            .order_by(ApplicantMark.campus_id.asc())
+            .limit(limit)
+        ).scalars()
+    )
 
 
 def create_applicant_mark(
@@ -36,7 +61,11 @@ def create_applicant_mark(
 ) -> ApplicantMark:
     """Insert a new applicant mark row."""
     applicant_mark = ApplicantMark(
-        mark_id=uuid.uuid4(), campus_id=campus_id, course_code=course_code, mark=mark, result_code=result_code
+        mark_id=uuid.uuid4(),
+        campus_id=campus_id,
+        course_code=course_code,
+        mark=mark,
+        result_code=result_code,
     )
     db.add(applicant_mark)
     db.flush()
@@ -52,7 +81,12 @@ def update_applicant_mark(
     result_code: ResultCode | None = None,
 ) -> ApplicantMark:
     """Partially update an applicant mark, only sets fields explicitly passed."""
-    fields = {"campus_id": campus_id, "course_code": course_code, "mark": mark, "result_code": result_code}
+    fields = {
+        "campus_id": campus_id,
+        "course_code": course_code,
+        "mark": mark,
+        "result_code": result_code,
+    }
     for field, value in fields.items():
         if value is not None:
             setattr(applicant_mark, field, value)

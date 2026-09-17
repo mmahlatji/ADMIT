@@ -28,5 +28,5 @@ class Vote(Base):
     voter_id: Mapped[str] = mapped_column(ForeignKey("users.employee_id"), nullable=False)
     voted_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
 
-    application: Mapped["Application"] = relationship(back_populates="votes", foreign_keys=[application_number])
-    voter: Mapped["User"] = relationship(back_populates="votes")
+    application: Mapped[Application] = relationship(back_populates="votes", foreign_keys=[application_number])
+    voter: Mapped[User] = relationship(back_populates="votes")

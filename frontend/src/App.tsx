@@ -23,6 +23,7 @@ const Imports = lazy(() => import("./pages/imports/Imports"));
 const Conflicts = lazy(() => import("./pages/conflicts/Conflicts"));
 const People = lazy(() => import("./pages/people/People"));
 const Audit = lazy(() => import("./pages/audit/Audit"));
+const Exports = lazy(() => import("./pages/exports/Exports"));
 
 export default function App() {
   return (
@@ -54,6 +55,14 @@ export default function App() {
                 element={
                   <ProtectedRoute allowed={CONVENOR_ADMIN}>
                     <Imports />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="exports"
+                element={
+                  <ProtectedRoute allowed={CONVENOR_ADMIN}>
+                    <Exports />
                   </ProtectedRoute>
                 }
               />

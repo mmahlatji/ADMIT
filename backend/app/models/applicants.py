@@ -57,10 +57,10 @@ class Applicant(Base):
     non_sa_citizenship: Mapped[str] = mapped_column(String(3), nullable=True) 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now(), index=True)
 
-    applications: Mapped[list["Application"]] = relationship(back_populates="applicant", cascade="all, delete-orphan") # so now we can access applications with applicant.applications
-    applicant_marks: Mapped[list["ApplicantMark"]] = relationship(back_populates="applicant", cascade="all, delete-orphan")
-    notes: Mapped[list["Note"]] = relationship(back_populates="applicant", cascade="all, delete-orphan")
-    motivation: Mapped["Motivation"] = relationship(back_populates="applicant", cascade="all, delete-orphan", uselist=False)
+    applications: Mapped[list[Application]] = relationship(back_populates="applicant", cascade="all, delete-orphan") # so now we can access applications with applicant.applications
+    applicant_marks: Mapped[list[ApplicantMark]] = relationship(back_populates="applicant", cascade="all, delete-orphan")
+    notes: Mapped[list[Note]] = relationship(back_populates="applicant", cascade="all, delete-orphan")
+    motivation: Mapped[Motivation] = relationship(back_populates="applicant", cascade="all, delete-orphan", uselist=False)
 
 
 

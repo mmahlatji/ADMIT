@@ -67,8 +67,8 @@ class Application(Base):
     requires_plan_correction: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False) # if an application is incorrect and a decision has been made but that is the only application for that applicant
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
 
-    applicant: Mapped["Applicant"] = relationship(back_populates="applications")
-    votes: Mapped[list["Vote"]] = relationship(back_populates="application", cascade="all, delete-orphan")
-    external_applicant_data: Mapped["ExternalApplicantData"] = relationship(back_populates="application", cascade="all, delete-orphan")
+    applicant: Mapped[Applicant] = relationship(back_populates="applications")
+    votes: Mapped[list[Vote]] = relationship(back_populates="application", cascade="all, delete-orphan")
+    external_applicant_data: Mapped[ExternalApplicantData] = relationship(back_populates="application", cascade="all, delete-orphan")
 
     

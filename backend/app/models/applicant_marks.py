@@ -40,6 +40,6 @@ class ApplicantMark(Base):
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False, index=True)
 
-    applicant: Mapped["Applicant"] = relationship(back_populates="applicant_marks", foreign_keys=[campus_id])
+    applicant: Mapped[Applicant] = relationship(back_populates="applicant_marks", foreign_keys=[campus_id])
 
 

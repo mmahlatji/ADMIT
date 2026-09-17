@@ -23,4 +23,4 @@ class ExternalApplicantData(Base):
     has_min_viable_marks: Mapped[bool] = mapped_column(Boolean, nullable=True)
     comment: Mapped[str] = mapped_column(Text, nullable=True)
 
-    application: Mapped["Application"] = relationship(back_populates="external_applicant_data")
+    application: Mapped[Application] = relationship(back_populates="external_applicant_data")

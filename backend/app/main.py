@@ -10,6 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.routers import (
     applicants,
     applications,
+    exports,
     import_documents,
     import_runs,
     imports,
@@ -44,6 +45,7 @@ app.include_router(votes.router)
 app.include_router(import_runs.router)
 app.include_router(system_logs.router)
 app.include_router(rules.router)
+app.include_router(exports.router)
 app.include_router(student_documents.router)
 app.include_router(nl_query.router)
 

@@ -188,8 +188,11 @@ export type SystemLog = {
   changed_at: string;
 };
 
-export type Institution = "University of Cape Town" | "University of Johannesburg";
+export type Institution =
+  | "University of Cape Town"
+  | "Other university";
 export type RuleStatus = "active" | "inactive" | "expired";
+export type RuleAction = "accept" | "reject";
 
 export type Rule = {
   rule_id: string;
@@ -198,6 +201,7 @@ export type Rule = {
   version: number;
   rule: string;
   status: RuleStatus;
+  rule_action: RuleAction;
   created_by: string;
   created_at: string;
 };

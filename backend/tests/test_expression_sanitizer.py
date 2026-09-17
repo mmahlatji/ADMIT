@@ -1,7 +1,8 @@
 import pandas as pd
 import pytest
 
-from app.services.rule_engine import RuleEngine, VariableError
+from app.services.engine.tools import VariableError
+from app.services.rule_engine import RuleEngine
 
 
 @pytest.fixture

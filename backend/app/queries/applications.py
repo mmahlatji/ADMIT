@@ -4,13 +4,21 @@ from datetime import date
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models.applications import Application, ApplicationStatus, Choice, DenyReason, Semester
+from app.models.applications import (
+    Application,
+    ApplicationStatus,
+    Choice,
+    DenyReason,
+    Semester,
+)
 
 
-def get_active_applications_by_campus_ids(db: Session, campus_ids: list[str], application_date: date) -> list[Application]:
+def get_active_applications_by_campus_ids(
+    db: Session, campus_ids: list[str], application_date: date
+) -> list[Application]:
     """
-        Look up applications by campus ids within the year given by application date, 
-        returns an empty list if applications do not exist yet.
+    Look up applications by campus ids within the year given by application date,
+    returns an empty list if applications do not exist yet.
     """
     # Half-open range rather than extract("year", ...): wrapping the column in a
     # function makes the index on application_date unusable, so postgres falls
@@ -18,13 +26,34 @@ def get_active_applications_by_campus_ids(db: Session, campus_ids: list[str], ap
     # once per imported row, so it is worth keeping sargable.
     year_start = date(application_date.year, 1, 1)
     next_year_start = date(application_date.year + 1, 1, 1)
-    return list(db.scalars(
+    return list(
+        db.scalars(
             select(Application).where(
                 Application.campus_id.in_(campus_ids),
                 Application.application_date >= year_start,
                 Application.application_date < next_year_start,
-            )).all()
+            )
+        ).all()
     )
+
+
+def get_applications_by_year(db: Session, year: int) -> list[Application]:
+    """
+    Applications submitted in the given year, keyed off application_date
+    (sargable half-open range so the index on application_date is used).
+    """
+    year_start = date(year, 1, 1)
+    next_year_start = date(year + 1, 1, 1)
+
+    return list(
+        db.scalars(
+            select(Application).where(
+                Application.application_date >= year_start,
+                Application.application_date < next_year_start,
+            )
+        ).all()
+    )
+
 
 def get_application_by_id(db: Session, application_id: uuid.UUID) -> Application | None:
     """Look up an application by its id. Returns None if it doesn't exist yet."""
@@ -33,17 +62,47 @@ def get_application_by_id(db: Session, application_id: uuid.UUID) -> Application
     ).scalar_one_or_none()
 
 
-def get_application_by_number(db: Session, application_number: str) -> Application | None:
+def get_application_by_number(
+    db: Session, application_number: str
+) -> Application | None:
     """Look up an application by its application number (its natural key across imports)."""
     return db.execute(
         select(Application).where(Application.application_number == application_number)
     ).scalar_one_or_none()
 
 
+def get_applications_by_status_and_year(
+    db: Session, statuses: list[ApplicationStatus], intake_year: int
+) -> list[Application]:
+    """List applications based on status/es and intake_year, note that the intake year is not the application year but the year which
+    the applicant is applying for
+    """
+    app_period_start = date(intake_year - 1, 4, 1)
+    app_period_end = date(intake_year - 1, 9, 30)
+
+    return list(
+        db.execute(
+            select(Application).where(
+                Application.application_status.in_(statuses),
+                Application.application_date >= app_period_start,
+                Application.application_date <= app_period_end,
+            )
+        )
+        .scalars()
+        .all()
+    )
+
 
 def get_applications(db: Session, skip: int = 0, limit: int = 100) -> list[Application]:
     """List applications, paginated."""
-    return list(db.execute(select(Application).offset(skip).order_by(Application.campus_id.asc()).limit(limit)).scalars())
+    return list(
+        db.execute(
+            select(Application)
+            .offset(skip)
+            .order_by(Application.campus_id.asc())
+            .limit(limit)
+        ).scalars()
+    )
 
 
 def list_applications(

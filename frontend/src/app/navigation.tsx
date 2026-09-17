@@ -1,5 +1,6 @@
 import {
   ClipboardList,
+  Download,
   FileSpreadsheet,
   Gavel,
   LayoutDashboard,
@@ -9,11 +10,7 @@ import {
   Users,
 } from "lucide-react";
 import type { Role } from "../types/api";
-import {
-  CONVENOR_ADMIN,
-  CONVENOR_ONLY,
-  READ_ROLES,
-  } from "../lib/roles";
+import { CONVENOR_ADMIN, CONVENOR_ONLY, READ_ROLES } from "../lib/roles";
 
 export type NavItem = {
   label: string;
@@ -73,6 +70,12 @@ export const navigation: NavSection[] = [
         to: "/rules",
         icon: <Scale size={size} />,
         roles: READ_ROLES,
+      },
+      {
+        label: "Exports",
+        to: "/exports",
+        icon: <Download size={size} />,
+        roles: CONVENOR_ADMIN,
       },
     ],
   },

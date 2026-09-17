@@ -11,11 +11,11 @@ import {
 import { RefreshCw } from "lucide-react";
 import PageHeader from "../../components/PageHeader";
 import TableCard from "../../components/TableCard";
+import { StatusDot } from "../../components/StatusBadge";
 import { EmptyState, ErrorState, LoadingState } from "../../components/States";
 import { formatDateTime } from "../../lib/format";
 import { useResource } from "../../lib/useResource";
 import type { ChangeSource, SystemLog } from "../../types/api";
-import { StatusDot } from "../../components/StatusBadge";
 
 // The entities the pipeline actually writes log rows for.
 const ENTITIES = [
@@ -165,9 +165,7 @@ export default function Audit() {
                         tt="none"
                         fw={500}
                         leftSection={
-                          <StatusDot
-                          colour={SOURCE_COLOUR[log.reason]}
-                          />
+                          <StatusDot colour={SOURCE_COLOUR[log.reason]} />
                         }
                       >
                         {log.reason.replace(/_/g, " ")}
@@ -187,5 +185,3 @@ export default function Audit() {
     </Stack>
   );
 }
-
-

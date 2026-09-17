@@ -112,7 +112,7 @@ async def read_and_validate(
     return content, extension
 
 
-async def upload_document(
+async def upload_document[DocumentT](
     db: Session,
     service: DocumentStorageService[DocumentT],
     content: bytes,
