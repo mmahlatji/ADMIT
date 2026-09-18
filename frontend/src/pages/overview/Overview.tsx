@@ -15,6 +15,7 @@ import TableCard from "../../components/TableCard";
 import { ErrorState, LoadingState } from "../../components/States";
 import { ImportStatusBadge } from "../../components/StatusBadge";
 import { useAuth } from "../../context/AuthContext";
+import { fetchAllPages } from "../../lib/allPages";
 import { api } from "../../lib/api";
 import { formatDateTime, sourceLabel } from "../../lib/format";
 import { can, CONVENOR_ADMIN, CONVENOR_ONLY } from "../../lib/roles";
@@ -89,20 +90,23 @@ export default function Overview() {
         // and swallowing the 403s would fill the network log with failures
         // that look like bugs.
         const wantsOps = can(role, CONVENOR_ADMIN);
+        // Everything here is a headline count, so a capped fetch would put a
+        // confidently wrong number on the dashboard. The import list is the one
+        // exception: it shows the five most recent runs and says so.
         const [applications, conflicts, imports, rules, users] =
           await Promise.all([
-            api.request<Application[]>("/applications?limit=500"),
+            fetchAllPages<Application>("/applications").then((r) => r.items),
             wantsOps
-              ? api.request<MatchingReview[]>(
-                  "/matching_reviews?status=pending&limit=500",
-                )
+              ? fetchAllPages<MatchingReview>(
+                  "/matching_reviews?status=pending",
+                ).then((r) => r.items)
               : Promise.resolve([]),
             wantsOps
               ? api.request<ImportRun[]>("/import_runs?limit=5")
               : Promise.resolve([]),
-            api.request<Rule[]>("/rules?limit=100"),
+            fetchAllPages<Rule>("/rules").then((r) => r.items),
             can(role, CONVENOR_ONLY)
-              ? api.request<User[]>("/users?limit=500")
+              ? fetchAllPages<User>("/users").then((r) => r.items)
               : Promise.resolve([]),
           ]);
 

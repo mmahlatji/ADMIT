@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     environment: str = "development"
 
     # Local Ollama serving the natural-language query model. Defaults to the
-    # 4-bit (Q4_K_M) instruct tag; quantization is a property of the model file,
+    # 6-bit (Q6_K) instruct tag; quantization is a property of the model file,
     # not the request.
     ollama_url: str = ""
     ollama_model: str = ""

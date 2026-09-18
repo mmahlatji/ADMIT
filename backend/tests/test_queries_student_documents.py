@@ -4,6 +4,7 @@ from app.queries.student_documents import (
     delete_student_document,
     get_student_document_by_id,
     get_student_documents,
+    get_student_documents_by_applicant,
     get_student_documents_by_hash,
     update_student_document,
 )
@@ -75,3 +76,23 @@ def test_get_student_document_by_hash_is_scoped_to_the_applicant(db_session):
     assert (
         get_student_documents_by_hash(db_session, document.applicant_id, "a" * 64) is not None
     )
+
+
+def test_get_student_documents_by_applicant_is_scoped(db_session):
+    applicant = create_applicant(db_session)
+    other = create_applicant(db_session, campus_id="zzzyyy002", employee_id="7777777")
+    create_student_document(
+        db_session, applicant.applicant_id, "key-a", "mine.pdf", "application/pdf", "a" * 64
+    )
+    create_student_document(
+        db_session, other.applicant_id, "key-b", "theirs.pdf", "application/pdf", "b" * 64
+    )
+
+    found = get_student_documents_by_applicant(db_session, applicant.applicant_id)
+    assert [d.original_file_name for d in found] == ["mine.pdf"]
+
+
+def test_get_student_documents_by_applicant_empty(db_session):
+    applicant = create_applicant(db_session)
+
+    assert get_student_documents_by_applicant(db_session, applicant.applicant_id) == []

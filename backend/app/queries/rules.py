@@ -17,7 +17,10 @@ def get_rules(db: Session, skip: int = 0, limit: int = 100) -> list[Rules]:
     """List rules, newest first, paginated."""
     return list(
         db.execute(
-            select(Rules).order_by(Rules.created_at.desc()).offset(skip).limit(limit)
+            select(Rules)
+            .order_by(Rules.created_at.desc(), Rules.rule_id.asc())
+            .offset(skip)
+            .limit(limit)
         ).scalars()
     )
 

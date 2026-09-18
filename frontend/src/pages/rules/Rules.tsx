@@ -23,7 +23,7 @@ import { useAuth } from "../../context/AuthContext";
 import { api } from "../../lib/api";
 import { formatDateTime } from "../../lib/format";
 import { can, CONVENOR_ADMIN } from "../../lib/roles";
-import { useResource } from "../../lib/useResource";
+import { useAllPages } from "../../lib/allPages";
 import {
   RULE_VARIABLES,
   type Rule,
@@ -63,7 +63,7 @@ export default function Rules() {
   const canWrite = can(user?.role ?? null, CONVENOR_ADMIN);
 
   const { data, loading, error, reload } =
-    useResource<Rule[]>("/rules?limit=100");
+    useAllPages<Rule>("/rules");
   const [expression, setExpression] = useState(
     "0.5*csc3003s + 0.5*csc2002s >= 60",
   );

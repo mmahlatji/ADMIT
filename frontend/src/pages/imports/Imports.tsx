@@ -1,5 +1,6 @@
 import { useState } from "react";
 import {
+  ActionIcon,
   Alert,
   Badge,
   Button,
@@ -9,18 +10,32 @@ import {
   Stack,
   Table,
   Text,
+  Tooltip,
 } from "@mantine/core";
 import { Dropzone, type FileWithPath } from "@mantine/dropzone";
 import { notifications } from "@mantine/notifications";
-import { CircleAlert, FileSpreadsheet, RefreshCw, Upload, X } from "lucide-react";
+import {
+  CircleAlert,
+  ExternalLink,
+  FileSpreadsheet,
+  RefreshCw,
+  Upload,
+  X,
+} from "lucide-react";
 import PageHeader from "../../components/PageHeader";
 import TableCard from "../../components/TableCard";
 import { EmptyState, ErrorState, LoadingState } from "../../components/States";
 import { ImportStatusBadge } from "../../components/StatusBadge";
 import { api } from "../../lib/api";
+import { notifyTabBlocked, openTab, signedUrlFor } from "../../lib/documents";
 import { formatDateTime, sourceLabel } from "../../lib/format";
-import { useResource } from "../../lib/useResource";
-import { SOURCE_TYPES, type ImportRun, type SourceType } from "../../types/api";
+import { useAllPages } from "../../lib/allPages";
+import {
+  SOURCE_TYPES,
+  type ImportDocument,
+  type ImportRun,
+  type SourceType,
+} from "../../types/api";
 
 const ACCEPT = [
   "text/csv",
@@ -111,12 +126,11 @@ function SlotDropzone({
 }
 
 export default function Imports() {
-  const { data, loading, error, reload } = useResource<ImportRun[]>(
-    "/import_runs?limit=100",
-  );
+  const { data, loading, error, reload } = useAllPages<ImportRun>("/import_runs");
   const [files, setFiles] = useState<Partial<Record<SourceType, File>>>({});
   const [errors, setErrors] = useState<Partial<Record<SourceType, string>>>({});
   const [uploading, setUploading] = useState(false);
+  const [openingRun, setOpeningRun] = useState<string | null>(null);
 
   const chosen = SOURCE_TYPES.filter((s) => files[s]);
 
@@ -183,6 +197,41 @@ export default function Imports() {
 
     setUploading(false);
     await reload();
+  }
+
+  // The run itself carries no reference to its stored file, so the document has
+  // to be looked up before its link can be asked for. Both happen on the click
+  // rather than for every row in the table.
+  async function openSource(run: ImportRun) {
+    const tab = openTab();
+    setOpeningRun(run.import_run_id);
+    try {
+      const documents = await api.request<ImportDocument[]>(
+        `/import_runs/${run.import_run_id}/documents`,
+      );
+      if (documents.length === 0) {
+        tab.cancel();
+        notifications.show({
+          color: "attention",
+          title: "No stored copy",
+          message: `This run read ${run.file_name}, but the file itself was not kept.`,
+        });
+        return;
+      }
+      const url = await signedUrlFor(
+        `/import_documents/${documents[0].document_id}`,
+      );
+      if (!tab.go(url)) notifyTabBlocked(url, run.file_name);
+    } catch (e) {
+      tab.cancel();
+      notifications.show({
+        color: "red",
+        title: "Could not open that sheet",
+        message: e instanceof Error ? e.message : "Something went wrong.",
+      });
+    } finally {
+      setOpeningRun(null);
+    }
   }
 
   const runs = data ?? [];
@@ -283,9 +332,22 @@ export default function Imports() {
                   <Table.Tr key={run.import_run_id}>
                     <Table.Td>{sourceLabel(run.source_type)}</Table.Td>
                     <Table.Td>
-                      <Text size="sm" lineClamp={1} maw={220}>
-                        {run.file_name}
-                      </Text>
+                      <Group gap={4} wrap="nowrap">
+                        <Text size="sm" lineClamp={1} maw={200}>
+                          {run.file_name}
+                        </Text>
+                        <Tooltip label="Open the sheet this run read">
+                          <ActionIcon
+                            variant="subtle"
+                            size="sm"
+                            aria-label={`Open ${run.file_name}`}
+                            loading={openingRun === run.import_run_id}
+                            onClick={() => openSource(run)}
+                          >
+                            <ExternalLink size={14} />
+                          </ActionIcon>
+                        </Tooltip>
+                      </Group>
                     </Table.Td>
                     <Table.Td>
                       <Text size="xs">{formatDateTime(run.uploaded_at)}</Text>

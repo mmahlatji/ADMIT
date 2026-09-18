@@ -1,0 +1,29 @@
+.countValue {
+  font-family: var(--mantine-font-family-monospace);
+  font-variant-numeric: tabular-nums;
+  font-size: 2.5rem;
+  font-weight: 500;
+  line-height: 1.1;
+}
+
+/* Column names come straight from the database, so they are read as
+   identifiers rather than as prose. */
+.columnName {
+  font-family: var(--mantine-font-family-monospace);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  text-transform: none;
+}
+
+/* A motivation is thousands of characters in a cell sized for a course code.
+   Two lines keep every row the same height and the full text in the title. */
+.cell {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  max-width: 28rem;
+  word-break: break-word;
+}

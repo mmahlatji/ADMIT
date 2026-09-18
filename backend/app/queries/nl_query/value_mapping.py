@@ -8,7 +8,7 @@ from sqlalchemy import Column
 from sqlalchemy import Enum as SQLEnum
 
 
-def _coerce_enum(enum_cls: type, name: str, value: Any) -> Any:
+def _coerce_enum(enum_cls: type, value: Any) -> Any:
     """Match ``value`` to a member of ``enum_cls`` (by value, or via str ctor)."""
     if isinstance(value, enum_cls):
         return value
@@ -18,8 +18,7 @@ def _coerce_enum(enum_cls: type, name: str, value: Any) -> Any:
     try:
         return enum_cls(value)
     except (ValueError, TypeError) as exc:
-        allowed = ", ".join(repr(m.value) for m in enum_cls)
-        raise ValueError(f"Invalid value for '{name}': {value!r} (allowed: {allowed})") from exc
+        raise ValueError("Invalid value") from exc
 
 
 def coerce_value(column: Column, value: Any) -> Any:
@@ -37,7 +36,7 @@ def coerce_value(column: Column, value: Any) -> Any:
 
     column_type = column.type
     if isinstance(column_type, SQLEnum):
-        return _coerce_enum(column_type.enum_class, column.name, value)
+        return _coerce_enum(column_type.enum_class, value)
 
     target = column_type.python_type
     if isinstance(value, target):
@@ -63,9 +62,7 @@ def coerce_value(column: Column, value: Any) -> Any:
                     return False
             raise ValueError
     except (ValueError, TypeError, AttributeError) as exc:
-        raise ValueError(
-            f"Invalid {type(column_type).__name__} value for '{column.name}': {value!r}"
-        ) from exc
+        raise ValueError(f"Invalid {type(column_type).__name__} value") from exc
 
     return value
 

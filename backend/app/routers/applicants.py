@@ -6,6 +6,7 @@ from app.models.users import RoleEnum, User
 from app.schemas.applicants import ApplicantDetail, ApplicantResponse
 from app.schemas.student_documents import StudentDocumentResponse
 from app.services import applicants as applicants_service
+from app.services import student_documents as document_service
 from app.services.storage import student_documents as student_doc_storage
 from app.services.storage.base import read_and_validate
 from app.services.storage.exceptions import (
@@ -41,6 +42,28 @@ def get_applicant(
     if applicant is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Applicant not found")
     return applicant
+
+
+@router.get("/{campus_id}/documents", response_model=list[StudentDocumentResponse])
+def list_documents(
+    campus_id: str,
+    skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_role(*ALLOWED_ROLES)),
+):
+    """List one applicant's uploaded documents.
+
+    Uploading already returned a document_id, but nothing ever listed them, so
+    a document was only reachable by whoever uploaded it and only until they
+    reloaded the page. GET /student_documents/{document_id} had no caller.
+    """
+    applicant = applicants_service.get_applicant_by_campus_id(db, campus_id)
+    if applicant is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Applicant not found")
+    return document_service.list_documents_for_applicant(
+        db, applicant.applicant_id, skip=skip, limit=limit
+    )
 
 
 @router.post(

@@ -18,6 +18,7 @@ const ApplicantDetail = lazy(
   () => import("./pages/applicants/ApplicantDetail"),
 );
 const Decisions = lazy(() => import("./pages/decisions/Decisions"));
+const Ask = lazy(() => import("./pages/ask/Ask"));
 const Rules = lazy(() => import("./pages/rules/Rules"));
 const Imports = lazy(() => import("./pages/imports/Imports"));
 const Conflicts = lazy(() => import("./pages/conflicts/Conflicts"));
@@ -49,6 +50,7 @@ export default function App() {
                 element={<ApplicantDetail />}
               />
               <Route path="decisions" element={<Decisions />} />
+              <Route path="ask" element={<Ask />} />
               <Route path="rules" element={<Rules />} />
               <Route
                 path="imports"

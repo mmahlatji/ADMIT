@@ -20,7 +20,10 @@ def get_latest_system_log_by_entity_and_entity_id(db: Session, entity: str, enti
 
 def get_system_logs(db: Session, skip: int = 0, limit: int = 100) -> list[SystemLog]:
     """List system log entries, paginated."""
-    return list(db.execute(select(SystemLog).offset(skip).order_by(SystemLog.changed_at.desc()).limit(limit)).scalars())
+    return list(db.execute(select(SystemLog)
+        .offset(skip)
+        .order_by(SystemLog.changed_at.desc(), SystemLog.log_id.asc())
+        .limit(limit)).scalars())
 
 
 def list_logs(
@@ -36,7 +39,9 @@ def list_logs(
         stmt = stmt.where(SystemLog.entity_name == entity_name)
     if entity_id is not None:
         stmt = stmt.where(SystemLog.entity_id == entity_id)
-    stmt = stmt.order_by(SystemLog.changed_at.desc()).offset(skip).limit(limit)
+    stmt = stmt.order_by(
+        SystemLog.changed_at.desc(), SystemLog.log_id.asc()
+    ).offset(skip).limit(limit)
     return list(db.execute(stmt).scalars())
 
 

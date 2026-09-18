@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Anchor,
   Button,
@@ -12,9 +12,10 @@ import {
 import { RefreshCw, Search } from "lucide-react";
 import { Link } from "react-router-dom";
 import PageHeader from "../../components/PageHeader";
+import Pager, { ROWS_PER_PAGE } from "../../components/Pager";
 import TableCard from "../../components/TableCard";
 import { EmptyState, ErrorState, LoadingState } from "../../components/States";
-import { useResource } from "../../lib/useResource";
+import { useAllPages } from "../../lib/allPages";
 import type { Applicant, CitizenshipResidency } from "../../types/api";
 
 const CITIZENSHIPS: CitizenshipResidency[] = [
@@ -24,10 +25,11 @@ const CITIZENSHIPS: CitizenshipResidency[] = [
 ];
 
 export default function Applicants() {
-  const { data, loading, error, reload } =
-    useResource<Applicant[]>("/applicants?limit=500");
+  const { data, loading, error, reload, truncated } =
+    useAllPages<Applicant>("/applicants");
   const [query, setQuery] = useState("");
   const [citizenship, setCitizenship] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
 
   const applicants = useMemo(() => data ?? [], [data]);
 
@@ -43,6 +45,16 @@ export default function Applicants() {
       );
     });
   }, [applicants, query, citizenship]);
+
+  const pageCount = Math.max(1, Math.ceil(visible.length / ROWS_PER_PAGE));
+  const rows = useMemo(
+    () => visible.slice((page - 1) * ROWS_PER_PAGE, page * ROWS_PER_PAGE),
+    [visible, page],
+  );
+
+  useEffect(() => {
+    if (page > pageCount) setPage(1);
+  }, [page, pageCount]);
 
   return (
     <Stack gap="lg">
@@ -102,9 +114,12 @@ export default function Applicants() {
         />
       ) : (
         <>
-          <Text size="sm" c="dimmed">
-            Showing {visible.length} of {applicants.length}
-          </Text>
+          <Pager
+            page={page}
+            onChange={setPage}
+            totalItems={visible.length}
+            truncated={truncated}
+          />
           <TableCard minWidth={760}>
             <Table>
               <Table.Thead>
@@ -116,7 +131,7 @@ export default function Applicants() {
                 </Table.Tr>
               </Table.Thead>
               <Table.Tbody>
-                {visible.map((a) => (
+                {rows.map((a) => (
                   <Table.Tr key={a.campus_id}>
                     <Table.Td>
                       <Anchor

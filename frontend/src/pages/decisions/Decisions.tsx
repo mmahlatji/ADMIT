@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Anchor,
   Badge,
@@ -17,11 +17,12 @@ import { notifications } from "@mantine/notifications";
 import { RefreshCw, Search } from "lucide-react";
 import { Link } from "react-router-dom";
 import PageHeader from "../../components/PageHeader";
+import Pager, { ROWS_PER_PAGE } from "../../components/Pager";
 import TableCard from "../../components/TableCard";
 import { EmptyState, ErrorState, LoadingState } from "../../components/States";
 import { ApplicationStatusBadge } from "../../components/StatusBadge";
+import { useAllPages } from "../../lib/allPages";
 import { api } from "../../lib/api";
-import { useResource } from "../../lib/useResource";
 import {
   APPLICATION_STATUSES,
   DENY_REASONS,
@@ -31,15 +32,15 @@ import {
 } from "../../types/api";
 
 export default function Decisions() {
-  const { data, loading, error, reload, setData } = useResource<Application[]>(
-    "/applications?limit=500",
-  );
+  const { data, loading, error, reload, setData, truncated } =
+    useAllPages<Application>("/applications");
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [target, setTarget] = useState<ApplicationStatus | null>(null);
   const [reason, setReason] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [page, setPage] = useState(1);
 
   const applications = useMemo(() => data ?? [], [data]);
 
@@ -61,6 +62,18 @@ export default function Decisions() {
     [visible, selected],
   );
 
+  const pageCount = Math.max(1, Math.ceil(visible.length / ROWS_PER_PAGE));
+  const rows = useMemo(
+    () => visible.slice((page - 1) * ROWS_PER_PAGE, page * ROWS_PER_PAGE),
+    [visible, page],
+  );
+
+  // Narrowing the filter can leave the current page past the end of the
+  // results, which renders an empty table under a pager that says otherwise.
+  useEffect(() => {
+    if (page > pageCount) setPage(1);
+  }, [page, pageCount]);
+
   function toggle(id: string) {
     setSelected((prev) => {
       const next = new Set(prev);
@@ -70,6 +83,9 @@ export default function Decisions() {
     });
   }
 
+  // Selects everything matching the filter, not just the page on screen: the
+  // point of filtering to a status is to act on all of it at once, and a
+  // convenor should not have to walk the pages to do that.
   function toggleAll() {
     setSelected((prev) =>
       prev.size === visible.length
@@ -191,11 +207,12 @@ export default function Decisions() {
         />
       ) : (
         <>
-          <Group justify="space-between" wrap="wrap" gap="xs">
-            <Text size="sm" c="dimmed">
-              Showing {visible.length} of {applications.length}
-            </Text>
-          </Group>
+          <Pager
+            page={page}
+            onChange={setPage}
+            totalItems={visible.length}
+            truncated={truncated}
+          />
 
           <TableCard minWidth={880}>
             <Table>
@@ -203,7 +220,7 @@ export default function Decisions() {
                 <Table.Tr>
                   <Table.Th w={40}>
                     <Checkbox
-                      aria-label="Select all shown"
+                      aria-label={`Select all ${visible.length} matching`}
                       checked={allSelected}
                       indeterminate={selected.size > 0 && !allSelected}
                       onChange={toggleAll}
@@ -217,7 +234,7 @@ export default function Decisions() {
                 </Table.Tr>
               </Table.Thead>
               <Table.Tbody>
-                {visible.map((a) => (
+                {rows.map((a) => (
                   <Table.Tr
                     key={a.application_id}
                     bg={

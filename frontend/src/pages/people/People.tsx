@@ -21,7 +21,7 @@ import { useAuth } from "../../context/AuthContext";
 import { api } from "../../lib/api";
 import { formatDateTime, fullName } from "../../lib/format";
 import { ALL_ROLES } from "../../lib/roles";
-import { useResource } from "../../lib/useResource";
+import { useAllPages } from "../../lib/allPages";
 import type { Role, User } from "../../types/api";
 
 const REVOKE = "__revoke__";
@@ -29,7 +29,7 @@ const REVOKE = "__revoke__";
 export default function People() {
   const { user: me } = useAuth();
   const { data, loading, error, reload, setData } =
-    useResource<User[]>("/users?limit=500");
+    useAllPages<User>("/users");
   const [query, setQuery] = useState("");
   const [pending, setPending] = useState<{
     target: User;

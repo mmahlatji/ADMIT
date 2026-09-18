@@ -168,6 +168,27 @@ export type ImportRun = {
   uploaded_at: string;
 };
 
+export type StudentDocument = {
+  document_id: string;
+  applicant_id: string;
+  storage_key: string;
+  original_file_name: string;
+  content_type: string;
+  sha256_hash: string;
+  uploaded_at: string;
+};
+
+export type ImportDocument = Omit<StudentDocument, "applicant_id"> & {
+  import_run_id: string;
+};
+
+/** The short-lived link both document download endpoints hand back. */
+export type DocumentDownload = {
+  original_file_name: string;
+  signed_url: string;
+  content_type: string;
+};
+
 export type ChangeSource =
   | "import"
   | "manual_edit"
@@ -224,3 +245,24 @@ export const RULE_VARIABLES = [
   "csc3002f",
   "csc3003s",
 ] as const;
+
+export type QueryRow = Record<string, unknown>;
+
+/**
+ * A "count" query answers with a bare number and a "select" query with rows,
+ * so every reader has to narrow before it can render anything.
+ */
+export type QueryResult = number | QueryRow[];
+
+export type QueryAskResponse = {
+  query_id: string;
+  rows: QueryResult | null;
+  title: string | null;
+};
+
+export type SavedQueryMeta = {
+  query_id: string;
+  prompt: string;
+  title: string | null;
+  created_at: string;
+};

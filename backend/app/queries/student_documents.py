@@ -18,6 +18,21 @@ def get_student_documents(db: Session, skip: int = 0, limit: int = 100) -> list[
     return list(db.execute(select(StudentDocument).offset(skip).order_by(StudentDocument.applicant_id.asc()).limit(limit)).scalars())
 
 
+def get_student_documents_by_applicant(
+    db: Session, applicant_id: uuid.UUID, skip: int = 0, limit: int = 100
+) -> list[StudentDocument]:
+    """List one applicant's documents, newest first."""
+    return list(
+        db.execute(
+            select(StudentDocument)
+            .where(StudentDocument.applicant_id == applicant_id)
+            .order_by(StudentDocument.uploaded_at.desc())
+            .offset(skip)
+            .limit(limit)
+        ).scalars()
+    )
+
+
 def get_student_documents_by_hash(
     db: Session, applicant_id: uuid.UUID, sha256_hash: str
 ) -> StudentDocument | None:

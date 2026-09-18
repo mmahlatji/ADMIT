@@ -16,6 +16,14 @@ def get_document_by_id(db: Session, document_id: uuid.UUID) -> StudentDocument |
     return student_doc_queries.get_student_document_by_id(db, document_id)
 
 
+def list_documents_for_applicant(
+    db: Session, applicant_id: uuid.UUID, skip: int = 0, limit: int = 100
+) -> list[StudentDocument]:
+    return student_doc_queries.get_student_documents_by_applicant(
+        db, applicant_id, skip=skip, limit=limit
+    )
+
+
 def create_document(
     db: Session,
     applicant_id: uuid.UUID,

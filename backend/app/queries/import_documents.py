@@ -17,6 +17,17 @@ def get_import_documents(db: Session, skip: int = 0, limit: int = 100) -> list[D
     """List import-run documents, paginated."""
     return list(db.execute(select(Document).offset(skip).order_by(Document.uploaded_at.desc()).limit(limit)).scalars())
 
+def get_import_documents_by_run(db: Session, import_run_id: uuid.UUID) -> list[Document]:
+    """List the files uploaded for one import run, newest first."""
+    return list(
+        db.execute(
+            select(Document)
+            .where(Document.import_run_id == import_run_id)
+            .order_by(Document.uploaded_at.desc())
+        ).scalars()
+    )
+
+
 def get_import_documents_by_hash(db: Session, sha256_hash: str) -> Document | None:
     return db.execute(
         select(Document).where(Document.sha256_hash == sha256_hash)

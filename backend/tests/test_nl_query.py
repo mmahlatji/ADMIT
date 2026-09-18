@@ -177,6 +177,80 @@ def test_aggregate_avg_and_max(marks):
     assert rows == [{"avg_mark": 60.0, "max_mark": 80}]
 
 
+def test_group_by_auto_includes_plain_columns(marks):
+    # LLM groups only by campus_id but also selects first/last name; the executor
+    # must add the non-aggregated columns to GROUP BY instead of failing.
+    spec = {
+        "base_table": "applicant_marks",
+        "joins": [{"table": "applicants", "on": "applicant_marks.campus_id=applicants.campus_id"}],
+        "select": [
+            {"table": "applicants", "field": "first_name"},
+            {"table": "applicants", "field": "last_name"},
+            {"func": "count", "table": "applicant_marks", "field": "mark_id", "alias": "number of marks"},
+        ],
+        "group_by": ["applicants.campus_id"],
+        "order_by": [{"field": "applicants.campus_id", "direction": "asc"}],
+    }
+    assert execute_query(spec, marks) == [
+        {"first_name": "Noah", "last_name": "Smith", "number of marks": 2},
+        {"first_name": "Ava", "last_name": "Jones", "number of marks": 1},
+    ]
+
+
+def test_order_by_unresolvable_column_falls_back(marks):
+    # The LLM ordered by applicant_id, a column of `applicants` that isn't in
+    # this query's tables; the executor falls back to the group key.
+    spec = {
+        "base_table": "applicant_marks",
+        "select": [
+            {"field": "campus_id", "alias": "Applicant ID"},
+            {"func": "count", "field": "mark_id", "distinct": True, "alias": "Number of Marks"},
+        ],
+        "group_by": ["campus_id"],
+        "order_by": [{"field": "applicant_id", "direction": "asc"}],
+    }
+    assert execute_query(spec, marks) == [
+        {"Applicant ID": "xxxyyy001", "Number of Marks": 2},
+        {"Applicant ID": "xxxyyy002", "Number of Marks": 1},
+    ]
+
+
+def test_distinct_rows_order_by_non_selected_column_falls_back(marks):
+    # SELECT DISTINCT forbids ordering by a column outside the select list.
+    spec = {
+        "base_table": "applicant_marks",
+        "select": [{"field": "course_code"}],
+        "distinct_rows": True,
+        "order_by": [{"field": "campus_id", "direction": "asc"}],
+    }
+    assert [r["course_code"] for r in execute_query(spec, marks)] == ["CSC1015F", "CSC2001F"]
+
+
+def test_group_by_order_by_ungrouped_column_falls_back(marks):
+    # last_name is resolvable (applicants is joined) but not grouped; the
+    # executor falls back to the group key instead of raising a GroupingError.
+    spec = {
+        "base_table": "applicant_marks",
+        "joins": [{"table": "applicants", "on": "applicant_marks.campus_id=applicants.campus_id"}],
+        "select": [
+            {"table": "applicant_marks", "field": "campus_id"},
+            {"func": "count", "field": "mark", "alias": "n"},
+        ],
+        "group_by": ["applicant_marks.campus_id"],
+        "order_by": [{"field": "last_name", "direction": "asc"}],
+    }
+    assert execute_query(spec, marks) == [
+        {"campus_id": "xxxyyy001", "n": 2},
+        {"campus_id": "xxxyyy002", "n": 1},
+    ]
+
+
+def test_avg_on_non_numeric_column_raises(marks):
+    spec = {"base_table": "applicants", "select": [{"func": "avg", "field": "first_name"}]}
+    with pytest.raises(ValueError, match="requires a numeric column"):
+        execute_query(spec, marks)
+
+
 def test_select_all_columns(departments):
     rows = execute_query({"base_table": "departments"}, departments)
     assert len(rows) == 2
@@ -220,7 +294,7 @@ def test_unknown_aggregate_raises(marks):
 def test_missing_foreign_key_join_raises(departments):
     # applicant_marks has no FK to departments, so the auto-resolve must fail.
     spec = {"base_table": "departments", "joins": [{"table": "applicant_marks"}], "action": "count"}
-    with pytest.raises(ValueError, match="No foreign key links"):
+    with pytest.raises(ValueError, match="No join condition"):
         execute_query(spec, departments)
 
 

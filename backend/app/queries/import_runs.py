@@ -15,7 +15,10 @@ def get_import_run_by_id(db: Session, import_run_id: uuid.UUID) -> ImportRun | N
 
 def get_import_runs(db: Session, skip: int = 0, limit: int = 100) -> list[ImportRun]:
     """List import runs, paginated."""
-    return list(db.execute(select(ImportRun).offset(skip).order_by(ImportRun.uploaded_at.desc()).limit(limit)).scalars())
+    return list(db.execute(select(ImportRun)
+        .offset(skip)
+        .order_by(ImportRun.uploaded_at.desc(), ImportRun.import_run_id.asc())
+        .limit(limit)).scalars())
 
 
 def create_import_run(

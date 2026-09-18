@@ -13,6 +13,10 @@ def get_document_by_id(db: Session, document_id: uuid.UUID) -> Document | None:
     return import_doc_queries.get_import_document_by_id(db, document_id)
 
 
+def list_documents_for_run(db: Session, import_run_id: uuid.UUID) -> list[Document]:
+    return import_doc_queries.get_import_documents_by_run(db, import_run_id)
+
+
 def create_document(
     db: Session,
     import_run_id: uuid.UUID,

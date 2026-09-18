@@ -1,4 +1,5 @@
 from app.models.users import RoleEnum
+from app.queries.student_documents import create_student_document
 from tests.test_notes_router import _make_actor, _make_client, _teardown
 from tests.test_queries_applicants import _create as create_applicant
 
@@ -40,6 +41,72 @@ def test_get_applicant_not_found(db_session):
     client = _make_client(db_session, actor)
     try:
         res = client.get("/applicants/doesnotexist")
+        assert res.status_code == 404
+    finally:
+        _teardown()
+
+
+def test_list_applicant_documents(db_session):
+    applicant = create_applicant(db_session)
+    create_student_document(
+        db_session, applicant.applicant_id, "key-a", "a.pdf", "application/pdf", "a" * 64
+    )
+    create_student_document(
+        db_session, applicant.applicant_id, "key-b", "b.pdf", "application/pdf", "b" * 64
+    )
+    actor = _make_actor(db_session, role=RoleEnum.committee)
+
+    client = _make_client(db_session, actor)
+    try:
+        res = client.get("/applicants/xxxyyy001/documents")
+        assert res.status_code == 200
+        body = res.json()
+        assert len(body) == 2
+        assert {d["original_file_name"] for d in body} == {"a.pdf", "b.pdf"}
+    finally:
+        _teardown()
+
+
+def test_list_applicant_documents_is_scoped_to_that_applicant(db_session):
+    applicant = create_applicant(db_session)
+    other = create_applicant(db_session, campus_id="zzzyyy002", employee_id="7777777")
+    create_student_document(
+        db_session, applicant.applicant_id, "key-a", "mine.pdf", "application/pdf", "a" * 64
+    )
+    create_student_document(
+        db_session, other.applicant_id, "key-b", "theirs.pdf", "application/pdf", "b" * 64
+    )
+    actor = _make_actor(db_session, role=RoleEnum.committee)
+
+    client = _make_client(db_session, actor)
+    try:
+        res = client.get("/applicants/xxxyyy001/documents")
+        assert res.status_code == 200
+        body = res.json()
+        assert [d["original_file_name"] for d in body] == ["mine.pdf"]
+    finally:
+        _teardown()
+
+
+def test_list_applicant_documents_empty(db_session):
+    create_applicant(db_session)
+    actor = _make_actor(db_session, role=RoleEnum.committee)
+
+    client = _make_client(db_session, actor)
+    try:
+        res = client.get("/applicants/xxxyyy001/documents")
+        assert res.status_code == 200
+        assert res.json() == []
+    finally:
+        _teardown()
+
+
+def test_list_applicant_documents_unknown_applicant(db_session):
+    actor = _make_actor(db_session, role=RoleEnum.committee)
+
+    client = _make_client(db_session, actor)
+    try:
+        res = client.get("/applicants/doesnotexist/documents")
         assert res.status_code == 404
     finally:
         _teardown()

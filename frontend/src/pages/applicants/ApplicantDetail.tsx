@@ -17,6 +17,7 @@ import { ApplicationStatusBadge } from "../../components/StatusBadge";
 import { formatDate } from "../../lib/format";
 import { useResource } from "../../lib/useResource";
 import type { ApplicantDetail as Detail } from "../../types/api";
+import DocumentsPanel from "./DocumentsPanel";
 import NotesPanel from "./NotesPanel";
 import VotesPanel from "./VotesPanel";
 
@@ -243,6 +244,12 @@ export default function ApplicantDetail() {
             campusId={data.campus_id}
             applications={data.applications}
           />
+        </Grid.Col>
+      </Grid>
+
+      <Grid gutter="md">
+        <Grid.Col span={{ base: 12, md: 6 }}>
+          <DocumentsPanel campusId={data.campus_id} />
         </Grid.Col>
       </Grid>
 

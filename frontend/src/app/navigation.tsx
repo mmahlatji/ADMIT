@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   Scale,
   ScrollText,
+  Sparkles,
   TriangleAlert,
   Users,
 } from "lucide-react";
@@ -45,6 +46,12 @@ export const navigation: NavSection[] = [
         label: "Decisions",
         to: "/decisions",
         icon: <Gavel size={size} />,
+        roles: READ_ROLES,
+      },
+      {
+        label: "Ask",
+        to: "/ask",
+        icon: <Sparkles size={size} />,
         roles: READ_ROLES,
       },
     ],

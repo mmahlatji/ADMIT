@@ -58,7 +58,7 @@ def get_users(db: Session, skip: int = 0, limit: int = 200) -> list[User]:
     return list(
         db.execute(
             select(User)
-            .order_by(User.role.is_(None).desc(), User.created_at.asc())
+            .order_by(User.role.is_(None).desc(), User.created_at.asc(), User.user_id.asc())
             .offset(skip)
             .limit(limit)
         ).scalars()

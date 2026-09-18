@@ -94,3 +94,29 @@ def test_get_application_by_number(db_session):
     assert found.application_number == "00000001"
 
     assert get_application_by_number(db_session, "doesnotexist") is None
+
+
+def test_paging_applications_is_stable_across_ties(db_session):
+    # Every row shares a campus_id, which was the whole sort key: without a
+    # unique tiebreaker the database is free to order these differently per
+    # query, so a row could appear on two pages or on none.
+    create_applicant(db_session)
+    for i in range(6):
+        create_application(
+            db_session,
+            application_number=f"APP{i:03d}",
+            campus_id="xxxyyy001",
+            academic_program_code="CSC",
+            academic_plan1="CSC05",
+            choice=Choice.FIRST,
+            application_status=ApplicationStatus.APPLIED,
+            application_date=date(2022, 10, 1),
+            effective_date=date(2022, 10, 1),
+        )
+
+    seen = []
+    for skip in (0, 2, 4):
+        seen.extend(a.application_id for a in get_applications(db_session, skip=skip, limit=2))
+
+    assert len(seen) == 6
+    assert len(set(seen)) == 6

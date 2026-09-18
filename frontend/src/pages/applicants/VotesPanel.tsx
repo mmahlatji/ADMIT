@@ -3,7 +3,7 @@ import { Button, Card, Divider, Group, Stack, Text } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useAuth } from "../../context/AuthContext";
 import { api } from "../../lib/api";
-import { useResource } from "../../lib/useResource";
+import { useAllPages } from "../../lib/allPages";
 import { VoteBadge } from "../../components/StatusBadge";
 import { LoadingState } from "../../components/States";
 import type { Application, Vote, VoteDecision } from "../../types/api";
@@ -18,8 +18,8 @@ export default function VotesPanel({
   applications: Application[];
 }) {
   const { user } = useAuth();
-  const { data, loading, reload } = useResource<Vote[]>(
-    `/votes?campus_id=${encodeURIComponent(campusId)}&limit=200`,
+  const { data, loading, reload } = useAllPages<Vote>(
+    `/votes?campus_id=${encodeURIComponent(campusId)}`,
   );
   const [saving, setSaving] = useState<string | null>(null);
 

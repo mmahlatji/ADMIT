@@ -1,8 +1,10 @@
 """HTTP layer for natural-language queries and their saved-query history."""
 
+import logging
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.deps import get_db, require_role
@@ -10,6 +12,8 @@ from app.llm.exceptions import LLMResponseError, LLMUnavailableError
 from app.models.users import RoleEnum, User
 from app.schemas.nl_query import QueryAskResponse, QueryRequest, QueryResult, SavedQueryMeta
 from app.services import nl_query as nl_query_service
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/query", tags=["nl_query"])
 
@@ -36,6 +40,17 @@ async def ask(
         raise HTTPException(
             status.HTTP_500_INTERNAL_SERVER_ERROR, f"LLM produced an invalid query: {exc}"
         ) from exc
+    # The executor guards the known PostgreSQL rules, but an unanticipated SQL
+    # error must still fail cleanly. Logged rather than returned: a
+    # SQLAlchemyError stringifies to the whole statement and its parameters,
+    # which would hand back the schema the rest of this module takes care not
+    # to name, and hand a committee member the tables their role excludes.
+    except SQLAlchemyError as exc:
+        logger.exception("nl_query ask failed while executing the generated query")
+        raise HTTPException(
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            "The query could not be run against the database",
+        ) from exc
 
 
 @router.get("", response_model=list[SavedQueryMeta])
@@ -61,6 +76,14 @@ def page(
     except ValueError as exc:
         raise HTTPException(
             status.HTTP_500_INTERNAL_SERVER_ERROR, f"Saved query produced an invalid query: {exc}"
+        ) from exc
+    # Same as ``ask``: a saved query replays live, so it can hit the same
+    # unanticipated SQL errors, and the same reason not to echo them back.
+    except SQLAlchemyError as exc:
+        logger.exception("nl_query page failed while replaying saved query %s", query_id)
+        raise HTTPException(
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            "The saved query could not be run against the database",
         ) from exc
 
 

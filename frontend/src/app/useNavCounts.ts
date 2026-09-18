@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { api } from "../lib/api";
+import { fetchAllPages } from "../lib/allPages";
 import { useAuth } from "../context/AuthContext";
 import { can, CONVENOR_ADMIN, CONVENOR_ONLY } from "../lib/roles";
 import type { MatchingReview, User } from "../types/api";
@@ -23,22 +23,22 @@ export function useNavCounts(): NavCounts {
       // and the page behind it reports properly if something is actually wrong.
       if (can(role, CONVENOR_ADMIN)) {
         try {
-          const pending = await api.request<MatchingReview[]>(
-            "/matching_reviews?status=pending&limit=500",
+          const pending = await fetchAllPages<MatchingReview>(
+            "/matching_reviews?status=pending",
           );
           if (!cancelled)
-            setCounts((c) => ({ ...c, conflicts: pending.length }));
+            setCounts((c) => ({ ...c, conflicts: pending.items.length }));
         } catch {
           /* leave at 0 */
         }
       }
       if (can(role, CONVENOR_ONLY)) {
         try {
-          const users = await api.request<User[]>("/users?limit=500");
+          const users = await fetchAllPages<User>("/users");
           if (!cancelled)
             setCounts((c) => ({
               ...c,
-              pendingUsers: users.filter((u) => u.role === null).length,
+              pendingUsers: users.items.filter((u) => u.role === null).length,
             }));
         } catch {
           /* leave at 0 */

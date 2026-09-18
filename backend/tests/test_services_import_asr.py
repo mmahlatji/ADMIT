@@ -111,7 +111,11 @@ def test_changed_field_updates_in_place_with_one_audit_entry(db_session):
 
     application_logs = [log for log in get_system_logs(db_session) if log.entity_name == "applications"]
     assert len(application_logs) == 2
-    assert application_logs[-1].new_data == {"academic_program_code": "MAM"}
+    # Matched rather than indexed: both entries are written inside one
+    # transaction, and changed_at is a transaction-start timestamp, so they tie
+    # on the sort key and neither end of the list is reliably the later one.
+    updates = [log for log in application_logs if log.new_data == {"academic_program_code": "MAM"}]
+    assert len(updates) == 1
 
 
 def test_application_number_pointing_at_different_campus_id_is_skipped(db_session):

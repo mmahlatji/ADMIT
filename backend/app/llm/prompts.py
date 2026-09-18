@@ -111,34 +111,53 @@ Rules:
 - Qualify a column as "<table>.<column>" only when its name is ambiguous.
 - For "action": "select", ALWAYS include a deterministic "order_by" on a stable column
   (prefer the table's primary key or another unique column) so results have a
-  consistent order.
+  consistent order, UNLESS "distinct_rows" is true — see the next rule.
+- When "distinct_rows" is true, "order_by" MUST only reference columns or aliases
+  that appear in "select" (SQL forbids sorting DISTINCT results by a column that
+  isn't selected). If you need a stable sort key, add it to "select" instead of
+  referencing it directly in "order_by"; if no selected column is a meaningful
+  sort key, omit "order_by" entirely rather than pointing outside "select".
+- When "group_by" is set, "order_by" MUST only reference a "group_by" column or
+  an aggregate's alias from "select" — never a plain column that isn't grouped
+  (SQL forbids sorting by a column that isn't grouped or aggregated, since each
+  group can contain many different values for it). If you want to sort by
+  something like a date, either add it to "group_by" (if that's a meaningful
+  grouping) or aggregate it (e.g. "max" of the date) and sort by that alias.
 - When giving columns aliases, prefer human readable aliases.
 - Return ONLY the JSON object: no markdown, no code fences, no commentary.
+
 
 """
 
 _EXAMPLES = """EXAMPLES:
 Q: How many applicants are there?
 A: {"title": "Applicant count", "base_table": "applicants", "action": "count"}
-
+ 
 Q: What is each applicant's average mark and how many marks do they have?
 A: {"title": "Average marks per applicant", "base_table": "applicant_marks", "select": [{"field": "campus_id"}, {"func": "avg", "field": "mark", "alias": "avg_mark"}, {"func": "count", "field": "mark", "alias": "number of marks"}], "group_by": ["campus_id"], "order_by": [{"field": "campus_id", "direction": "asc"}]}
-
+ 
 Q: How many applications are denied?
 A: {"title": "Denied applications", "base_table": "applications", "action": "count", "filters": [{"field": "application_status", "op": "eq", "value": "Denied"}]}
-
+ 
 Q: How many distinct campus ids have applied?
 A: {"title": "Distinct applicants", "base_table": "applications", "action": "count", "field": "campus_id", "distinct": true}
-
+ 
 Q: For each applicant, how many distinct courses do they have marks in?
 A: {"title": "Distinct courses per applicant", "base_table": "applicant_marks", "select": [{"field": "campus_id"}, {"func": "count", "field": "course_code", "distinct": true, "alias": "distinct courses"}], "group_by": ["campus_id"], "order_by": [{"field": "campus_id", "direction": "asc"}]}
-
+ 
 Q: What are the distinct application statuses?
 A: {"title": "Application statuses", "base_table": "applications", "select": [{"field": "application_status"}], "distinct_rows": true, "order_by": [{"field": "application_status", "direction": "asc"}]}
-
+ 
 Q: List the first and last name of every applicant with a Denied or Cancelled application.
 A: {"title": "Denied or cancelled applicants", "base_table": "applicants", "joins": [{"table": "applications"}], "select": [{"table": "applicants", "field": "first_name"}, {"table": "applicants", "field": "last_name"}], "filters": [{"table": "applications", "field": "application_status", "op": "in", "value": ["Denied", "Cancelled"]}], "order_by": [{"field": "applicants.campus_id", "direction": "asc"}]}
+ 
+Q: What are the distinct combinations of campus id and course code that have a recorded mark?
+A: {"title": "Distinct campus/course pairs with marks", "base_table": "applicant_marks", "select": [{"field": "campus_id"}, {"field": "course_code"}], "distinct_rows": true, "order_by": [{"field": "campus_id", "direction": "asc"}]}
+ 
+Q: List the distinct first and last names of applicants with Denied or Cancelled applications, sorted by first name.
+A: {"title": "Denied or cancelled applicant names", "base_table": "applicants", "joins": [{"table": "applications"}], "select": [{"table": "applicants", "field": "first_name"}, {"table": "applicants", "field": "last_name"}], "filters": [{"table": "applications", "field": "application_status", "op": "in", "value": ["Denied", "Cancelled"]}], "distinct_rows": true, "order_by": [{"field": "first_name", "direction": "asc"}]}
 """
+
 
 
 def build_system_prompt(schema: dict[str, Any]) -> str:

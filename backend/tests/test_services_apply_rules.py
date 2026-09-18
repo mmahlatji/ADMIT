@@ -317,3 +317,64 @@ def test_apply_rules_does_not_crash_when_nobody_has_marks_yet(patched_deps):
     apply_rules(db=db, intake_year=2024)  # must not raise
 
     patched_deps.transition_status.assert_not_called()
+
+
+# --- institution classification -----------------------------------------
+
+
+@pytest.mark.parametrize(
+    "last_registration",
+    ["", "   ", None, float("nan")],
+    ids=["empty", "whitespace", "null", "nan"],
+)
+def test_an_applicant_without_a_registration_is_judged_as_other(
+    patched_deps, last_registration
+):
+    """Every shape of "no registration" has to reach the OTHER rules.
+
+    The ASR sheet carries a single space for these, not a null: 226 of 345 rows
+    in the October 2022 sheet. Treating any non-null value as a UCT
+    registration silently moves most of an intake onto the wrong rule set, and
+    the existing per-institution test cannot see it because it hands back the
+    same rule whichever institution is asked for.
+    """
+    patched_deps.rule_queries.get_active_rules.side_effect = (
+        lambda db, institution, year: (
+            [make_rule("csc2001f >= 90", RuleAction.ACCEPT, institution=institution)]
+            if institution is Institution.UCT
+            else [make_rule("csc2001f >= 50", RuleAction.ACCEPT, institution=institution)]
+        )
+    )
+    patched_deps.application_queries.get_applications_by_status_and_year.return_value = [
+        make_application(campus_id=1, last_registration=last_registration)
+    ]
+    patched_deps.mark_queries.get_applicant_marks_by_ids.return_value = [
+        make_mark(1, "csc2001f", 70)
+    ]
+
+    apply_rules(db=MagicMock(), intake_year=2024)
+
+    # 70 clears the OTHER rule (>= 50) and misses the UCT one (>= 90), so a
+    # transition happening at all is what proves which rule set was used.
+    assert patched_deps.transition_status.call_count == 1
+
+
+def test_an_applicant_with_a_registration_is_judged_as_uct(patched_deps):
+    patched_deps.rule_queries.get_active_rules.side_effect = (
+        lambda db, institution, year: (
+            [make_rule("csc2001f >= 90", RuleAction.ACCEPT, institution=institution)]
+            if institution is Institution.UCT
+            else [make_rule("csc2001f >= 50", RuleAction.ACCEPT, institution=institution)]
+        )
+    )
+    patched_deps.application_queries.get_applications_by_status_and_year.return_value = [
+        make_application(campus_id=1, last_registration="2022:SB001:reg")
+    ]
+    patched_deps.mark_queries.get_applicant_marks_by_ids.return_value = [
+        make_mark(1, "csc2001f", 70)
+    ]
+
+    apply_rules(db=MagicMock(), intake_year=2024)
+
+    # 70 misses the UCT rule, so nothing should move.
+    assert patched_deps.transition_status.call_count == 0

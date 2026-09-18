@@ -99,7 +99,7 @@ def get_applications(db: Session, skip: int = 0, limit: int = 100) -> list[Appli
         db.execute(
             select(Application)
             .offset(skip)
-            .order_by(Application.campus_id.asc())
+            .order_by(Application.campus_id.asc(), Application.application_id.asc())
             .limit(limit)
         ).scalars()
     )
@@ -121,7 +121,9 @@ def list_applications(
         stmt = stmt.where(Application.application_status == application_status)
     if application_number is not None:
         stmt = stmt.where(Application.application_number == application_number)
-    stmt = stmt.order_by(Application.campus_id.asc()).offset(skip).limit(limit)
+    stmt = stmt.order_by(
+        Application.campus_id.asc(), Application.application_id.asc()
+    ).offset(skip).limit(limit)
     return list(db.execute(stmt).scalars())
 
 

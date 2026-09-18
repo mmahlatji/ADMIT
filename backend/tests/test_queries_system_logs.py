@@ -108,3 +108,27 @@ def test_get_latest_system_log_returns_most_recent(db_session):
     assert found is not None
     assert found.log_id == newer.log_id
 
+
+
+def test_paging_system_logs_is_stable_across_identical_timestamps(db_session):
+    # One import writes many log rows in the same instant, so changed_at ties
+    # are the normal case here rather than an edge one.
+    _create_author(db_session)
+    stamp = datetime(2026, 9, 18, 10, 0, tzinfo=UTC)
+    for _ in range(6):
+        log = create_system_log(
+            db_session,
+            entity_name="applicant_marks",
+            entity_id=uuid.uuid4(),
+            changed_by="9999999",
+            reason=ChangeSource.IMPORT,
+        )
+        log.changed_at = stamp
+    db_session.flush()
+
+    seen = []
+    for skip in (0, 2, 4):
+        seen.extend(log.log_id for log in get_system_logs(db_session, skip=skip, limit=2))
+
+    assert len(seen) == 6
+    assert len(set(seen)) == 6

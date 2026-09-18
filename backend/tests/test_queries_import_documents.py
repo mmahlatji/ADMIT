@@ -1,14 +1,18 @@
 import uuid
 
+from app.models.import_runs import ImportStatus, SourceType
 from app.queries.import_documents import (
     create_import_document,
     delete_import_document,
     get_import_document_by_id,
     get_import_documents,
     get_import_documents_by_hash,
+    get_import_documents_by_run,
     update_import_document,
 )
+from app.queries.import_runs import create_import_run as make_import_run
 from tests.test_queries_import_runs import _create as create_import_run
+from tests.test_queries_notes import _create_author
 
 
 def _create(db_session, sha256_hash="a" * 64):
@@ -64,3 +68,29 @@ def test_get_import_document_by_hash(db_session):
 
     assert get_import_documents_by_hash(db_session, "a" * 64) is not None
     assert get_import_documents_by_hash(db_session, "b" * 64) is None
+
+
+def test_get_import_documents_by_run_is_scoped(db_session):
+    # _create makes its own author, and a second call collides on employee_id.
+    _create_author(db_session)
+    run_a = make_import_run(
+        db_session, SourceType.ASR, "9999999", "a.xlsx", ImportStatus.PENDING, 10
+    )
+    run_b = make_import_run(
+        db_session, SourceType.UCT_MARKS, "9999999", "b.xlsx", ImportStatus.PENDING, 5
+    )
+    create_import_document(
+        db_session, run_a.import_run_id, "key-a", "a.xlsx", "application/vnd.ms-excel", "a" * 64
+    )
+    create_import_document(
+        db_session, run_b.import_run_id, "key-b", "b.xlsx", "application/vnd.ms-excel", "b" * 64
+    )
+
+    found = get_import_documents_by_run(db_session, run_a.import_run_id)
+    assert [d.original_file_name for d in found] == ["a.xlsx"]
+
+
+def test_get_import_documents_by_run_empty(db_session):
+    import_run = create_import_run(db_session)
+
+    assert get_import_documents_by_run(db_session, import_run.import_run_id) == []

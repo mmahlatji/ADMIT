@@ -148,6 +148,23 @@ def rules_to_df(rules: list[Rules]) -> pd.DataFrame:
     )
 
 
+
+def _institution_for(last_registration) -> Institution:
+    """Classify one applicant by whether they hold a UCT registration.
+
+    Three shapes of "no registration" all have to land on OTHER. NaN reaches
+    this from pandas and has no .strip(), which used to raise. None is what the
+    ORM gives for a null column. Blank and whitespace-only strings are what the
+    ASR sheet actually contains: in the October 2022 sheet, 226 of 345 rows
+    carry a single space and not one is null, so treating any non-null value as
+    a registration reclassifies most of the intake as UCT and judges them by the
+    wrong rules.
+    """
+    if last_registration is None or pd.isna(last_registration):
+        return Institution.OTHER
+    return Institution.UCT if str(last_registration).strip() else Institution.OTHER
+
+
 def apply_rules(db: Session, intake_year: int):
     """Actually updates the admission status of applicants using the current existing rule"""
 
@@ -192,13 +209,13 @@ def apply_rules(db: Session, intake_year: int):
     # another university, so classify by last_registration rather than guessing
     # from the academic plan code.
     apps_df = pd.DataFrame(
-        [{"campus_id": a.campus_id, "last_registration": a.last_registration} for a in apps]
+        [
+            {"campus_id": a.campus_id, "last_registration": a.last_registration}
+            for a in apps
+        ]
     )
-    apps_df["institution"] = apps_df["last_registration"].apply(
-        lambda reg: (
-            Institution.UCT if (reg or "").strip() else Institution.OTHER
-        )
-    )
+
+    apps_df["institution"] = apps_df["last_registration"].apply(_institution_for)
 
     for institution, rules in rules_by_institution.items():
 

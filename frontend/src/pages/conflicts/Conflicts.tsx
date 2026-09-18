@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Button,
   Card,
@@ -12,11 +12,12 @@ import {
 import { notifications } from "@mantine/notifications";
 import { Check, RefreshCw, X } from "lucide-react";
 import PageHeader from "../../components/PageHeader";
+import Pager, { ROWS_PER_PAGE } from "../../components/Pager";
 import { EmptyState, ErrorState, LoadingState } from "../../components/States";
 import { MatchStatusBadge } from "../../components/StatusBadge";
+import { useAllPages } from "../../lib/allPages";
 import { api } from "../../lib/api";
 import { formatDateTime } from "../../lib/format";
-import { useResource } from "../../lib/useResource";
 import type { MatchingReview, MatchResolution } from "../../types/api";
 
 /** The evidence the matcher recorded, which is the whole basis for deciding. */
@@ -42,13 +43,25 @@ function Evidence({
 
 export default function Conflicts() {
   const [tab, setTab] = useState<"pending" | "resolved">("pending");
-  const { data, loading, error, reload, setData } = useResource<
-    MatchingReview[]
-  >(`/matching_reviews?status=${tab}&limit=300`);
+  const { data, loading, error, reload, setData, truncated } =
+    useAllPages<MatchingReview>(`/matching_reviews?status=${tab}`);
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
 
-  const reviews = data ?? [];
+  const reviews = useMemo(() => data ?? [], [data]);
+
+  const pageCount = Math.max(1, Math.ceil(reviews.length / ROWS_PER_PAGE));
+  const rows = useMemo(
+    () => reviews.slice((page - 1) * ROWS_PER_PAGE, page * ROWS_PER_PAGE),
+    [reviews, page],
+  );
+
+  // Resolving the last conflict on a page, or switching tabs, can leave the
+  // page index past the end of a now-shorter queue.
+  useEffect(() => {
+    if (page > pageCount) setPage(1);
+  }, [page, pageCount]);
 
   async function resolve(review: MatchingReview, resolution: MatchResolution) {
     setSaving(review.match_id);
@@ -128,12 +141,15 @@ export default function Conflicts() {
         />
       ) : (
         <>
-          <Text size="sm" c="dimmed">
-            {reviews.length} item{reviews.length === 1 ? "" : "s"}
-          </Text>
+          <Pager
+            page={page}
+            onChange={setPage}
+            totalItems={reviews.length}
+            truncated={truncated}
+          />
 
           <Stack gap="md">
-            {reviews.map((review) => (
+            {rows.map((review) => (
               <Card key={review.match_id}>
                 <Group justify="space-between" mb="xs" wrap="wrap" gap="xs">
                   <Group gap="xs">
