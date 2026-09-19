@@ -196,3 +196,60 @@ def test_generate_decisions_names_the_missing_applicant(db_session):
 
     with pytest.raises(MissingApplicantDataError, match="orphan001"):
         generate_decisions_by_year(db_session, 2025)
+
+
+# ---------- per-stage exports ----------
+
+
+def _seed(db_session, status, application_number, campus_id="xxxyyy001", employee_id="1000001"):
+    """One applicant with one application at the given stage, in 2025."""
+    _create_applicant(db_session, campus_id=campus_id, employee_id=employee_id)
+    return _create_application(
+        db_session,
+        campus_id=campus_id,
+        application_number=application_number,
+        status=status,
+    )
+
+
+def test_export_defaults_to_settled_decisions_only(db_session):
+    _seed(db_session, ApplicationStatus.REVIEWED, "A0000009")
+
+    with pytest.raises(NoDecisionsFoundError):
+        generate_decisions_by_year(db_session, 2025)
+
+
+def test_export_can_name_an_earlier_stage(db_session):
+    _seed(db_session, ApplicationStatus.REVIEWED, "A0000010")
+
+    buffer = generate_decisions_by_year(db_session, 2025, [ApplicationStatus.REVIEWED])
+    frame = pd.read_excel(buffer)
+
+    assert list(frame["Decision"]) == ["Reviewed"]
+
+
+def test_export_can_combine_stages(db_session):
+    _seed(db_session, ApplicationStatus.REVIEWED, "A0000011")
+    _seed(
+        db_session,
+        ApplicationStatus.READY_TO_REGISTER,
+        "A0000012",
+        campus_id="xxxyyy012",
+        employee_id="1000012",
+    )
+
+    buffer = generate_decisions_by_year(
+        db_session,
+        2025,
+        [ApplicationStatus.REVIEWED, ApplicationStatus.READY_TO_REGISTER],
+    )
+    frame = pd.read_excel(buffer)
+
+    assert sorted(frame["Decision"]) == ["Ready to Register", "Reviewed"]
+
+
+def test_missing_stage_names_the_stage_it_looked_for(db_session):
+    _seed(db_session, ApplicationStatus.ACCEPTED, "A0000013")
+
+    with pytest.raises(NoDecisionsFoundError, match="Ready to Register"):
+        generate_decisions_by_year(db_session, 2025, [ApplicationStatus.READY_TO_REGISTER])

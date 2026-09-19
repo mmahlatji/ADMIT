@@ -36,14 +36,22 @@ def format_application_decision(application: Application):
     return decision
 
 
-def generate_decisions_by_year(db: Session, year: int) -> io.BytesIO:
-    """Generates a decisions excel file buffer by year"""
+# What "the decisions" means with no stage named: the outcomes that have been
+# settled. The earlier stages are exportable too, they are just not what a
+# convenor means by a decision list.
+DEFAULT_EXPORT_STATUSES = [
+    ApplicationStatus.ACCEPTED,
+    ApplicationStatus.DENIED,
+    ApplicationStatus.CONDITIONAL_OFFER,
+]
 
-    export_status_types = [
-        ApplicationStatus.ACCEPTED,
-        ApplicationStatus.DENIED,
-        ApplicationStatus.CONDITIONAL_OFFER,
-    ]
+
+def generate_decisions_by_year(
+    db: Session, year: int, statuses: list[ApplicationStatus] | None = None
+) -> io.BytesIO:
+    """Generates a decisions excel file buffer by year, for the given stages."""
+
+    export_status_types = statuses or DEFAULT_EXPORT_STATUSES
 
     applications = [
         a
@@ -52,7 +60,10 @@ def generate_decisions_by_year(db: Session, year: int) -> io.BytesIO:
     ]
 
     if not applications:
-        raise NoDecisionsFoundError(f"No decisions found for year {year}")
+        named = ", ".join(s.value for s in export_status_types)
+        raise NoDecisionsFoundError(
+            f"No applications at stage {named} for year {year}"
+        )
 
     campus_ids = [a.campus_id for a in applications]
     applicants = applicant_queries.get_applicants_by_campus_ids(db, campus_ids)

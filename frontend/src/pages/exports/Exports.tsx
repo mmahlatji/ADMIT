@@ -1,9 +1,18 @@
 import { useState } from "react";
-import { Alert, Button, Group, Select, Stack, Text } from "@mantine/core";
+import {
+  Alert,
+  Button,
+  Group,
+  MultiSelect,
+  Select,
+  Stack,
+  Text,
+} from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { CircleAlert, Download } from "lucide-react";
 import PageHeader from "../../components/PageHeader";
 import { api } from "../../lib/api";
+import { APPLICATION_STATUSES } from "../../types/api";
 
 // Adjust the range as the program needs — earliest intake year to
 // current year, newest first.
@@ -12,14 +21,20 @@ const YEARS = Array.from({ length: 6 }, (_, i) => String(CURRENT_YEAR - i));
 
 export default function Exports() {
   const [year, setYear] = useState<string | null>(String(CURRENT_YEAR));
+  // Empty means the settled decisions the API exports by default. Naming
+  // stages here is how the earlier ones in the pipeline get exported at all.
+  const [stages, setStages] = useState<string[]>([]);
   const [exporting, setExporting] = useState(false);
 
   async function runExport() {
     if (!year) return;
     setExporting(true);
     try {
+      const query = new URLSearchParams({ year });
+      for (const stage of stages) query.append("status", stage);
+
       const { blob, filename = `Decisions - ${year}.xlsx` } =
-        await api.requestBlob(`/exports/decisions?year=${year}`);
+        await api.requestBlob(`/exports/decisions?${query}`);
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
@@ -48,7 +63,7 @@ export default function Exports() {
     <Stack gap="lg">
       <PageHeader
         title="Exports"
-        description="Download the decisions export for a given year."
+        description="Download an applicant list for a given year. By default that is the settled decisions, but any stage of the pipeline can be exported."
       />
 
       <Alert
@@ -70,6 +85,16 @@ export default function Exports() {
           onChange={setYear}
           allowDeselect={false}
           w={160}
+        />
+        <MultiSelect
+          label="Stages"
+          placeholder={stages.length === 0 ? "Settled decisions" : undefined}
+          description="Leave empty for accepted, denied and conditional offers"
+          data={APPLICATION_STATUSES as unknown as string[]}
+          value={stages}
+          onChange={setStages}
+          clearable
+          w={360}
         />
         <Button
           onClick={runExport}
