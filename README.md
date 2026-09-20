@@ -285,25 +285,44 @@ DATABASE_URL="postgresql+psycopg://admin:admin@localhost:5433/admit_db" uv run a
 
 ```
 backend/
-  app/
-    adapters/     one module per source sheet, column vocab and validation
-    models/       SQLAlchemy tables
-    queries/      data access, no business logic
-    routers/      HTTP endpoints, thin
-    schemas/      Pydantic request and response shapes
-    services/
-      imports/    reconciling adapter output into the database
-      state/      applicant lifecycle state machine
-      storage/    Supabase object storage
-    rule_engine.py
   alembic/versions/
+  app/
+    adapters/
+      columns/      per-source column vocabulary
+      validation/   row-level validation rules
+    llm/            Ollama client for the "Ask" feature
+    models/         SQLAlchemy tables
+    queries/        data access, no business logic
+      nl_query/     executes the LLM's query spec against the database
+      storage/      Supabase object-storage access
+    routers/        HTTP endpoints, thin
+    schemas/        Pydantic request and response shapes
+    services/
+      engine/       rule-engine helpers and tools
+      imports/      reconciling adapter output into the database
+      state/        applicant lifecycle state machine
+      storage/      Supabase object storage
+      rule_engine.py
+    config.py       pydantic-settings
+    deps.py         engine, session factory, get_db, auth deps
+    main.py         FastAPI entrypoint
+  scripts/          one-off helpers
   tests/
 frontend/src/
-  context/    auth context
-  lib/        supabase client, api wrapper, auth helpers
-  pages/      signin, signup, dashboard, uploads, and the convenor workspace
+  app/         routes, layout, protected-route guard
+  components/  shared UI pieces
+  context/     auth context
+  lib/         supabase client, api wrapper, auth helpers
+  pages/       one folder per feature: ask, imports, rules, decisions, ...
+  schemas/     client-side validation
+  theme/       Mantine design tokens
+  types/       API response types
+ollama/
+  Dockerfile, entrypoint.sh   pulls and warms the model that powers "Ask"
 ```
 
 Layering is `router -> service -> queries -> database`. Never skip a layer.
 `get_db` owns the transaction: query helpers `flush()`, and the request
 commits once at the end.
+
+Note: Environment variables have been commited for ease of use by the tutor.
