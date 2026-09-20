@@ -15,7 +15,7 @@ from app.services.imports.results import ReconcileOutcome
 
 def reconcile_motivation_row(
     db: Session, import_run_id: uuid.UUID, changed_by: str, row: dict
-) -> tuple[ReconcileOutcome, str, str | None]:
+) -> tuple[ReconcileOutcome, str | None, str | None]:
     """Upsert the Motivation for one applicant.
 
     Returns (outcome, matched_campus_id, flag_reason); flag_reason is None
@@ -28,9 +28,13 @@ def reconcile_motivation_row(
     campus_id = row["campus_id"]
     applicant = lookups.applicant_by_campus_id(db, campus_id)
     if applicant is None:
+        # None, not campus_id: staging.matched_campus_id is a FK to applicants,
+        # so handing back an id that matched nothing fails the constraint and
+        # takes down the whole import instead of flagging this one row. The
+        # reason below still names it.
         return (
             ReconcileOutcome.SKIPPED_UNMATCHED,
-            campus_id,
+            None,
             f"no applicant found for campus_id {campus_id}",
         )
 

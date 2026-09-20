@@ -167,7 +167,7 @@ class RuleEngine:
 
         if has_opposite_conflicts:
             raise RuleConflict(
-                f"The new rule expression = {expression}, action = {action.value} causes conflicts with other {action.opposite.value} existing rules"
+                f"The new rule expression {expression} with  {action.value.upper()} action causes conflicts with other {action.opposite.value.upper()} existing rules"
             )
 
         try:

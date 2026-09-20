@@ -1,3 +1,5 @@
+from datetime import UTC, datetime
+
 from sqlalchemy.orm import Session
 
 from app.models.votes import Vote, VoteDecision
@@ -32,6 +34,19 @@ def create_vote(
     application = appl_queries.get_application_by_number(db, application_number)
     if application is None:
         raise ApplicationNotFoundError(application_number)
+    # One vote each per application, which is what the committee screen says.
+    # Casting again replaces your own vote rather than adding a second row,
+    # and clears any duplicates left behind from before that was enforced.
+    existing = vote_queries.get_votes_by_application_and_voter(
+        db, application_number, actor.employee_id
+    )
+    if existing:
+        current, *stale = existing
+        for duplicate in stale:
+            vote_queries.delete_vote(db, duplicate)
+        return vote_queries.update_vote(
+            db, current, vote=vote, voted_at=datetime.now(UTC)
+        )
     return vote_queries.create_vote(
         db,
         application_number=application_number,

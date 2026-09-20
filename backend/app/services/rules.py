@@ -6,11 +6,9 @@ comes back into something a router can return.
 """
 
 import pandas as pd
-from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models.applicant_marks import ApplicantMark
-from app.models.applications import Application, ApplicationStatus, DenyReason
+from app.models.applications import ApplicationStatus, DenyReason
 from app.models.rules import Institution, RuleAction, Rules, RuleStatus
 from app.queries import applicant_marks as mark_queries
 from app.queries import applications as application_queries
@@ -18,6 +16,7 @@ from app.queries import rules as rule_queries
 from app.services.applications import transition_status
 from app.services.engine.tools import SYSTEM_ACTOR
 from app.services.rule_engine import RuleEngine
+from uuid import UUID
 
 
 class NoMarksError(Exception):
@@ -32,26 +31,49 @@ class NoApplicationsException(Exception):
     """Raised when the intake has no applications (rare)"""
 
 
+class InvalidRuleTransitionError(Exception):
+    """Raised when an invalid rule transition (inactive -> active) is attempted"""
+
+
 def _load_frames(
     db: Session, institution: Institution, intake_year: int
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    """Pull the intake into the three frames RuleEngine expects."""
+    """Pull one institution's slice of one intake into the frames RuleEngine expects.
+
+    Narrowed to the intake and the institution, but deliberately not to the
+    statuses apply_rules acts on. A preview answers "what would this rule do
+    to this intake", which is a question about the whole cohort. Restricting
+    it to the undecided ones answers "what will pressing Apply change right
+    now" instead, and on a cycle that is mostly decided that is a handful of
+    people and reads as though the rule barely does anything.
+
+    The marks frame is the one that has to be narrowed. RuleEngine counts the
+    rows in it and never reads the applications frame at all, so filtering
+    only the applications leaves the preview reporting on every applicant
+    with marks in the database, whichever intake or institution was asked
+    for.
+    """
+    in_scope = [
+        a
+        for a in application_queries.get_applications_by_intake_year(db, intake_year)
+        if _institution_for(a.last_registration) is institution
+    ]
+    campus_ids = list({a.campus_id for a in in_scope})
+
     applications = pd.DataFrame(
-        db.execute(select(Application.campus_id, Application.application_date))
-        .mappings()
-        .all()
+        [
+            {"campus_id": a.campus_id, "application_date": a.application_date}
+            for a in in_scope
+        ],
+        columns=["campus_id", "application_date"],
     )
 
     marks = pd.DataFrame(
-        db.execute(
-            select(
-                ApplicantMark.campus_id,
-                ApplicantMark.course_code,
-                ApplicantMark.mark,
-            )
-        )
-        .mappings()
-        .all()
+        [
+            {"campus_id": m.campus_id, "course_code": m.course_code, "mark": m.mark}
+            for m in mark_queries.get_applicant_marks_by_ids(db, campus_ids)
+        ],
+        columns=["campus_id", "course_code", "mark"],
     )
 
     saved = rule_queries.get_rules_for_intake(db, institution, intake_year)
@@ -92,7 +114,8 @@ def preview_rule(
     applications, marks, rules = _load_frames(db, institution, intake_year)
     if marks.empty:
         raise NoMarksError(
-            "No marks have been imported yet, so a rule cannot be evaluated"
+            f"No marks on file for the {intake_year} intake at "
+            f"{institution.value}, so a rule cannot be evaluated against it yet"
         )
     engine = RuleEngine(applications, marks, rules)
     summary = engine.process_proposed_rule(institution, intake_year, expression, action)
@@ -116,6 +139,14 @@ def save_rule(
     because the engine is what validates the expression at all.
     """
     preview_rule(db, institution, intake_year, expression, rule_action)
+    # Retire the version this one replaces. Only the same action: an accept and
+    # a reject rule are meant to run side by side (the conflict check above is
+    # what keeps them from contradicting each other), but two live accept rules
+    # are ORed by the engine, so leaving the old one active means tightening a
+    # threshold silently does nothing.
+    # for superseded in rule_queries.get_active_rules(db, institution, intake_year):
+    #     if superseded.rule_action is rule_action:
+    #         rule_queries.update_rule(db, superseded, status=RuleStatus.INACTIVE)
     return rule_queries.create_rule(
         db,
         institution=institution,
@@ -126,6 +157,22 @@ def save_rule(
         action=rule_action,
         created_by=created_by,
     )
+
+
+def update_rule_status(db: Session, rule_id: UUID, status: RuleStatus):
+
+    rule = rule_queries.get_rule_by_id(db, rule_id)
+
+    if rule is None:
+        raise NoRuleException(f"No rule with id {rule_id} found")
+
+    if rule.status is RuleStatus.INACTIVE and status is RuleStatus.ACTIVE:
+        raise InvalidRuleTransitionError(
+            "An inactive rule cannot be reactivated; save it as a new version instead"
+        )
+
+    updated = rule_queries.update_rule(db, rule, status=status)
+    return updated
 
 
 def list_rules(db: Session, skip: int = 0, limit: int = 100) -> list[Rules]:
@@ -146,7 +193,6 @@ def rules_to_df(rules: list[Rules]) -> pd.DataFrame:
             for r in rules
         ]
     )
-
 
 
 def _institution_for(last_registration) -> Institution:

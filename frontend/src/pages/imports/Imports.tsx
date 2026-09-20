@@ -319,6 +319,7 @@ export default function Imports() {
                   <Table.Th>File</Table.Th>
                   <Table.Th>Uploaded</Table.Th>
                   <Table.Th>By</Table.Th>
+                  <Table.Th>Sheet rows</Table.Th>
                   <Table.Th>Loaded</Table.Th>
                   <Table.Th>Matched</Table.Th>
                   <Table.Th>New</Table.Th>
@@ -356,7 +357,10 @@ export default function Imports() {
                       {run.uploaded_by}
                     </Table.Td>
                     <Table.Td className="identifier">
-                      {run.rows_loaded}/{run.rows_total}
+                      {run.rows_total}
+                    </Table.Td>
+                    <Table.Td className="identifier">
+                      {run.rows_loaded}
                     </Table.Td>
                     <Table.Td className="identifier">
                       {run.rows_auto_matched}

@@ -1,6 +1,6 @@
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.deps import get_db, require_role
@@ -12,11 +12,13 @@ from app.services import import_runs as import_runs_service
 
 router = APIRouter(prefix="/import_runs", tags=["import_runs"])
 
+MAX_PAGE_SIZE = 500
+
 
 @router.get("", response_model=list[ImportRunResponse])
 def list_import_runs(
-    skip: int = 0,
-    limit: int = 100,
+    skip: int = Query(default=0, ge=0),
+    limit: int = Query(default=100, ge=1, le=MAX_PAGE_SIZE),
     db: Session = Depends(get_db),
     _: User = Depends(require_role(RoleEnum.convenor, RoleEnum.admin)),
 ):

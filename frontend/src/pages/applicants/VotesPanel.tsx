@@ -109,9 +109,12 @@ export default function VotesPanel({
                     );
                   })}
                   {mine && (
-                    <Text size="xs" c="dimmed">
-                      you voted <VoteBadge vote={mine.vote} size="xs" />
-                    </Text>
+                    <Group gap={4}>
+                      <Text size="xs" c="dimmed">
+                        you voted
+                      </Text>
+                      <VoteBadge vote={mine.vote} size="xs" />
+                    </Group>
                   )}
                 </Group>
               </div>

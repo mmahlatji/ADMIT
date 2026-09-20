@@ -6,6 +6,7 @@ from app.deps import get_current_user, get_db
 from app.main import app
 from app.models.users import RoleEnum, User
 from app.queries.users import create_user
+from tests.support import request_scoped_db
 
 
 def _create(db_session, email: str, employee_id: str | None = None) -> User:
@@ -22,10 +23,7 @@ def _create(db_session, email: str, employee_id: str | None = None) -> User:
 
 
 def _make_client(db_session, actor: User | None):
-    def override_get_db():
-        yield db_session
-
-    app.dependency_overrides[get_db] = override_get_db
+    app.dependency_overrides[get_db] = request_scoped_db(db_session)
     if actor is not None:
         app.dependency_overrides[get_current_user] = lambda: actor
     else:

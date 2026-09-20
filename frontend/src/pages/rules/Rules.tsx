@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Alert,
   Badge,
@@ -10,6 +10,7 @@ import {
   SimpleGrid,
   Stack,
   Table,
+  Tooltip,
   Text,
   TextInput,
   Select,
@@ -29,10 +30,12 @@ import {
   type Rule,
   type RulePreview,
   type RuleAction,
+  type RuleStatus,
+  Institution,
 } from "../../types/api";
 import classes from "./Rules.module.css";
 
-const INSTITUTION = "University of Cape Town";
+// const INSTITUTION = "University of Cape Town";
 
 function Stat({
   label,
@@ -62,8 +65,7 @@ export default function Rules() {
   const { user } = useAuth();
   const canWrite = can(user?.role ?? null, CONVENOR_ADMIN);
 
-  const { data, loading, error, reload } =
-    useAllPages<Rule>("/rules");
+  const { data, loading, error, reload } = useAllPages<Rule>("/rules");
   const [expression, setExpression] = useState(
     "0.5*csc3003s + 0.5*csc2002s >= 60",
   );
@@ -72,13 +74,45 @@ export default function Rules() {
   );
   const [action, setAction] = useState<RuleAction>("accept");
   const [preview, setPreview] = useState<RulePreview | null>(null);
+  const [institution, setInstitution] = useState<Institution>(
+    "University of Cape Town",
+  );
   const [busy, setBusy] = useState<"preview" | "save" | "apply" | null>(null);
   const [ruleError, setRuleError] = useState<string | null>(null);
   const [applyIntakeYear, setApplyIntakeYear] = useState<number>(
     new Date().getFullYear(),
   );
 
+  const updateStatus = async (ruleId: string, newStatus: RuleStatus) => {
+    try {
+      await api.request<Rule>(
+        `/rules/${ruleId}/status?new_status=${newStatus}`,
+        {
+          method: "POST",
+        },
+      );
+      await reload();
+    } catch (e) {
+      notifications.show({
+        color: "red",
+        title: "Could not update status",
+        message: e instanceof Error ? e.message : "Something went wrong.",
+      });
+    }
+  };
+
   const rules = data ?? [];
+
+  // Open on the intake the saved rules are for rather than on the calendar
+  // year, which is rarely an intake anyone has data for. Only until the
+  // convenor picks a year themselves, so it never fights a typed value.
+  const yearTouched = useRef(false);
+  useEffect(() => {
+    if (yearTouched.current || !data || data.length === 0) return;
+    yearTouched.current = true;
+    setIntakeYear(data[0].intake_year);
+    setApplyIntakeYear(data[0].intake_year);
+  }, [data]);
 
   async function run(path: "/rules/preview" | "/rules") {
     setBusy(path === "/rules" ? "save" : "preview");
@@ -87,7 +121,7 @@ export default function Rules() {
       const result = await api.request<RulePreview | Rule>(path, {
         method: "POST",
         body: JSON.stringify({
-          institution: INSTITUTION,
+          institution: institution,
           intake_year: intakeYear,
           expression,
           rule_action: action,
@@ -188,11 +222,26 @@ export default function Rules() {
               <NumberInput
                 label="Intake year"
                 value={intakeYear}
-                onChange={(v) => setIntakeYear(Number(v) || intakeYear)}
+                onChange={(v) => {
+                  yearTouched.current = true;
+                  setIntakeYear(Number(v) || intakeYear);
+                }}
                 min={2000}
                 max={2100}
                 w={140}
                 allowDecimal={false}
+              />
+              <Select
+                label="Institution"
+                value={institution}
+                onChange={(v) =>
+                  setInstitution((v as Institution) || institution)
+                }
+                data={[
+                  { value: "University of Cape Town", label: "UCT" }, //for now since there isnt a way to get instiution
+                  { value: "Other university", label: "Other" },
+                ]}
+                w={140}
               />
               <Select
                 label="Action"
@@ -252,7 +301,7 @@ export default function Rules() {
             <Stat
               label="Would be admitted"
               value={preview.after}
-              hint={`${preview.pass_rate_after.toFixed(1)}% pass rate`}
+              hint={`${preview.pass_rate_after.toFixed(1)}% admission rate`}
             />
             {!preview.first_rule && (
               <>
@@ -261,7 +310,7 @@ export default function Rules() {
                   value={preview.before ?? "—"}
                   hint={
                     preview.pass_rate_before !== null
-                      ? `${preview.pass_rate_before.toFixed(1)}% pass rate`
+                      ? `${preview.pass_rate_before.toFixed(1)}% admission rate`
                       : undefined
                   }
                 />
@@ -324,9 +373,10 @@ export default function Rules() {
               <NumberInput
                 aria-label="Intake year to apply"
                 value={applyIntakeYear}
-                onChange={(v) =>
-                  setApplyIntakeYear(Number(v) || applyIntakeYear)
-                }
+                onChange={(v) => {
+                  yearTouched.current = true;
+                  setApplyIntakeYear(Number(v) || applyIntakeYear);
+                }}
                 min={2000}
                 max={2100}
                 w={100}
@@ -359,8 +409,10 @@ export default function Rules() {
               <Table.Thead>
                 <Table.Tr>
                   <Table.Th>Version</Table.Th>
+                  <Table.Th>Institution</Table.Th>
                   <Table.Th>Intake</Table.Th>
                   <Table.Th>Rule</Table.Th>
+                  <Table.Th>Action</Table.Th>
                   <Table.Th>Status</Table.Th>
                   <Table.Th>By</Table.Th>
                   <Table.Th>Saved</Table.Th>
@@ -371,6 +423,9 @@ export default function Rules() {
                   <Table.Tr key={rule.rule_id}>
                     <Table.Td className="identifier">{rule.version}</Table.Td>
                     <Table.Td className="identifier">
+                      {rule.institution}
+                    </Table.Td>
+                    <Table.Td className="identifier">
                       {rule.intake_year}
                     </Table.Td>
                     <Table.Td>
@@ -378,11 +433,48 @@ export default function Rules() {
                     </Table.Td>
                     <Table.Td>
                       <Badge
-                        color={rule.status === "active" ? "green" : "gray"}
+                        color={rule.rule_action === "accept" ? "blue" : "red"}
                         variant="light"
                       >
-                        {rule.status}
+                        {rule.rule_action}
                       </Badge>
+                    </Table.Td>
+                    <Table.Td>
+                      <Tooltip
+                        label="A retired rule can't be reactivated, save it as a new version instead"
+                        disabled={rule.status !== "inactive"}
+                      >
+                        <Select
+                          data={[
+                            { value: "active", label: "Active" },
+                            { value: "inactive", label: "Inactive" },
+                          ]}
+                          value={rule.status}
+                          onChange={(value) =>
+                            value &&
+                            updateStatus(
+                              rule.rule_id,
+                              value as "active" | "inactive",
+                            )
+                          }
+                          disabled={rule.status === "inactive"}
+                          size="xs"
+                          w={110}
+                          styles={{
+                            input: {
+                              color:
+                                rule.status === "active"
+                                  ? "var(--mantine-color-green-7)"
+                                  : "var(--mantine-color-gray-6)",
+                              fontWeight: 500,
+                              cursor:
+                                rule.status === "inactive"
+                                  ? "not-allowed"
+                                  : "pointer",
+                            },
+                          }}
+                        />
+                      </Tooltip>
                     </Table.Td>
                     <Table.Td className="identifier">
                       {rule.created_by}

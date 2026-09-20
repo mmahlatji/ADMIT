@@ -27,6 +27,8 @@ def resolve_review(
     reason: str | None = None,
 ):
     """Record the resolution of a matching review. Does not merge data."""
+    previous_status = review.status
+    previous_resolution = review.resolution
     review = match_queries.update_matching_review(
         db,
         review,
@@ -42,7 +44,10 @@ def resolve_review(
         entity_id=review.match_id,
         changed_by=actor.employee_id,
         reason=ChangeSource.MERGE_RESOLUTION,
-        old_data={"status": MatchStatus.PENDING.value},
+        old_data={
+            "status": previous_status.value,
+            "resolution": previous_resolution.value if previous_resolution else None,
+        },
         new_data={"status": MatchStatus.RESOLVED.value, "resolution": resolution.value},
     )
     return review

@@ -254,7 +254,12 @@ export default function ApplicantDetail() {
       </Grid>
 
       <Group>
-        <Button component={Link} to="/decisions" variant="default">
+        <Button
+          component={Link}
+          to="/decisions"
+          state={{ query: data.campus_id }}
+          variant="default"
+        >
           Record a decision
         </Button>
       </Group>

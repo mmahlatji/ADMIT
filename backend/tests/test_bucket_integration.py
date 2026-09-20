@@ -25,6 +25,7 @@ from app.queries.academic_plans import create_academic_plan
 from app.queries.departments import create_department
 from app.queries.storage import bucket as storage_queries
 from app.services.storage import import_documents as storage_service
+from tests.support import request_scoped_db
 from tests.test_queries_notes import _create_author
 
 pytestmark = pytest.mark.skipif(
@@ -46,10 +47,7 @@ def _seed(db_session):
 
 
 def _make_client(db_session, actor):
-    def override_get_db():
-        yield db_session
-
-    app.dependency_overrides[get_db] = override_get_db
+    app.dependency_overrides[get_db] = request_scoped_db(db_session)
     app.dependency_overrides[get_current_user] = lambda: actor
     return TestClient(app)
 

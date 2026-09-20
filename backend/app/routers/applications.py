@@ -1,6 +1,6 @@
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.deps import get_db, require_role
@@ -11,6 +11,8 @@ from app.services import applications as applications_service
 
 router = APIRouter(prefix="/applications", tags=["applications"])
 
+MAX_PAGE_SIZE = 500
+
 ALLOWED_ROLES = [RoleEnum.convenor, RoleEnum.committee, RoleEnum.admin]
 
 
@@ -19,8 +21,8 @@ def list_applications(
     campus_id: str | None = None,
     application_status: ApplicationStatus | None = None,
     application_number: str | None = None,
-    skip: int = 0,
-    limit: int = 100,
+    skip: int = Query(default=0, ge=0),
+    limit: int = Query(default=100, ge=1, le=MAX_PAGE_SIZE),
     db: Session = Depends(get_db),
     _: User = Depends(require_role(*ALLOWED_ROLES)),
 ):

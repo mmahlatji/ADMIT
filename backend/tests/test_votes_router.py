@@ -55,3 +55,23 @@ def test_list_votes_forbidden_for_unapproved_staff(db_session):
         assert res.status_code == 403
     finally:
         _teardown()
+
+
+def test_recasting_replaces_your_own_vote(db_session):
+    create_application(db_session)
+    actor = _make_actor(db_session, role=RoleEnum.committee)
+
+    client = _make_client(db_session, actor)
+    try:
+        client.post("/votes", json={"application_number": "00000001", "vote": "no"})
+        res = client.post(
+            "/votes", json={"application_number": "00000001", "vote": "yes"}
+        )
+        assert res.status_code == 201
+        assert res.json()["vote"] == "yes"
+
+        listed = client.get("/votes", params={"application_number": "00000001"})
+        assert [v["vote"] for v in listed.json()] == ["yes"]
+    finally:
+        _teardown()
+

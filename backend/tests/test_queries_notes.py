@@ -12,8 +12,8 @@ from app.queries.notes import (
 from tests.test_queries_applicants import _create as create_applicant
 
 
-def _create_author(db_session, employee_id="9999999"):
-    author = User(user_id=uuid.uuid4(), email="staff@uct.ac.za", employee_id=employee_id)
+def _create_author(db_session, employee_id="9999999", email="staff@uct.ac.za"):
+    author = User(user_id=uuid.uuid4(), email=email, employee_id=employee_id)
     db_session.add(author)
     db_session.commit()
     return author

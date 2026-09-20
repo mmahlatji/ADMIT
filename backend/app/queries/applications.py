@@ -13,19 +13,32 @@ from app.models.applications import (
 )
 
 
+def intake_year_bounds(intake_year: int) -> tuple[date, date]:
+    """Half-open [start, end) over application_date covering one intake.
+
+    An intake is applied for during the year before it starts, so the 2023
+    intake is the applications dated 2022. Three lookups have to agree on
+    this (duplicate detection during an import, the rule engine, and the
+    decisions export), and they did not: the rule engine used to read a
+    hardcoded April-September window, which silently skipped the 46 of 392
+    applications on file dated October and November.
+
+    Half-open rather than extract("year", ...): wrapping the column in a
+    function makes the index on application_date unusable, so postgres falls
+    back to scanning. Duplicate detection calls this once per imported row,
+    so it is worth keeping sargable.
+    """
+    return date(intake_year - 1, 1, 1), date(intake_year, 1, 1)
+
+
 def get_active_applications_by_campus_ids(
     db: Session, campus_ids: list[str], application_date: date
 ) -> list[Application]:
     """
-    Look up applications by campus ids within the year given by application date,
-    returns an empty list if applications do not exist yet.
+    Look up applications by campus ids within the intake the given application
+    date falls in, returns an empty list if applications do not exist yet.
     """
-    # Half-open range rather than extract("year", ...): wrapping the column in a
-    # function makes the index on application_date unusable, so postgres falls
-    # back to scanning. This means the same thing and can use the index. Called
-    # once per imported row, so it is worth keeping sargable.
-    year_start = date(application_date.year, 1, 1)
-    next_year_start = date(application_date.year + 1, 1, 1)
+    year_start, next_year_start = intake_year_bounds(application_date.year + 1)
     return list(
         db.scalars(
             select(Application).where(
@@ -37,13 +50,14 @@ def get_active_applications_by_campus_ids(
     )
 
 
-def get_applications_by_year(db: Session, year: int) -> list[Application]:
+def get_applications_by_intake_year(db: Session, intake_year: int) -> list[Application]:
     """
-    Applications submitted in the given year, keyed off application_date
+    Applications for the given intake year, keyed off application_date
     (sargable half-open range so the index on application_date is used).
+
+    See intake_year_bounds for what counts as belonging to an intake.
     """
-    year_start = date(year, 1, 1)
-    next_year_start = date(year + 1, 1, 1)
+    year_start, next_year_start = intake_year_bounds(intake_year)
 
     return list(
         db.scalars(
@@ -76,16 +90,20 @@ def get_applications_by_status_and_year(
 ) -> list[Application]:
     """List applications based on status/es and intake_year, note that the intake year is not the application year but the year which
     the applicant is applying for
+
+    Uses intake_year_bounds, the same span the export and duplicate detection
+    use. This read a narrower April-September window before, so a late
+    application was never seen by the rule engine and sat at Applied however
+    many times a convenor ran the rules.
     """
-    app_period_start = date(intake_year - 1, 4, 1)
-    app_period_end = date(intake_year - 1, 9, 30)
+    period_start, period_end = intake_year_bounds(intake_year)
 
     return list(
         db.execute(
             select(Application).where(
                 Application.application_status.in_(statuses),
-                Application.application_date >= app_period_start,
-                Application.application_date <= app_period_end,
+                Application.application_date >= period_start,
+                Application.application_date < period_end,
             )
         )
         .scalars()

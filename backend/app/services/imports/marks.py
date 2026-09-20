@@ -98,7 +98,7 @@ def normalize_row(row: dict) -> list[dict]:
 
 def reconcile_marks_row(
     db: Session, import_run_id: uuid.UUID, changed_by: str, row: dict
-) -> tuple[MarksRowSummary, str, str | None]:
+) -> tuple[MarksRowSummary, str | None, str | None]:
     """Upsert every mark fact in one wide row.
 
     Returns (summary, matched_campus_id, flag_reason); flag_reason is None
@@ -109,9 +109,13 @@ def reconcile_marks_row(
     """
     campus_id = row["campus_id"]
     if lookups.applicant_by_campus_id(db, campus_id) is None:
+        # None, not campus_id: staging.matched_campus_id is a FK to applicants,
+        # so handing back an id that matched nothing fails the constraint and
+        # takes down the whole import instead of flagging this one row. The
+        # reason below still names it.
         return (
             MarksRowSummary(flagged=True),
-            campus_id,
+            None,
             f"no applicant found for campus_id {campus_id}",
         )
 

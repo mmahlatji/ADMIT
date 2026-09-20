@@ -15,7 +15,7 @@ import {
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { RefreshCw, Search } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import PageHeader from "../../components/PageHeader";
 import Pager, { ROWS_PER_PAGE } from "../../components/Pager";
 import TableCard from "../../components/TableCard";
@@ -34,7 +34,10 @@ import {
 export default function Decisions() {
   const { data, loading, error, reload, setData, truncated } =
     useAllPages<Application>("/applications");
-  const [query, setQuery] = useState("");
+  const location = useLocation();
+  const [query, setQuery] = useState(
+    () => (location.state as { query?: string } | null)?.query ?? "",
+  );
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [target, setTarget] = useState<ApplicationStatus | null>(null);

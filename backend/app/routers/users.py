@@ -1,6 +1,6 @@
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.deps import get_current_user, get_db, require_role
@@ -11,6 +11,8 @@ from app.services.users import assign_role, get_user_by_id
 
 router = APIRouter(prefix="/users", tags=["users"])
 
+MAX_PAGE_SIZE = 500
+
 
 @router.get("/me", response_model=UserOut)
 def read_current_user(user: User = Depends(get_current_user)) -> User:
@@ -20,8 +22,8 @@ def read_current_user(user: User = Depends(get_current_user)) -> User:
 
 @router.get("", response_model=list[UserOut])
 def list_users(
-    skip: int = 0,
-    limit: int = 200,
+    skip: int = Query(default=0, ge=0),
+    limit: int = Query(default=200, ge=1, le=MAX_PAGE_SIZE),
     db: Session = Depends(get_db),
     _: User = Depends(require_role(RoleEnum.convenor, RoleEnum.admin)),
 ) -> list[User]:
@@ -40,4 +42,7 @@ def set_user_role(
     target = get_user_by_id(db, user_id)
     if target is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "User not found")
-    return assign_role(db, actor, target, body.role)
+    try:
+        return assign_role(db, actor, target, body.role)
+    except PermissionError as exc:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, str(exc)) from exc

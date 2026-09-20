@@ -59,7 +59,15 @@ async def upload_import(
     except FileTooLargeException as exc:
         raise HTTPException(status.HTTP_413_CONTENT_TOO_LARGE, str(exc)) from exc
 
-    sheet = await run_in_threadpool(TO_DATAFRAME[extension], io.BytesIO(content))
+    # Parsing attacker-shaped bytes: any failure here is a bad file, not a bug,
+    # so it answers 400 rather than escaping as an unhandled 500.
+    try:
+        sheet = await run_in_threadpool(TO_DATAFRAME[extension], io.BytesIO(content))
+    except Exception as exc:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            f"That file could not be read as a spreadsheet: {exc}",
+        ) from exc
 
     import_run = import_run_service.create_import_run(
         db,

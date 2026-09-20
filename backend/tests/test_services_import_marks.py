@@ -114,7 +114,7 @@ def test_reimport_with_one_changed_value_updates_in_place(db_session):
 def test_unknown_campus_id_flags_the_row_without_creating_marks(db_session):
     summary, campus_id, flag_reason = reconcile_marks_row(db_session, IMPORT_RUN_ID, CHANGED_BY, _row())
 
-    assert campus_id == "xxxyyy001"
+    assert campus_id is None
     assert summary == MarksRowSummary(flagged=True)
     assert flag_reason == "no applicant found for campus_id xxxyyy001"
     assert get_applicant_mark_by_campus_and_course(db_session, "xxxyyy001", "CSC2001F") is None

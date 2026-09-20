@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.deps import get_db, require_role
@@ -19,13 +19,15 @@ from app.services.storage.exceptions import (
 
 router = APIRouter(prefix="/applicants", tags=["applicants"])
 
+MAX_PAGE_SIZE = 500
+
 ALLOWED_ROLES = [RoleEnum.convenor, RoleEnum.committee, RoleEnum.admin]
 
 
 @router.get("", response_model=list[ApplicantResponse])
 def list_applicants(
-    skip: int = 0,
-    limit: int = 100,
+    skip: int = Query(default=0, ge=0),
+    limit: int = Query(default=100, ge=1, le=MAX_PAGE_SIZE),
     db: Session = Depends(get_db),
     _: User = Depends(require_role(*ALLOWED_ROLES)),
 ):
@@ -47,8 +49,8 @@ def get_applicant(
 @router.get("/{campus_id}/documents", response_model=list[StudentDocumentResponse])
 def list_documents(
     campus_id: str,
-    skip: int = 0,
-    limit: int = 100,
+    skip: int = Query(default=0, ge=0),
+    limit: int = Query(default=100, ge=1, le=MAX_PAGE_SIZE),
     db: Session = Depends(get_db),
     _: User = Depends(require_role(*ALLOWED_ROLES)),
 ):

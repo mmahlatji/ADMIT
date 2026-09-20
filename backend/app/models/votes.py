@@ -3,7 +3,7 @@ from datetime import datetime
 from enum import Enum
 from typing import TYPE_CHECKING
 
-from sqlalchemy import UUID, DateTime, ForeignKey, func
+from sqlalchemy import UUID, DateTime, ForeignKey, UniqueConstraint, func
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -21,6 +21,11 @@ class VoteDecision(str, Enum):
 
 class Vote(Base):
     __tablename__="votes"
+    __table_args__ = (
+        UniqueConstraint(
+            "application_number", "voter_id", name="uq_vote_application_voter"
+        ),
+    )
     vote_id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True)
     application_number: Mapped[str] = mapped_column(ForeignKey("applications.application_number"), primary_key=True,nullable=False, index=True)
     campus_id: Mapped[str] = mapped_column(ForeignKey("applicants.campus_id"), nullable=False)

@@ -34,7 +34,7 @@ def test_unknown_campus_id_is_skipped(db_session):
     outcome, campus_id, flag_reason = reconcile_motivation_row(db_session, IMPORT_RUN_ID, CHANGED_BY, _row())
 
     assert outcome == ReconcileOutcome.SKIPPED_UNMATCHED
-    assert campus_id == "xxxyyy001"
+    assert campus_id is None
     assert flag_reason == "no applicant found for campus_id xxxyyy001"
     assert get_motivation_by_campus_id(db_session, "xxxyyy001") is None
 

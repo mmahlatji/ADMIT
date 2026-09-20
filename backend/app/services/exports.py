@@ -49,20 +49,21 @@ DEFAULT_EXPORT_STATUSES = [
 def generate_decisions_by_year(
     db: Session, year: int, statuses: list[ApplicationStatus] | None = None
 ) -> io.BytesIO:
-    """Generates a decisions excel file buffer by year, for the given stages."""
+    """Generates a decisions excel file buffer for one intake year, for the given stages."""
 
     export_status_types = statuses or DEFAULT_EXPORT_STATUSES
 
     applications = [
         a
-        for a in applications_queries.get_applications_by_year(db, year)
+        for a in applications_queries.get_applications_by_intake_year(db, year)
         if a.application_status in export_status_types
     ]
 
     if not applications:
         named = ", ".join(s.value for s in export_status_types)
         raise NoDecisionsFoundError(
-            f"No applications at stage {named} for year {year}"
+            f"No applications at stage {named} for the {year} intake. "
+            f"Applications for an intake are dated the year before it starts."
         )
 
     campus_ids = [a.campus_id for a in applications]

@@ -157,21 +157,29 @@ def remember_motivation(db: Session, motivation: Motivation) -> None:
 def active_applications_for(
     db: Session, campus_id: str, application_date: date
 ) -> list[Application]:
-    """Applications for one applicant in the given year.
+    """Applications for one applicant in the intake the given date falls in.
 
     Served from the cache when primed. Duplicate detection only ever asks
     about the row's own applicant, and the prefetch already holds every
     application the sheet mentions plus any created during the run.
+
+    Both branches go through intake_year_bounds so the cached answer and the
+    queried one cannot drift apart if what counts as one intake changes.
     """
+    from app.queries.applications import (
+        get_active_applications_by_campus_ids,
+        intake_year_bounds,
+    )
+
     cache = _cache(db)
     if cache is None:
-        from app.queries.applications import get_active_applications_by_campus_ids
-
         return get_active_applications_by_campus_ids(db, [campus_id], application_date)
+
+    start, end = intake_year_bounds(application_date.year + 1)
     return [
         application
         for application in cache["applications"].values()
         if application.campus_id == campus_id
         and application.application_date is not None
-        and application.application_date.year == application_date.year
+        and start <= application.application_date < end
     ]

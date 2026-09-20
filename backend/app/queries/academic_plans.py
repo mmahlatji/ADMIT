@@ -6,25 +6,37 @@ from sqlalchemy.orm import Session
 from app.models.academic_plans import AcademicPlan, AcademicPlanType
 
 
-def get_academic_plans_by_department_code(db: Session, department_code: str) -> list[AcademicPlan]:
+def get_academic_plans_by_department_code(
+    db: Session, department_code: str
+) -> list[AcademicPlan]:
     return list(
         db.scalars(
-            select(AcademicPlan).where(
-                AcademicPlan.department_code == department_code
-            )
+            select(AcademicPlan).where(AcademicPlan.department_code == department_code)
         ).all()
     )
 
-def get_academic_plan_by_id(db: Session, academic_plan_id: uuid.UUID) -> AcademicPlan | None:
+
+def get_academic_plan_by_id(
+    db: Session, academic_plan_id: uuid.UUID
+) -> AcademicPlan | None:
     """Look up an academic plan by its id. Returns None if it doesn't exist yet."""
     return db.execute(
         select(AcademicPlan).where(AcademicPlan.academic_plan_id == academic_plan_id)
     ).scalar_one_or_none()
 
 
-def get_academic_plans(db: Session, skip: int = 0, limit: int = 100) -> list[AcademicPlan]:
+def get_academic_plans(
+    db: Session, skip: int = 0, limit: int = 100
+) -> list[AcademicPlan]:
     """List academic plans, paginated."""
-    return list(db.execute(select(AcademicPlan).offset(skip).order_by(AcademicPlan.academic_plan.asc()).limit(limit)).scalars())
+    return list(
+        db.execute(
+            select(AcademicPlan)
+            .offset(skip)
+            .order_by(AcademicPlan.academic_plan.asc())
+            .limit(limit)
+        ).scalars()
+    )
 
 
 def create_academic_plan(

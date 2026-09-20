@@ -12,12 +12,17 @@ import { notifications } from "@mantine/notifications";
 import { CircleAlert, Download } from "lucide-react";
 import PageHeader from "../../components/PageHeader";
 import { api } from "../../lib/api";
+import { currentIntakeYear } from "../../lib/intake";
 import { APPLICATION_STATUSES } from "../../types/api";
 
-// Adjust the range as the program needs — earliest intake year to
-// current year, newest first.
+// Adjust the range as the program needs, earliest intake year to the one
+// being applied for now, newest first. That top entry matters: the cycle a
+// convenor is currently working is next year's intake, so the list has to
+// reach it.
 const CURRENT_YEAR = new Date().getFullYear();
-const YEARS = Array.from({ length: 6 }, (_, i) => String(CURRENT_YEAR - i));
+const YEARS = Array.from({ length: 6 }, (_, i) =>
+  String(currentIntakeYear() - i),
+);
 
 export default function Exports() {
   const [year, setYear] = useState<string | null>(String(CURRENT_YEAR));
@@ -63,7 +68,7 @@ export default function Exports() {
     <Stack gap="lg">
       <PageHeader
         title="Exports"
-        description="Download an applicant list for a given year. By default that is the settled decisions, but any stage of the pipeline can be exported."
+        description="Download an applicant list for a given intake year. By default that is the settled decisions, but any stage of the pipeline can be exported."
       />
 
       <Alert
@@ -79,7 +84,8 @@ export default function Exports() {
 
       <Group align="flex-end">
         <Select
-          label="Year"
+          label="Intake year"
+          description="The year the intake starts, not the year people applied."
           data={YEARS}
           value={year}
           onChange={setYear}

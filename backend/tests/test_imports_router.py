@@ -6,6 +6,7 @@ from app.deps import get_current_user, get_db
 from app.main import app
 from app.models.users import RoleEnum, User
 from app.routers import imports as imports_router
+from tests.support import request_scoped_db
 
 
 def _make_actor(role=RoleEnum.convenor):
@@ -18,10 +19,7 @@ def _make_actor(role=RoleEnum.convenor):
 
 
 def _make_client(db_session, actor):
-    def override_get_db():
-        yield db_session
-
-    app.dependency_overrides[get_db] = override_get_db
+    app.dependency_overrides[get_db] = request_scoped_db(db_session)
     app.dependency_overrides[get_current_user] = lambda: actor
     return TestClient(app)
 
@@ -103,5 +101,33 @@ def test_upload_import_keeps_the_real_filename(db_session, monkeypatch):
         )
         assert res.status_code == 201
         assert res.json()["file_name"] == "applicants.csv"
+    finally:
+        _teardown()
+
+def test_upload_import_rejects_a_file_pandas_cannot_parse(db_session, monkeypatch):
+    """A sheet that will not parse is a bad file, not a server fault: it used
+    to escape as an unhandled ParserError and 500."""
+
+    async def fake_upload_document(**kwargs):
+        return None
+
+    monkeypatch.setattr(
+        imports_router.import_doc_service, "upload_document", fake_upload_document
+    )
+
+    # ragged columns: the C parser cannot tokenise this
+    broken = b"""a,b,c
+1,2
+3,4,5,6,7
+"""
+
+    client = _make_client(db_session, _make_actor())
+    try:
+        res = client.post(
+            "/imports/asr",
+            files={"file": ("broken.csv", broken, "text/csv")},
+        )
+        assert res.status_code == 400
+        assert "could not be read as a spreadsheet" in res.json()["detail"]
     finally:
         _teardown()

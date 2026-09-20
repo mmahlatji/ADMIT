@@ -255,7 +255,8 @@ export default function Overview() {
                         <Table.Tr>
                           <Table.Th>Source</Table.Th>
                           <Table.Th>When</Table.Th>
-                          <Table.Th>Rows</Table.Th>
+                          <Table.Th>Sheet rows</Table.Th>
+                          <Table.Th>Loaded</Table.Th>
                           <Table.Th>Status</Table.Th>
                         </Table.Tr>
                       </Table.Thead>
@@ -269,7 +270,10 @@ export default function Overview() {
                               </Text>
                             </Table.Td>
                             <Table.Td className="identifier">
-                              {run.rows_loaded}/{run.rows_total}
+                              {run.rows_total}
+                            </Table.Td>
+                            <Table.Td className="identifier">
+                              {run.rows_loaded}
                             </Table.Td>
                             <Table.Td>
                               <ImportStatusBadge status={run.status} />

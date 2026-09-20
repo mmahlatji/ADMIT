@@ -30,7 +30,7 @@ def create_user(
         role=None,
     )
     db.add(user)
-    db.commit()
+    db.flush()
     db.refresh(user)
     return user
 
@@ -48,7 +48,7 @@ def update_user_role(
         user.approved_by = approved_by
     if approved_at is not None:
         user.approved_at = approved_at
-    db.commit()
+    db.flush()
     db.refresh(user)
     return user
 

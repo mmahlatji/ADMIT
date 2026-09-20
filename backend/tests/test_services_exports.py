@@ -106,8 +106,11 @@ def test_generate_decisions_raises_when_none_match_export_statuses(db_session):
         db_session, application_number="A0000001", status=ApplicationStatus.APPLIED
     )
 
+    # 2026, not 2025: the application is dated 2025 and so belongs to the 2026
+    # intake. Asking for 2025 would find nothing and raise before the status
+    # filter this test is about ever ran.
     with pytest.raises(NoDecisionsFoundError):
-        generate_decisions_by_year(db_session, 2025)
+        generate_decisions_by_year(db_session, 2026)
 
 
 def test_generate_decisions_filters_by_year_and_status(db_session):
@@ -121,7 +124,7 @@ def test_generate_decisions_filters_by_year_and_status(db_session):
         status=ApplicationStatus.ACCEPTED,
         application_date=date(2025, 2, 1),
     )
-    # different year, should be excluded
+    # a different intake (dated 2024, so the 2025 intake), should be excluded
     _create_application(
         db_session,
         campus_id="xxxyyy002",
@@ -129,7 +132,7 @@ def test_generate_decisions_filters_by_year_and_status(db_session):
         status=ApplicationStatus.ACCEPTED,
         application_date=date(2024, 2, 1),
     )
-    # same year, non-exportable status, should be excluded
+    # same intake, non-exportable status, should be excluded
     _create_application(
         db_session,
         campus_id="xxxyyy002",
@@ -138,7 +141,7 @@ def test_generate_decisions_filters_by_year_and_status(db_session):
         application_date=date(2025, 5, 1),
     )
 
-    buffer = generate_decisions_by_year(db_session, 2025)
+    buffer = generate_decisions_by_year(db_session, 2026)
 
     df = pd.read_excel(buffer, engine="openpyxl")
 
@@ -160,7 +163,7 @@ def test_generate_decisions_builds_expected_columns(db_session):
         application_date=date(2025, 4, 1),
     )
 
-    buffer = generate_decisions_by_year(db_session, 2025)
+    buffer = generate_decisions_by_year(db_session, 2026)
     df = pd.read_excel(buffer, engine="openpyxl")
 
     assert list(df.columns) == [
@@ -195,14 +198,15 @@ def test_generate_decisions_names_the_missing_applicant(db_session):
     )
 
     with pytest.raises(MissingApplicantDataError, match="orphan001"):
-        generate_decisions_by_year(db_session, 2025)
+        generate_decisions_by_year(db_session, 2026)
 
 
 # ---------- per-stage exports ----------
 
 
 def _seed(db_session, status, application_number, campus_id="xxxyyy001", employee_id="1000001"):
-    """One applicant with one application at the given stage, in 2025."""
+    """One applicant with one application at the given stage, dated 2025,
+    which is the 2026 intake."""
     _create_applicant(db_session, campus_id=campus_id, employee_id=employee_id)
     return _create_application(
         db_session,
@@ -216,13 +220,13 @@ def test_export_defaults_to_settled_decisions_only(db_session):
     _seed(db_session, ApplicationStatus.REVIEWED, "A0000009")
 
     with pytest.raises(NoDecisionsFoundError):
-        generate_decisions_by_year(db_session, 2025)
+        generate_decisions_by_year(db_session, 2026)
 
 
 def test_export_can_name_an_earlier_stage(db_session):
     _seed(db_session, ApplicationStatus.REVIEWED, "A0000010")
 
-    buffer = generate_decisions_by_year(db_session, 2025, [ApplicationStatus.REVIEWED])
+    buffer = generate_decisions_by_year(db_session, 2026, [ApplicationStatus.REVIEWED])
     frame = pd.read_excel(buffer)
 
     assert list(frame["Decision"]) == ["Reviewed"]
@@ -240,7 +244,7 @@ def test_export_can_combine_stages(db_session):
 
     buffer = generate_decisions_by_year(
         db_session,
-        2025,
+        2026,
         [ApplicationStatus.REVIEWED, ApplicationStatus.READY_TO_REGISTER],
     )
     frame = pd.read_excel(buffer)
@@ -252,4 +256,4 @@ def test_missing_stage_names_the_stage_it_looked_for(db_session):
     _seed(db_session, ApplicationStatus.ACCEPTED, "A0000013")
 
     with pytest.raises(NoDecisionsFoundError, match="Ready to Register"):
-        generate_decisions_by_year(db_session, 2025, [ApplicationStatus.READY_TO_REGISTER])
+        generate_decisions_by_year(db_session, 2026, [ApplicationStatus.READY_TO_REGISTER])

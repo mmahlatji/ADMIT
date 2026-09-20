@@ -21,8 +21,9 @@ def test_create_and_get_vote(db_session):
 def test_get_votes_returns_all(db_session):
     create_application(db_session)
     _create_author(db_session)
+    _create_author(db_session, employee_id="8888888", email="other@uct.ac.za")
     create_vote(db_session, "00000001", "xxxyyy001", VoteDecision.YES, "9999999")
-    create_vote(db_session, "00000001", "xxxyyy001", VoteDecision.NO, "9999999")
+    create_vote(db_session, "00000001", "xxxyyy001", VoteDecision.NO, "8888888")
 
     assert len(get_votes(db_session)) == 2
 

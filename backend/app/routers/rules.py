@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.deps import get_db, require_role
@@ -8,11 +8,15 @@ from app.schemas.rules import (
     RulePreviewRequest,
     RulePreviewResponse,
     RuleResponse,
+    RuleStatus,
 )
 from app.services import rules as rules_service
 from app.services.engine.tools import RuleConflict, VariableError
+from uuid import UUID
 
 router = APIRouter(prefix="/rules", tags=["rules"])
+
+MAX_PAGE_SIZE = 500
 
 # Rules decide who gets in, so writing one is convenor/admin only. Committee
 # members can read what is in force but not change it.
@@ -22,8 +26,8 @@ READ_ROLES = [RoleEnum.convenor, RoleEnum.committee, RoleEnum.admin]
 
 @router.get("", response_model=list[RuleResponse])
 def list_rules(
-    skip: int = 0,
-    limit: int = 100,
+    skip: int = Query(default=0, ge=0),
+    limit: int = Query(default=100, ge=1, le=MAX_PAGE_SIZE),
     db: Session = Depends(get_db),
     _: User = Depends(require_role(*READ_ROLES)),
 ):
@@ -92,3 +96,19 @@ def apply_rules(
         return {"status": "applied"}
     except rules_service.NoRuleException as exc:
         raise HTTPException(status.HTTP_409_CONFLICT, str(exc)) from exc
+
+
+@router.post("/{rule_id}/status", status_code=status.HTTP_200_OK)
+def update_status(
+    rule_id: UUID,
+    new_status: RuleStatus,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_role(*WRITE_ROLES)),
+):
+
+    try:
+        return rules_service.update_rule_status(db, rule_id, new_status)
+    except rules_service.NoRuleException as exec:
+        raise HTTPException(status_code=404, detail=str(exec))
+    except rules_service.InvalidRuleTransitionError as exec:
+        raise HTTPException(status_code=400, detail=str(exec))

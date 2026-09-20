@@ -7,6 +7,7 @@ from app.main import app
 from app.models.users import RoleEnum, User
 from app.routers import import_documents as import_documents_router
 from app.services import import_documents as document_service
+from tests.support import request_scoped_db
 from tests.test_queries_import_runs import _create as create_import_run
 
 
@@ -22,10 +23,7 @@ def _make_actor(role=RoleEnum.convenor):
 
 
 def _make_client(db_session, actor):
-    def override_get_db():
-        yield db_session
-
-    app.dependency_overrides[get_db] = override_get_db
+    app.dependency_overrides[get_db] = request_scoped_db(db_session)
     app.dependency_overrides[get_current_user] = lambda: actor
     return TestClient(app)
 

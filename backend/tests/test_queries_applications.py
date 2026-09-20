@@ -7,6 +7,9 @@ from app.queries.applications import (
     get_application_by_id,
     get_application_by_number,
     get_applications,
+    get_applications_by_intake_year,
+    get_applications_by_status_and_year,
+    intake_year_bounds,
     update_application,
 )
 from tests.test_queries_applicants import _create as create_applicant
@@ -120,3 +123,45 @@ def test_paging_applications_is_stable_across_ties(db_session):
 
     assert len(seen) == 6
     assert len(set(seen)) == 6
+
+def test_intake_year_bounds_span_the_whole_preceding_year():
+    start, end = intake_year_bounds(2023)
+
+    assert start == date(2022, 1, 1)
+    assert end == date(2023, 1, 1)
+
+
+def test_a_late_application_still_belongs_to_the_intake(db_session):
+    """The rule engine read a hardcoded April-September window, so an
+    application dated October was never evaluated and sat at Applied no
+    matter how often the rules were run."""
+    # _create dates the application 2022-10-01, which that window excluded.
+    _create(db_session)
+
+    found = get_applications_by_status_and_year(
+        db_session, [ApplicationStatus.APPLIED], 2023
+    )
+
+    assert [a.application_number for a in found] == ["00000001"]
+
+
+def test_an_application_outside_the_intake_is_not_returned(db_session):
+    _create(db_session)
+
+    assert get_applications_by_status_and_year(
+        db_session, [ApplicationStatus.APPLIED], 2024
+    ) == []
+    assert get_applications_by_intake_year(db_session, 2024) == []
+
+
+def test_the_export_and_the_rule_engine_agree_on_the_intake(db_session):
+    _create(db_session)
+
+    exported = get_applications_by_intake_year(db_session, 2023)
+    evaluated = get_applications_by_status_and_year(
+        db_session, [ApplicationStatus.APPLIED], 2023
+    )
+
+    assert [a.application_id for a in exported] == [
+        a.application_id for a in evaluated
+    ]

@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -36,6 +37,27 @@ def get_votes_by_campus_id(db: Session, campus_id: str) -> list[Vote]:
     )
 
 
+def get_votes_by_application_and_voter(
+    db: Session, application_number: str, voter_id: str
+) -> list[Vote]:
+    """This voter's votes on this application, newest first.
+
+    A list rather than one row: the unique constraint that makes it at most
+    one only arrives in a7c3e91b2f45, so rows predating it can still come back
+    in pairs and asking for exactly one would raise instead of answering.
+    """
+    return list(
+        db.execute(
+            select(Vote)
+            .where(
+                Vote.application_number == application_number,
+                Vote.voter_id == voter_id,
+            )
+            .order_by(Vote.voted_at.desc(), Vote.vote_id.desc())
+        ).scalars()
+    )
+
+
 def create_vote(
     db: Session, application_number: str, campus_id: str, vote: VoteDecision, voter_id: str
 ) -> Vote:
@@ -48,7 +70,7 @@ def create_vote(
         voter_id=voter_id,
     )
     db.add(vote_row)
-    db.commit()
+    db.flush()
     db.refresh(vote_row)
     return vote_row
 
@@ -60,6 +82,7 @@ def update_vote(
     campus_id: str | None = None,
     vote: VoteDecision | None = None,
     voter_id: str | None = None,
+    voted_at: datetime | None = None,
 ) -> Vote:
     """Partially update a vote, only sets fields explicitly passed."""
     fields = {
@@ -67,11 +90,12 @@ def update_vote(
         "campus_id": campus_id,
         "vote": vote,
         "voter_id": voter_id,
+        "voted_at": voted_at,
     }
     for field, value in fields.items():
         if value is not None:
             setattr(vote_row, field, value)
-    db.commit()
+    db.flush()
     db.refresh(vote_row)
     return vote_row
 
@@ -79,4 +103,4 @@ def update_vote(
 def delete_vote(db: Session, vote_row: Vote) -> None:
     """Delete a vote row."""
     db.delete(vote_row)
-    db.commit()
+    db.flush()

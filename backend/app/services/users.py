@@ -68,6 +68,10 @@ def assign_role(db: Session, actor: User, target: User, role: RoleEnum | None) -
     approved_by = actor.employee_id if role is not None else None
     approved_at = datetime.now(UTC) if role is not None else None
     old_role = target.role
+    # The role change and the entry recording it have to land together. Both
+    # only flush, so get_db's single commit covers the pair: a failure after
+    # this point takes the role change with it rather than leaving a changed
+    # role nobody can attribute.
     user = user_queries.update_user_role(db, target, role, approved_by, approved_at)
     system_log_queries.create_system_log(
         db,
