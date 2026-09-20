@@ -57,6 +57,9 @@ correct, Docker is correct.
 docker compose up api web
 ```
 
+This also starts the `ollama` container (see [Ollama](#ollama-and-the-ask-feature)
+below); it comes up whether you ask for it or not.
+
 First build takes a few minutes (pulling base images, `npm install`, `uv sync`
 inside the containers). After that, `docker compose up api web` again reuses
 the built images and starts in seconds.
@@ -88,6 +91,37 @@ To rebuild after pulling changes that touch dependencies:
 `docker-compose.yml` also defines a `test_db` service, a throwaway local
 Postgres used only for testing a migration before it touches Supabase.
 Nothing in normal day-to-day use needs it; see [Migrations](#migrations).
+
+### Ollama and the "Ask" feature
+
+The natural-language "Ask" page runs its model in a separate `ollama`
+container. Everything else — ingestion, the rules engine, the applicant
+lifecycle, exports — works without it.
+
+**With Ollama (the default).** `docker compose up api web` starts `ollama` as
+well, because `api` declares `depends_on: ollama`.
+
+- The first start pulls `qwen2.5-coder:7b-instruct-q6_K`, several GB, before
+  the container reports healthy. A cold volume can take up to 15 minutes, so
+  watch the logs rather than assuming it has hung.
+- Inference is CPU-only and slow: the first question after startup can take a
+  minute or more, and complex questions can take minutes. The model is kept
+  resident in memory (`OLLAMA_KEEP_ALIVE` is `-1`), which trades RAM for a warm
+  start on later questions.
+
+**Without Ollama.** There is no `docker compose` command that starts `api`
+without also starting Ollama: the dependency and the `OLLAMA_URL` /
+`OLLAMA_MODEL` values are set in the compose file's `environment:` block, not
+read from `backend/.env`. To run without it, comment out `depends_on: ollama`
+and the two `OLLAMA_*` lines in `docker-compose.yml`, then:
+
+```bash
+docker compose up api web
+```
+
+Everything works except `/ask`, which fails and points at the missing model.
+This skips the multi-GB download and frees the memory the model would
+otherwise hold, at the cost of the Ask page.
 
 ## Running it without Docker
 
