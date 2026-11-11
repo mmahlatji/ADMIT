@@ -17,8 +17,7 @@ dist/
 npm-debug.log*
 
 # Env files (never commit real secrets, .env.example stays tracked)
-# .env added solely for the purpose of functionality for tutor
-# local backups of .env: these hold real credentials
+.env
 .env.backup-*
 .env.local
 .env.*.local
